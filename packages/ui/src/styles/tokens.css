@@ -1,0 +1,725 @@
+﻿/**
+ * Tokens do CRM CF — identidade Arena CF.
+ *
+ *   Azul principal    #102850   hsl(218 67% 19%)
+ *   Azul secundário   #212D51   hsl(225 42% 22%)
+ *   Branco            #FFFFFF
+ *   Laranja (acento)  #FF9933   hsl(30 100% 60%)
+ *
+ * Princípio de composição: **a borda é exceção**. Superfícies se separam por
+ * cor e sombra, não por traço. Hairline só onde duas regiões roláveis se
+ * encontram. O laranja marca uma coisa por tela — o que precisa de ação.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Plano de fundo levemente azulado: o branco dos cartões "sobe" sozinho. */
+    --background: 220 24% 97%;
+    --foreground: 218 45% 16%;
+
+    --surface: 0 0% 100%;
+    --surface-raised: 0 0% 100%;
+    --surface-sunken: 220 24% 95%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 218 45% 16%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 218 45% 16%;
+
+    --primary: 218 67% 19%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 218 52% 96%;
+
+    --primary-2: 225 42% 22%;
+    --primary-2-foreground: 0 0% 100%;
+
+    --secondary: 220 22% 94%;
+    --secondary-foreground: 218 45% 20%;
+
+    --muted: 220 22% 95%;
+    --muted-foreground: 218 12% 46%;
+
+    --accent: 30 100% 60%;
+    --accent-foreground: 24 62% 16%;
+    --accent-soft: 32 100% 95%;
+    --accent-ink: 26 82% 38%;
+
+    --destructive: 0 68% 47%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 72% 97%;
+
+    --success: 158 62% 30%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 158 48% 95%;
+
+    --warning: 36 92% 42%;
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 40 92% 95%;
+
+    --info: 210 88% 44%;
+    --info-foreground: 0 0% 100%;
+    --info-soft: 210 88% 96%;
+
+    /**
+     * Traço.
+     *
+     * "A borda é exceção" continua valendo — mas exceção precisa ser **vista**.
+     * A primeira versão era clara demais: 1,24:1 contra a superfície branca, o
+     * que na prática desenhava nada. O campo de texto ficava invisível sem o
+     * texto de exemplo dentro dele.
+     *
+     * Os três níveis agora saem de alvo de contraste, não de estimativa:
+     *
+     * | token             | contra branco | por quê                            |
+     * | ----------------- | ------------- | ---------------------------------- |
+     * | `--border`        | 1,86:1        | hairline: visível, ainda discreto  |
+     * | `--border-strong` | 2,68:1        | onde a divisão precisa de peso     |
+     * | `--input`         | 3,41:1        | **exigência** da WCAG 1.4.11       |
+     *
+     * `--input` é o único com piso obrigatório: limite de componente de interface
+     * pede 3:1, e ele foi resolvido para cumprir isso na pior superfície onde um
+     * campo aparece (`--muted`, 95%), não só sobre o branco — daí 3,02:1 no pior
+     * caso. Ao mexer nestes valores, refaça a conta em vez de ajustar a olho.
+     */
+    --border: 220 16% 76%;
+    --border-strong: 220 16% 64%;
+    --input: 220 16% 57%;
+    /* Apontado ao anel de foco: se alguem usar `ring-ring`, ganha o acessivel. */
+    --ring: var(--focus-ring);
+
+    /**
+     * Anel de foco.
+     *
+     * Token próprio porque o laranja da marca **não serve** aqui no tema claro:
+     * `--accent` rende 2,13:1 contra branco, abaixo do 3:1 que a WCAG 1.4.11
+     * exige de indicador de foco. Escurecer `--accent` corrigiria o foco e
+     * estragaria todo o resto (preenchimento de botão, selo, filete).
+     *
+     * Então o foco ganha a sua própria laranja: mais fechada no claro (3,43:1) e
+     * a da marca no escuro, onde ela já rende 8:1.
+     */
+    --focus-ring: 28 90% 45%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 218 60% 14%;
+    --sidebar-foreground: 213 30% 92%;
+    --sidebar-muted: 214 16% 62%;
+    --sidebar-accent: 222 40% 21%;
+    /* Traço sobre o azul profundo da barra: clareado ao mesmo alvo de ~2:1. */
+    --sidebar-border: 222 30% 35%;
+
+    /* Séries de gráfico — validadas para daltonismo e contraste na superfície branca. */
+    --chart-1: 216 67% 50%;
+    --chart-2: 27 82% 46%;
+    --chart-3: 174 82% 33%;
+    --chart-4: 256 58% 56%;
+    --chart-5: 337 66% 58%;
+    --chart-6: 103 55% 37%;
+
+    /**
+     * Cores derivadas de dado (matiz de tag, avatar, canal e bloco de fluxo).
+     * O componente informa só a matiz; saturação, luminosidade e opacidade vêm
+     * daqui — é o que mantém essas cores no sistema e faz o tema escuro
+     * funcionar sem duplicar código.
+     */
+    --hue-bg-l: 95%;
+    --hue-bg-a: 1;
+    --hue-fg-l: 32%;
+
+    /**
+     * Superfície da conversa.
+     *
+     * A textura de rabiscos vem do WhatsApp — ela existe porque o olho precisa
+     * de um plano com "grão" para as bolhas descolarem. A cor, não: é a Arena
+     * CF. Bege azulado no claro, azul profundo no escuro, e o desenho entra
+     * como máscara (`.chat-canvas`) para que a tinta continue saindo de token.
+     *
+     * As duas bolhas se separam por matiz e não por peso: branco de um lado,
+     * azul claro do outro, texto escuro nos dois. Isso mantém contraste alto
+     * sobre um plano claro texturizado — bolha escura sobre bege briga com a
+     * textura e some no tema escuro.
+     */
+    --chat-canvas: 38 26% 93%;
+    --chat-doodle: 218 45% 30%;
+    --chat-doodle-a: 0.05;
+
+    --chat-in: 0 0% 100%;
+    --chat-in-foreground: 218 45% 16%;
+    --chat-out: 213 62% 90%;
+    --chat-out-foreground: 218 52% 18%;
+    --chat-out-ink: 214 42% 40%;
+    --chat-quote: 218 40% 34%;
+
+    --elev-1: 0 1px 2px -1px hsl(218 40% 20% / 0.06), 0 1px 3px 0 hsl(218 40% 20% / 0.05);
+    --elev-2: 0 2px 4px -2px hsl(218 40% 20% / 0.08), 0 6px 16px -6px hsl(218 40% 20% / 0.1);
+    --elev-3: 0 8px 24px -8px hsl(218 40% 20% / 0.16), 0 24px 56px -24px hsl(218 40% 20% / 0.22);
+
+    /**
+     * Ladrilho de 400 px da textura da conversa — só forma, nenhuma cor: o SVG
+     * é consumido como máscara em `.chat-canvas` e a tinta sai de
+     * `--chat-doodle`. Vinte glifos do ofício, em escalas e giros variados,
+     * afastados das bordas para o ladrilho fechar sem glifo cortado.
+     */
+    --chat-doodle-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'><g fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><g transform='translate(24 30) rotate(-12) scale(1.15)' opacity='.9'><path d='M4 2h9l5 5v16H4z'/><path d='M13 2v6h5'/><path d='M7 13h9'/><path d='M7 17h6'/></g><g transform='translate(140 18) rotate(9)' opacity='.75'><path d='M4 2h16v20H4z'/><path d='M7 6h10v4H7z'/><path d='M8 14h1M12 14h1M16 14h1M8 18h1M12 18h1M16 18h1'/></g><g transform='translate(250 40) rotate(-6) scale(1.25)' opacity='.85'><path d='M4 20h16'/><path d='M7 20v-7'/><path d='M12 20v-12'/><path d='M17 20v-5'/></g><g transform='translate(338 26) rotate(14) scale(.95)' opacity='.7'><path d='M3 5h18v16H3z'/><path d='M3 10h18'/><path d='M8 3v4'/><path d='M16 3v4'/><path d='M8 14h2'/><path d='M14 14h2'/></g><g transform='translate(14 96) rotate(-18) scale(.95)' opacity='.7'><path d='M14 6l-6 6a2.5 2.5 0 003.5 3.5l6-6a5 5 0 00-7-7l-6.5 6.5a7.5 7.5 0 0010.5 10.5'/></g><g transform='translate(78 124) rotate(7) scale(1.1)' opacity='.85'><path d='M2 5h20v14H2z'/><path d='M2 5l10 8 10-8'/></g><g transform='translate(182 108) rotate(-14) scale(1.2)' opacity='.9'><path d='M3 4h18v12H8l-5 5V4z'/></g><g transform='translate(292 130) rotate(10) scale(1.05)' opacity='.8'><path d='M19 5L5 19'/><path d='M8 6.5a2 2 0 11-4 0 2 2 0 014 0z'/><path d='M20 17.5a2 2 0 11-4 0 2 2 0 014 0z'/></g><g transform='translate(22 200) rotate(-8)' opacity='.72'><path d='M5 11h14v10H5z'/><path d='M8 11V8a4 4 0 018 0v3'/></g><g transform='translate(112 214) rotate(12) scale(1.15)' opacity='.85'><path d='M3 6h6l2 3h10v12H3V6z'/></g><g transform='translate(212 202) rotate(-5) scale(1.1)' opacity='.8'><path d='M21 12a9 9 0 11-18 0 9 9 0 0118 0z'/><path d='M12 7v6l4 2'/></g><g transform='translate(318 210) rotate(16) scale(1.2)' opacity='.85'><path d='M4 20l3-1 12-12-2-2L5 17z'/></g><g transform='translate(46 296) rotate(9) scale(1.05)' opacity='.78'><path d='M4 7h12v3H4z'/><path d='M4 12h12v3H4z'/><path d='M4 17h12v3H4z'/></g><g transform='translate(150 310) rotate(-10) scale(1.15)' opacity='.9'><path d='M20 6L9 17l-5-5'/></g><g transform='translate(240 298) rotate(6) scale(1.2)' opacity='.85'><path d='M3 17l5-5 4 3 7-8'/></g><g transform='translate(334 304) rotate(-12)' opacity='.75'><path d='M6 20h12'/><path d='M9 16h6l1-4H8z'/><path d='M12 12V8a2 2 0 112-2'/></g><g transform='translate(358 150) rotate(-16) scale(.9)' opacity='.68'><path d='M4 20h16'/><path d='M8 20v-6'/><path d='M13 20v-10'/></g><g transform='translate(10 352) rotate(8) scale(.9)' opacity='.7'><path d='M3 4h18v12H8l-5 5V4z'/></g><g transform='translate(196 352) rotate(-8) scale(.85)' opacity='.68'><path d='M3 5h18v16H3z'/><path d='M3 10h18'/><path d='M8 3v4'/><path d='M16 3v4'/></g><g transform='translate(286 356) rotate(11) scale(.85)' opacity='.7'><path d='M2 5h20v14H2z'/><path d='M2 5l10 8 10-8'/></g></g></svg>");
+  }
+
+  .dark {
+    --background: 220 32% 8%;
+    --foreground: 213 28% 92%;
+
+    --surface: 220 28% 12%;
+    --surface-raised: 220 24% 15%;
+    --surface-sunken: 220 34% 6%;
+
+    --card: 220 28% 12%;
+    --card-foreground: 213 28% 92%;
+
+    --popover: 220 26% 14%;
+    --popover-foreground: 213 28% 92%;
+
+    --primary: 213 70% 62%;
+    --primary-foreground: 220 40% 10%;
+    --primary-soft: 218 32% 20%;
+
+    --primary-2: 225 34% 28%;
+    --primary-2-foreground: 213 28% 92%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 213 28% 92%;
+
+    --muted: 220 20% 17%;
+    --muted-foreground: 215 14% 64%;
+
+    --accent: 30 100% 60%;
+    --accent-foreground: 24 62% 12%;
+    --accent-soft: 28 40% 19%;
+    --accent-ink: 32 96% 66%;
+
+    --destructive: 0 66% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 34% 19%;
+
+    --success: 158 50% 46%;
+    --success-foreground: 158 40% 8%;
+    --success-soft: 160 30% 17%;
+
+    --warning: 38 88% 56%;
+    --warning-foreground: 30 70% 10%;
+    --warning-soft: 38 40% 18%;
+
+    --info: 210 84% 60%;
+    --info-foreground: 208 60% 10%;
+    --info-soft: 210 36% 19%;
+
+    /**
+     * No escuro o traço **clareia** para se separar da superfície, e sofria do
+     * mesmo problema: 1,3:1 contra o plano do cartão. Mesmos alvos do tema
+     * claro — 1,96:1, 2,66:1 e 3,55:1 —, resolvidos contra a pior superfície
+     * onde cada um aparece.
+     */
+    --border: 220 14% 31%;
+    --border-strong: 220 14% 39%;
+    --input: 220 14% 47%;
+    /* Apontado ao anel de foco: se alguem usar `ring-ring`, ganha o acessivel. */
+    --ring: var(--focus-ring);
+
+    /* No escuro a laranja da marca já rende 8:1 — não precisa de degrau próprio. */
+    --focus-ring: 30 100% 60%;
+
+    --sidebar-background: 220 34% 6%;
+    --sidebar-foreground: 213 26% 90%;
+    --sidebar-muted: 215 12% 58%;
+    --sidebar-accent: 220 24% 14%;
+    --sidebar-border: 220 18% 29%;
+
+    /* Mesmas seis matizes, degrau próprio para a superfície escura. */
+    --chart-1: 214 79% 61%;
+    --chart-2: 30 73% 47%;
+    --chart-3: 175 80% 35%;
+    --chart-4: 254 69% 69%;
+    --chart-5: 336 66% 62%;
+    --chart-6: 103 46% 45%;
+
+    --hue-bg-l: 55%;
+    --hue-bg-a: 0.16;
+    --hue-fg-l: 72%;
+
+    /* Mesma textura, degrau próprio: o plano escurece abaixo da superfície. */
+    --chat-canvas: 220 36% 7%;
+    --chat-doodle: 213 60% 78%;
+    --chat-doodle-a: 0.055;
+
+    --chat-in: 220 24% 15%;
+    --chat-in-foreground: 213 28% 92%;
+    --chat-out: 218 42% 26%;
+    --chat-out-foreground: 213 34% 94%;
+    --chat-out-ink: 213 34% 72%;
+    --chat-quote: 213 60% 74%;
+
+    --elev-1: 0 1px 2px -1px hsl(220 40% 2% / 0.5), 0 1px 3px 0 hsl(220 40% 2% / 0.4);
+    --elev-2: 0 2px 4px -2px hsl(220 40% 2% / 0.5), 0 6px 16px -6px hsl(220 40% 2% / 0.55);
+    --elev-3: 0 8px 24px -8px hsl(220 40% 2% / 0.7), 0 24px 56px -24px hsl(220 40% 2% / 0.75);
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /**
+   * O foco usa `--focus-ring`, não `--accent`.
+   *
+   * São laranjas diferentes de propósito: a da marca preenche botão e selo, onde
+   * o contraste que importa é do texto sobre ela; a do foco é um traço fino sobre
+   * a superfície, e aí quem precisa dos 3:1 é o traço. Sobre branco, a laranja da
+   * marca rende 2,13:1 — o anel existia e mal se via.
+   */
+  :focus-visible {
+    outline: 2px solid hsl(var(--focus-ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: hsl(var(--accent) / 0.24);
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.22);
+    border: 4px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.38);
+    border: 4px solid transparent;
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* Cartão padrão: sem traço, separado por elevação. */
+  .panel {
+    background-color: hsl(var(--card));
+    border-radius: var(--radius);
+    box-shadow: var(--elev-1);
+  }
+
+  .panel-raised {
+    background-color: hsl(var(--card));
+    border-radius: var(--radius);
+    box-shadow: var(--elev-2);
+  }
+
+  /* Superfície de marca do cabeçalho da barra lateral. */
+  .brand-surface {
+    background:
+      radial-gradient(120% 100% at 12% 0%, hsl(var(--accent) / 0.18), transparent 58%),
+      linear-gradient(155deg, hsl(var(--primary-2)), hsl(var(--sidebar-background)));
+  }
+
+  .mesh-surface {
+    background:
+      radial-gradient(ellipse 60% 50% at 10% 12%, hsl(var(--accent) / 0.12), transparent 60%),
+      radial-gradient(ellipse 55% 45% at 92% 4%, hsl(var(--primary) / 0.14), transparent 58%),
+      radial-gradient(ellipse 70% 50% at 50% 100%, hsl(var(--primary-2) / 0.1), transparent 62%);
+  }
+
+  /**
+   * Grade de fundo decorativa.
+   *
+   * A opacidade caiu de 0,7 para 0,35 quando `--border` escureceu: aqui a grade
+   * é textura, não estrutura, e herdar o traço mais escuro por inteiro a
+   * transformaria em papel milimetrado. É o único lugar do sistema onde a borda
+   * deve ficar **mais fraca** que o token — e por isso está anotado.
+   */
+  .grid-surface {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted-foreground) / 0.1) 37%,
+      hsl(var(--muted)) 63%
+    );
+    background-size: 400% 100%;
+  }
+
+  /* Faixa de vidro usada nos cabeçalhos fixos. */
+  .glass {
+    background-color: hsl(var(--surface) / 0.82);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+  }
+
+  /**
+   * Plano da conversa.
+   *
+   * O desenho entra como **máscara**, não como imagem colorida: o SVG carrega
+   * só a forma e a tinta vem de `--chat-doodle`. É o que permite a mesma
+   * textura servir aos dois temas e continuar obedecendo "cor sai de token".
+   *
+   * A textura fica no `::before` do invólucro, que não rola — o padrão é fixo
+   * como no WhatsApp. O rolador é um filho posicionado, e por isso pinta
+   * acima. Os glifos são do ofício (documento, calculadora, apuração, prazo),
+   * não corações e pizzas: mesma sensação, identidade nossa.
+   */
+  .chat-canvas {
+    position: relative;
+    background-color: hsl(var(--chat-canvas));
+  }
+
+  .chat-canvas::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: hsl(var(--chat-doodle) / var(--chat-doodle-a));
+    mask-image: var(--chat-doodle-mask);
+    mask-size: 400px 400px;
+    mask-repeat: repeat;
+    -webkit-mask-image: var(--chat-doodle-mask);
+    -webkit-mask-size: 400px 400px;
+    -webkit-mask-repeat: repeat;
+  }
+
+  /**
+   * Rabicho da bolha.
+   *
+   * Recortado por `clip-path` sobre um bloco da cor da própria bolha: um só
+   * elemento, sem borda, e a cor continua vindo do token. O canto onde o
+   * rabicho encosta perde o arredondamento no componente.
+   */
+  .chat-tail {
+    position: relative;
+  }
+
+  .chat-tail::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 0.5rem;
+    height: 0.8125rem;
+  }
+
+  .chat-tail-in::after {
+    left: -0.4375rem;
+    background-color: hsl(var(--chat-in));
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+  }
+
+  .chat-tail-out::after {
+    right: -0.4375rem;
+    background-color: hsl(var(--chat-out));
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+
+  /** Cartão do copiloto enquanto o modelo responde. */
+  .ai-thinking {
+    background-image: linear-gradient(
+      100deg,
+      hsl(var(--accent) / 0) 20%,
+      hsl(var(--accent) / 0.14) 40%,
+      hsl(var(--accent) / 0) 60%
+    );
+    background-size: 300% 100%;
+  }
+}
+
+@layer utilities {
+  /* Sequência de entrada da página: cada seção herda um atraso do índice. */
+  .reveal {
+    opacity: 0;
+    animation: reveal-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: calc(var(--reveal-index, 0) * 60ms);
+  }
+
+  .lift {
+    transition:
+      transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--elev-2);
+  }
+
+  .press {
+    transition: transform 0.12s ease;
+  }
+  .press:active {
+    transform: scale(0.985);
+  }
+
+  /* Texto numérico com a face de exibição. */
+  .figure {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+}
+
+/**
+ * Separador entre conversas do inbox.
+ *
+ * Um filete que nasce transparente, ganha o laranja da marca no centro e some
+ * de novo — a cor marca a divisão sem virar mais uma linha cheia na tela. O
+ * brilho atravessa devagar, uma vez a cada seis segundos: sinaliza que a lista
+ * é viva sem competir com a leitura.
+ */
+.conversation-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--accent) / 0.55) 20%,
+    hsl(var(--accent) / 0.9) 50%,
+    hsl(var(--accent) / 0.55) 80%,
+    transparent 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+.conversation-divider::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, hsl(var(--accent)), transparent);
+  transform: translateX(-100%);
+  animation: divider-sweep 6s ease-in-out infinite;
+  animation-delay: calc(var(--divider-index, 0) * 260ms);
+}
+
+@keyframes divider-sweep {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  38% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/**
+ * Faísca que percorre a aresta do editor de fluxo enquanto o simulador anda.
+ * O traço curto viaja pelo caminho; a linha por baixo continua contínua, então
+ * o efeito lê como "passando por aqui" e não como linha tracejada.
+ */
+.flow-edge-pulse {
+  stroke-dasharray: 14 220;
+  animation: flow-edge-dash 1.4s linear infinite;
+}
+
+@keyframes flow-edge-dash {
+  from {
+    stroke-dashoffset: 234;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/**
+ * Trilho do compositor de automações.
+ *
+ * Liga um passo ao seguinte. Enquanto o passo de cima está incompleto o trilho
+ * fica cinza e parado; quando completa, ganha a cor e uma faísca desce por ele.
+ * O movimento é a confirmação — não há selo de "ok" competindo com o conteúdo.
+ */
+.rule-rail {
+  position: relative;
+  width: 2px;
+  background: hsl(var(--border));
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rule-rail[data-live="true"] {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--rail-from, var(--accent)) / 0.85),
+    hsl(var(--rail-to, var(--accent)) / 0.85)
+  );
+}
+
+.rule-rail[data-live="true"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 40%;
+  background: linear-gradient(180deg, transparent, hsl(0 0% 100% / 0.9), transparent);
+  animation: rail-travel 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--rail-index, 0) * 400ms);
+}
+
+@keyframes rail-travel {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.85;
+  }
+  75% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(320%);
+    opacity: 0;
+  }
+}
+
+/** Entrada de uma ação recém-adicionada: vem da esquerda, como quem se encaixa na frase. */
+.rule-slide-in {
+  animation: rule-slide-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rule-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/**
+ * Abertura e fechamento do webchat.
+ *
+ * A janela cresce **a partir do canto onde o lançador estava**, não do centro:
+ * é o movimento que liga visualmente o botão clicado à janela que apareceu.
+ * `transform-origin` muda com a posição configurada, por isso a variável.
+ *
+ * O fechamento é mais rápido que a abertura (140 ms contra 260) porque quem
+ * fecha já decidiu: prolongar a saída faz a interface parecer lenta, enquanto
+ * prolongar a entrada faz parecer suave.
+ */
+.webchat-open {
+  animation: webchat-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: var(--webchat-origin, bottom right);
+}
+
+.webchat-close {
+  animation: webchat-out 140ms cubic-bezier(0.4, 0, 1, 1) both;
+  transform-origin: var(--webchat-origin, bottom right);
+}
+
+@keyframes webchat-in {
+  from {
+    opacity: 0;
+    transform: scale(0.86) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes webchat-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+}
+
+/** O lançador some enquanto a janela entra, para os dois não se sobreporem. */
+.webchat-launcher-in {
+  animation: webchat-launcher-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes webchat-launcher-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/** Bolha nova da conversa: sobe do rodapé, curta o bastante para não atrasar a leitura. */
+.webchat-bubble-in {
+  animation: webchat-bubble-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes webchat-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .lift:hover {
+    transform: none;
+  }
+}

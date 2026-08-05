@@ -1,0 +1,762 @@
+﻿=== TABELA ===
+PLANO COMPLETOCRM Omnichannelcom Automação e Inteligência ArtificialArquitetura, benchmark Salesforce/RD Station, catálogo funcional, equipe de 6 pessoas, roadmap e implantação gradualCONTABILIDADE FACILITADAVersão 2.0 ampliada  |  27 de julho de 2026
+=== FIM TABELA ===
+
+=== TABELA ===
+ATENDIMENTOInbox unificado, filas, SLA e histórico | AUTOMAÇÃOChatbots, campanhas, jornadas e e-mail | INTELIGÊNCIACopiloto, agentes, RAG e analytics
+=== FIM TABELA ===
+
+[Heading1] 1. Objetivo e uso deste documento
+Este documento define uma proposta completa para a criação de um CRM interno omnichannel, capaz de centralizar os números de WhatsApp da empresa, realizar atendimentos dentro da própria plataforma, criar chatbots visuais, executar campanhas em massa, programar e-mails, construir jornadas automatizadas e utilizar inteligência artificial como apoio operacional e decisório.
+A proposta foi preparada para funcionar como base de alinhamento entre direção, produto, tecnologia, atendimento, marketing, comercial, dados e jurídico. O conteúdo não é um contrato de prazo ou custo: é um plano de produto e engenharia que deverá ser refinado após a descoberta técnica e o levantamento dos volumes reais da operação.
+=== TABELA ===
+Decisão centralO CRM deve nascer como uma plataforma orientada a eventos, modular e multiempresa. O Supabase será o núcleo de dados e autenticação, mas disparos, filas, processamento de mídia e execuções longas deverão contar com workers próprios para garantir escala e confiabilidade.
+=== FIM TABELA ===
+
+[Heading1] 2. Sumário executivo
+O produto recomendado combina quatro capacidades que normalmente aparecem separadas em diferentes ferramentas: CRM, central de atendimento, automação de marketing e plataforma de inteligência artificial. O diferencial será manter uma única visão do contato, do lead ou do aluno, independentemente do canal utilizado.
+[ListBullet] Centralizar WhatsApp, e-mail, Instagram, Messenger, webchat, formulários e integrações em uma única linha do tempo.
+[ListBullet] Permitir que agentes humanos atendam, transfiram, classifiquem e acompanhem conversas com controle de SLA.
+[ListBullet] Criar chatbots por meio de um editor visual de blocos e conexões, inspirado em soluções como OmniChat e Blip.
+[ListBullet] Criar campanhas segmentadas de WhatsApp e e-mail, com agendamento, aprovação, testes e métricas.
+[ListBullet] Construir e-mails em editor drag-and-drop, com componentes reutilizáveis, merge tags, responsividade e versionamento.
+[ListBullet] Orquestrar jornadas multicanal acionadas por eventos, condições, datas, alterações no CRM e comportamento do contato.
+[ListBullet] Utilizar Claude ou Gemini por meio de uma camada de abstração, permitindo trocar o modelo por tarefa, custo, segurança e desempenho.
+[ListBullet] Manter logs imutáveis, consentimentos, preferências de contato, descadastro, retenção e controles de acesso compatíveis com LGPD.
+O caminho recomendado é entregar primeiro a fundação e a operação de atendimento real. Em seguida, evoluir para chatbot, campanhas, editor de e-mail, jornadas e IA avançada. Construir todas as áreas ao mesmo tempo aumentaria o risco de criar uma plataforma ampla, porém instável e difícil de operar.
+[Heading1] 3. Visão do produto
+[Heading2] 3.1 Proposta de valor
+Uma plataforma única para adquirir, atender, qualificar, vender, engajar e reter contatos, leads, clientes e alunos, preservando todo o contexto da relação com a empresa.
+[Heading2] 3.2 Princípios do produto
+=== TABELA ===
+Princípio | Aplicação prática
+Contato único | Um mesmo indivíduo não deve virar cadastros separados apenas porque conversou por WhatsApp, respondeu um formulário ou abriu um e-mail.
+Canal como adaptador | As regras de negócio não devem ficar presas ao WhatsApp ou ao e-mail. Cada canal é um adaptador que recebe e envia eventos.
+Automação auditável | Toda execução deve registrar versão do fluxo, entrada, saída, tentativa, erro e motivo da decisão.
+Humano no controle | A IA sugere, classifica e executa ações permitidas, mas deve respeitar limites, aprovações e mecanismos de escalonamento.
+Privacidade por padrão | Coletar apenas o necessário, controlar consentimentos, registrar bases legais e reduzir a exposição de dados pessoais.
+Escala progressiva | Começar com arquitetura simples, porém preparada para separar serviços e filas quando o volume crescer.
+Observabilidade desde o início | Não basta saber que uma mensagem falhou; é necessário saber onde, por quê, qual contato foi afetado e como reprocessar.
+=== FIM TABELA ===
+
+[Heading1] 4. Escopo funcional
+=== TABELA ===
+Módulo | Resultado esperado
+Administração e multiempresa | Empresas, marcas, unidades, times, usuários, perfis, canais, números, domínios, limites, branding e políticas.
+CRM 360º | Contatos, empresas, leads, oportunidades, alunos, negócios, atividades, tarefas, notas, tags, campos personalizados e timeline.
+Inbox omnichannel | Conversas, filas, roteamento, atribuição, transferências, respostas rápidas, anexos, menções, notas internas, SLA e avaliação.
+WhatsApp | Números oficiais, webhooks, templates, qualidade, status, mídia, campanhas, opt-in, bloqueios e coexistência quando aplicável.
+Chatbot Builder | Editor visual, blocos, variáveis, condições, integrações, subfluxos, IA, testes, versões, publicação e rollback.
+Campanhas | Segmentação, listas, templates, aprovação, agendamento, lotes, limites, testes A/B, UTM, métricas e supressões.
+E-mail Studio | Drag-and-drop, HTML/MJML, módulos, identidade visual, prévia responsiva, merge tags, testes, versionamento e biblioteca.
+Jornadas e automações | Gatilhos, condições, espera, ramificações, metas, ações multicanal, webhooks, atualizações no CRM e reentrada.
+Inteligência Artificial | Copiloto, resumo, classificação, recomendação, resposta sugerida, RAG, agentes e avaliação de qualidade.
+Analytics e governança | Dashboards, funis, SLA, campanhas, automações, custos, auditoria, exportações e trilhas de conformidade.
+=== FIM TABELA ===
+
+[Heading1] 5. Benchmark funcional e decisões de construção
+A referência de experiência deve combinar os pontos fortes de plataformas de atendimento conversacional, construtores de chatbot e editores de e-mail. O objetivo não é copiar interfaces, mas reproduzir padrões de uso já validados: caixa de entrada unificada, automação visual, prévia ao vivo, componentes reutilizáveis e publicação versionada.
+=== TABELA ===
+Referência | Capacidades observadas | Decisão para o projeto
+OmniChat | Inbox centralizada, colaboração entre atendentes, automação multicanal, campanhas e construtor visual de fluxos. | Usar como referência de jornada conversacional e transbordo bot-humano.
+Blip | Builder por blocos, integração com WhatsApp, mensagens ativas, rastreamento e extensões. | Usar como referência para versionamento, depuração e componentes do chatbot.
+Stripo | Editor incorporável, drag-and-drop, módulos, merge tags, HTML/CSS, armazenamento e personalização visual. | No MVP, avaliar integração white-label; no longo prazo, decidir entre manter o plugin ou evoluir editor próprio.
+Supabase | PostgreSQL, Auth, Row Level Security, Storage, Realtime, Functions, extensões e vetores. | Usar como núcleo de dados, identidade, arquivos, eventos em tempo real e base de conhecimento.
+Claude/Gemini | Processamento de linguagem, classificação, resumo, geração, ferramentas e saídas estruturadas. | Criar um AI Gateway para evitar dependência de um único modelo.
+=== FIM TABELA ===
+
+=== TABELA ===
+Build versus buyPara o editor de e-mail, a melhor decisão inicial tende a ser integrar um componente pronto e incorporável. Construir do zero um editor compatível com dezenas de clientes de e-mail, responsivo, com undo/redo e histórico de versões é um projeto grande por si só. A propriedade do código pode ser ampliada em uma segunda etapa.
+=== FIM TABELA ===
+
+[Heading2] 5.1 Referências específicas incorporadas
+A versão ampliada adiciona Salesforce e RD Station como referências explícitas de produto. A Salesforce orienta governança, extensibilidade, atendimento e orquestração; a RD Station orienta simplicidade, adoção, marketing, conversas e integração entre marketing e vendas.
+=== TABELA ===
+Referência | Capacidades usadas como benchmark | Decisão para o produto
+Salesforce | Console e casos; Omni-Channel; objetos e permissões; Flow; Journey Builder; eventos; APIs; auditoria. | Robustez, configuração, roteamento, rastreabilidade e jornadas orientadas a eventos.
+RD Station | CRM simples; funis e tarefas; Marketing Automation; lead scoring; campanhas; Conversas; chatbot e IA. | Usabilidade, rapidez de implantação, operação no-code e visão integrada de aquisição, vendas e atendimento.
+Projeto CF | Supabase, WhatsApp, e-mail, chatbot, jornadas, IA e integrações com sistemas atuais. | Produto próprio, modular, fácil de usar e capaz de coexistir com Salesforce até a migração por domínio.
+=== FIM TABELA ===
+[Heading2] 5.2 Regra de desenho do produto
+A experiência diária deverá ser simples para atendimento, comercial e marketing, enquanto a camada administrativa preserva controles de nível empresarial: versões, publicação, auditoria, aprovações, permissões, testes, limites e rollback.
+[Heading1] 6. Perfis de usuário e permissões
+=== TABELA ===
+Perfil | Principais responsabilidades
+Superadministrador | Configuração global, organizações, planos, segurança, limites e suporte técnico.
+Administrador da empresa | Usuários, equipes, canais, números, domínios, campos, integrações e políticas.
+Gestor de atendimento | Filas, escalas, SLA, distribuição, acompanhamento e qualidade.
+Atendente | Conversas atribuídas, respostas, notas, tarefas e atualização permitida do contato.
+Gestor comercial | Pipeline, leads, oportunidades, metas, roteamento e relatórios.
+Marketing | Segmentos, campanhas, templates, e-mails, jornadas e resultados.
+Criador de automações | Chatbots, jornadas, webhooks, variáveis, testes e publicação.
+Analista de dados | Dashboards, exportações, eventos, definições e acesso restrito a dados.
+Auditor/DPO | Logs, consentimentos, solicitações de titulares, retenção, incidentes e evidências.
+=== FIM TABELA ===
+
+Além de perfis, o sistema deve aceitar permissões granulares por recurso e escopo: visualizar, criar, editar, publicar, aprovar, exportar, excluir e administrar. O escopo pode ser organização, unidade, equipe, fila, canal ou proprietário do registro.
+[Heading1] 7. Arquitetura técnica recomendada
+
+[FigureCaption] Figura 1 — Visão lógica da plataforma proposta.
+[Heading2] 7.1 Stack sugerida
+=== TABELA ===
+Camada | Tecnologia/abordagem
+Frontend | Next.js + TypeScript + React; Tailwind/shadcn para o design system; React Flow para builders visuais; editor rico e componentes de tabela virtualizada.
+API principal | Node.js com NestJS ou Fastify; REST para integrações externas e WebSocket/Supabase Realtime para atualizações instantâneas.
+Banco e identidade | Supabase/PostgreSQL, Supabase Auth, RLS, Storage, Realtime, Vault e extensões como pgvector.
+Execução assíncrona | Workers Node.js; Redis/BullMQ, pgmq ou serviço equivalente; filas separadas por canal e prioridade.
+Agendamentos | pg_cron para rotinas simples e scheduler de aplicação para jornadas/campanhas de grande volume.
+Observabilidade | OpenTelemetry, logs estruturados, Sentry, métricas Prometheus/Grafana ou serviço gerenciado equivalente.
+Infraestrutura | Containers, CI/CD, ambientes separados, secrets manager, CDN para mídia e object storage.
+Integrações | Webhooks, REST, OAuth 2.0, API keys rotacionáveis, conectores n8n e importação/exportação segura.
+=== FIM TABELA ===
+
+[Heading2] 7.2 Por que não usar somente Edge Functions
+Edge Functions são adequadas para webhooks, endpoints leves, autenticação e integrações rápidas. Porém, campanhas grandes, processamento de anexos, renderização de e-mails, reprocessamento de eventos e execução de jornadas podem ultrapassar limites de duração ou exigir controle de concorrência. Esses trabalhos devem ser enviados a workers dedicados por meio de filas.
+[Heading2] 7.3 Multi-tenancy
+Todas as tabelas de negócio devem possuir organization_id ou tenant_id. As políticas de Row Level Security devem validar a associação do usuário à organização e, quando necessário, à unidade, equipe ou fila. Jobs de sistema usam credenciais de serviço isoladas e nunca devem expor a chave privilegiada no navegador.
+[Heading1] 8. Modelo orientado a eventos
+
+[FigureCaption] Figura 2 — Pipeline padrão de ingestão, decisão e resposta.
+Cada mudança importante deve gerar um evento de domínio. Exemplos: contact.created, conversation.opened, message.received, lead.qualified, deal.won, campaign.delivered, email.clicked e journey.goal_reached. Eventos possibilitam automações desacopladas, auditoria, reprocessamento e integração com dados.
+=== TABELA ===
+Idempotência obrigatóriaTodo webhook e job deve possuir uma chave de deduplicação. A mesma mensagem recebida duas vezes não pode criar dois contatos, disparar duas automações ou registrar duas vendas.
+=== FIM TABELA ===
+
+[Heading1] 9. Módulo CRM 360º
+[Heading2] 9.1 Entidades principais
+[ListBullet] Contato: pessoa física com dados de identificação, canais, preferências, consentimentos, tags e atributos personalizados.
+[ListBullet] Empresa/Conta: pessoa jurídica, unidade, escritório, parceiro ou organização relacionada.
+[ListBullet] Lead: interesse identificado, origem, campanha, score, proprietário e estágio de qualificação.
+[ListBullet] Oportunidade/Negócio: produto, valor, estágio, probabilidade, responsável, previsão e motivo de perda.
+[ListBullet] Aluno/Cliente: vínculo comercial ou educacional, produtos adquiridos, status, suporte e indicadores de relacionamento.
+[ListBullet] Atividade: tarefa, ligação, reunião, comentário, mudança de etapa, envio e evento externo.
+[ListBullet] Lista/Segmento: agrupamento estático ou dinâmico utilizado por campanhas, automações e relatórios.
+[Heading2] 9.2 Visão única do contato
+A tela do contato deve reunir dados cadastrais, canais vinculados, origem, tags, negócios, atendimentos, campanhas recebidas, e-mails, consentimentos, páginas ou formulários relevantes, atividades e notas internas. A timeline deve aceitar filtros por tipo de evento, canal e período.
+[Heading2] 9.3 Deduplicação e identidade
+A identidade não deve depender apenas do e-mail. O motor de resolução deve considerar telefone normalizado, e-mail normalizado, IDs externos, CPF quando houver base legal e identificadores dos canais. Mesclagens devem ser auditáveis, reversíveis por administrador e nunca apagar o histórico original sem registro.
+[Heading2] 9.4 Pipeline comercial e de atendimento
+O sistema pode oferecer múltiplos pipelines: vendas, retenção, regularização documental, matrícula, suporte complexo e outros processos internos. Cada etapa pode possuir campos obrigatórios, automações de entrada/saída, tempo máximo, checklist, tarefas e regras de permissão.
+[Heading1] 10. Inbox omnichannel e atendimento
+=== TABELA ===
+Capacidade | Descrição
+Caixa de entrada | Todas as conversas abertas, pendentes, aguardando cliente, resolvidas e arquivadas.
+Filas | Separação por produto, canal, assunto, unidade, horário, prioridade ou nível de suporte.
+Roteamento | Round-robin, menor carga, habilidade, proprietário do contato, região, produto ou regra customizada.
+SLA | Tempo para primeira resposta, tempo de solução, pausas justificadas, alertas e escalonamento.
+Colaboração | Notas internas, menções, transferência, observadores, comentários e histórico de alterações.
+Produtividade | Respostas rápidas, atalhos, snippets, dados do CRM, checklists e ações contextuais.
+Qualidade | Avaliação do cliente, auditoria amostral, score do atendimento e feedback do gestor.
+Continuidade | Transbordo bot-humano, retorno ao bot, reabertura, retomada de contexto e handoff com resumo.
+=== FIM TABELA ===
+
+[Heading2] 10.1 Estados recomendados
+Nova → Em triagem → Em atendimento → Aguardando cliente → Aguardando área interna → Resolvida → Encerrada. Estados adicionais podem ser criados, mas o sistema deve preservar um conjunto padrão para relatórios comparáveis.
+[Heading2] 10.2 Regras de concorrência
+Somente um agente deve possuir a conversa como responsável principal, mas outros podem observar e colaborar. O sistema precisa impedir respostas simultâneas conflitantes, mostrar quem está digitando e registrar quando a conversa foi assumida, transferida ou encerrada.
+[Heading1] 11. Integração dos números de WhatsApp
+A integração deve utilizar a plataforma oficial do WhatsApp, diretamente ou por meio de um BSP. Cada número deve possuir configuração independente de nome, WABA, token, webhook, limites, templates, filas, horários, mensagens de ausência, idioma e política de roteamento.
+=== TABELA ===
+Área | Requisito
+Recebimento | Mensagens de texto, imagens, documentos, áudio, vídeo, localização, contatos, botões, listas e respostas de Flow quando disponíveis.
+Envio | Mensagens dentro da janela permitida, templates aprovados, mídia, botões, listas e experiências estruturadas.
+Status | Enfileirada, enviada, entregue, lida, falhou, expirada e bloqueada, preservando código e motivo do provedor.
+Templates | Criação, variáveis, idiomas, categoria, submissão, aprovação, rejeição, versionamento e uso em campanhas.
+Governança | Opt-in, opt-out, bloqueio, quiet hours, limite por número, reputação, frequência e lista de supressão.
+Mídia | Download temporário, antivírus, armazenamento, expiração, thumbnails, tamanho e controle de acesso.
+Falhas | Retentativa apenas quando segura; erro permanente deve gerar DLQ, alerta e opção de reprocessamento.
+=== FIM TABELA ===
+
+=== TABELA ===
+Campanha em massa não é “enviar para todos”O módulo deve bloquear bases sem consentimento, respeitar descadastro, controlar frequência, validar templates e dividir envios em lotes. A reputação do número e a experiência do usuário devem ser tratadas como ativos do negócio.
+=== FIM TABELA ===
+
+[Heading1] 12. Chatbot Builder
+O construtor visual deve permitir que pessoas não técnicas criem fluxos semelhantes a um diagrama. O usuário arrasta blocos, conecta saídas, define variáveis, testa em simulador e publica uma versão imutável. Alterações futuras geram nova versão e não modificam execuções já iniciadas.
+[Heading2] 12.1 Blocos do MVP
+=== TABELA ===
+Bloco | Função
+Início/Gatilho | Mensagem recebida, palavra-chave, evento, campanha, API, horário ou chamada por outro fluxo.
+Enviar mensagem | Texto, mídia, botões, lista, quick reply, template e conteúdo específico por canal.
+Perguntar e capturar | Texto, e-mail, telefone, número, data, seleção, arquivo ou resposta estruturada.
+Condição | Comparações, presença de tag, etapa do CRM, horário, consentimento, score ou resultado de integração.
+Definir variável | Criar, atualizar, normalizar, converter e limpar variáveis de sessão ou contato.
+Atualizar CRM | Criar/editar contato, lead, negócio, tarefa, nota, tag, proprietário ou etapa.
+Requisição HTTP | GET/POST, autenticação, headers, timeout, mapeamento e tratamento de erro.
+IA | Classificar intenção, extrair dados, resumir, responder com base de conhecimento ou decidir ferramenta.
+Transferir para humano | Fila, prioridade, contexto, resumo, tags e SLA.
+Aguardar | Tempo, data específica, evento, resposta do usuário ou expiração.
+Subfluxo | Chamar fluxo reutilizável com parâmetros e receber retorno.
+Finalizar | Encerrar sessão, resolver conversa, registrar resultado e disparar evento.
+=== FIM TABELA ===
+
+[Heading2] 12.2 Recursos do editor
+[ListBullet] Zoom, minimapa, alinhamento automático, copiar/colar, agrupamento, comentários e pesquisa de blocos.
+[ListBullet] Validação antes da publicação: caminhos sem saída, variáveis inexistentes, credenciais ausentes e loops sem limite.
+[ListBullet] Modo rascunho, revisão, aprovação, publicação, arquivamento, clonagem e rollback.
+[ListBullet] Simulador com inspeção de variáveis, passos executados, chamadas externas e tokens de IA.
+[ListBullet] Biblioteca de subfluxos e templates: captação de lead, triagem de suporte, recuperação de boleto e qualificação comercial.
+[ListBullet] Limites de segurança: máximo de passos, tempo de execução, chamadas externas, tentativas e custo de IA.
+[Heading2] 12.3 Runtime do chatbot
+O runtime deve persistir o estado da sessão após cada bloco. Assim, uma queda do worker não perde o ponto do fluxo. O estado mínimo inclui flow_version_id, current_node_id, variables, contact_id, conversation_id, last_event_id, next_run_at, attempt_count e status.
+[Heading1] 13. Campanhas de WhatsApp e outros canais
+[Heading2] 13.1 Processo de criação
+1. Selecionar organização, número/canal e objetivo.
+2. Definir segmento dinâmico ou lista estática e exibir estimativa de elegíveis, excluídos e motivos.
+3. Escolher template, idioma e mapear variáveis.
+4. Configurar UTM, frequência, janela de envio, velocidade, prioridade e critérios de cancelamento.
+5. Executar envio de teste para contatos internos.
+6. Submeter à aprovação quando a política da empresa exigir.
+7. Agendar ou iniciar, com possibilidade de pausar, retomar e cancelar lotes ainda não enviados.
+8. Acompanhar envio, entrega, leitura, resposta, conversão, falhas, descadastros e custo.
+[Heading2] 13.2 Segmentação
+O construtor de segmentos deve aceitar grupos AND/OR, campos do contato, tags, origem, produto, etapa, comportamento, datas, campanhas anteriores, consentimento, score e eventos. A consulta deve ser salva e recalculada no momento do disparo para segmentos dinâmicos.
+[Heading2] 13.3 Proteções
+[ListBullet] Lista global de supressão e bloqueio por canal.
+[ListBullet] Limite de frequência por contato, campanha, número e período.
+[ListBullet] Quiet hours por fuso horário e feriados configuráveis.
+[ListBullet] Validação de telefone, consentimento e template antes de entrar na fila.
+[ListBullet] Cancelamento automático por erro elevado, queda de qualidade ou anomalia de custo.
+[ListBullet] Deduplicação por campaign_id + contact_id + message_variant_id.
+[Heading1] 14. E-mail Studio inspirado no Stripo
+O editor deve permitir a criação de e-mails profissionais sem exigir conhecimento de HTML. O usuário monta o layout por blocos, utiliza módulos da marca, visualiza desktop e mobile, insere personalização e salva versões. O resultado final precisa ser compilado com CSS inline e testado em clientes de e-mail.
+[Heading2] 14.1 Estratégia recomendada
+=== TABELA ===
+Fase | Abordagem
+Fase inicial | Integrar editor incorporável/white-label ou componente baseado em MJML/GrapesJS. Salvar HTML, CSS, JSON do editor, thumbnail e versão no Supabase.
+Fase intermediária | Criar biblioteca própria de blocos, brand kits, regras de aprovação, colaboração, comentários, histórico e pré-visualização.
+Fase avançada | Avaliar editor totalmente próprio apenas se custo, privacidade ou diferenciação justificarem a manutenção contínua de compatibilidade.
+=== FIM TABELA ===
+
+[Heading2] 14.2 Blocos e recursos
+[ListBullet] Texto, imagem, botão, divisor, espaçamento, colunas, menu, social, vídeo com fallback, rodapé e HTML controlado.
+[ListBullet] Módulos reutilizáveis: cabeçalho, assinatura, CTA, benefícios, depoimentos, agenda, oferta e aviso legal.
+[ListBullet] Merge tags: nome, curso, consultor, data, link, cupom, unidade e campos personalizados.
+[ListBullet] Condições de exibição, conteúdo dinâmico, idioma, modo escuro quando viável e acessibilidade.
+[ListBullet] Prévia desktop/mobile, envio de teste, validação de links, tamanho total, texto alternativo e assunto/preheader.
+[ListBullet] Versões, autosave, desfazer/refazer, aprovação e bloqueio de módulos de marca.
+[Heading2] 14.3 Infraestrutura de e-mail
+O envio deve ser desacoplado do editor e funcionar por provedores substituíveis. A plataforma deve armazenar identidade do remetente, domínios, SPF/DKIM/DMARC, listas de supressão, bounces, complaints, descadastros, eventos de abertura/click quando aplicável e motivo de falha.
+=== TABELA ===
+Requisito já identificadoAs automações de e-mail devem utilizar fila própria, retentativas seguras, descadastro em um clique e preferências individuais de notificação. O mesmo princípio deve valer para campanhas, notificações do produto e comunicações operacionais.
+=== FIM TABELA ===
+
+[Heading1] 15. Jornadas e automações
+A jornada é uma automação de longa duração que acompanha o contato ao longo de dias ou meses. Diferentemente do chatbot, ela não depende de uma conversa aberta. Deve reagir a eventos do CRM, comportamento, datas e integrações.
+=== TABELA ===
+Categoria | Elementos
+Gatilhos | Contato criado, tag adicionada, formulário respondido, compra aprovada, etapa alterada, data, webhook, evento customizado ou segmento.
+Condições | Campos, tags, consentimento, canal disponível, atividade, score, produto, horário, histórico e resultado de etapa anterior.
+Ações | Enviar WhatsApp/e-mail, criar tarefa, atualizar CRM, chamar webhook, adicionar/remover tag, mover etapa, gerar conteúdo ou notificar equipe.
+Controles | Aguardar, ramificar, repetir com limite, meta, saída, janela de envio, reentrada, prioridade e cancelamento.
+Qualidade | Versões, teste com contatos internos, publicação, pausa, auditoria, reprocessamento e comparação de variantes.
+=== FIM TABELA ===
+
+[Heading2] 15.1 Engine de execução
+Cada participante da jornada deve ser um registro independente com status, versão, nó atual, próxima execução e histórico. A espera não deve manter processo em memória; ela grava next_run_at e um scheduler recoloca a execução na fila no momento correto.
+[Heading2] 15.2 Reentrada e prioridade
+Cada jornada define se o contato pode entrar uma única vez, várias vezes ou novamente após um período. Quando duas jornadas tentarem enviar ao mesmo contato, regras de prioridade e frequência evitam excesso de comunicação.
+[Heading2] 15.3 Aprovação e publicação
+Jornadas críticas devem adotar quatro estados: rascunho, em revisão, aprovada e publicada. A versão publicada é imutável. A edição cria nova versão e exige análise do impacto sobre participantes ativos.
+[Heading1] 16. Camada de Inteligência Artificial
+[Heading2] 16.1 AI Gateway
+A aplicação não deve chamar Claude ou Gemini diretamente em dezenas de pontos do código. Um serviço interno, denominado AI Gateway, recebe a tarefa, escolhe provedor e modelo, aplica políticas, registra custo, mascara dados quando necessário, valida saída estruturada e oferece fallback.
+=== TABELA ===
+Caso | Aplicação
+Copiloto do atendente | Resumo da conversa, intenção, sentimento, dados importantes, resposta sugerida, próximo passo e checklist.
+Autoatendimento | Responder com base de conhecimento, coletar dados, executar ferramentas autorizadas e transferir ao humano.
+Classificação | Assunto, prioridade, produto, risco, estágio, motivo de contato e probabilidade de resolução.
+Extração | Nome, telefone, documento, produto, datas, valores, protocolo e campos de formulários ou mensagens.
+Marketing | Assuntos, variações, snippets, segmentação sugerida, revisão de tom e avaliação de clareza.
+Gestão | Resumo de operação, causas de aumento de SLA, clusters de dúvidas, oportunidades e alertas.
+Qualidade | Avaliar atendimento por rubrica, aderência à política, alucinação, tom, completude e risco.
+=== FIM TABELA ===
+
+[Heading2] 16.2 RAG e base de conhecimento
+Documentos, FAQs, políticas, produtos e procedimentos devem ser indexados em uma base de conhecimento com metadados, permissões e versionamento. O conteúdo pode ser fragmentado, transformado em embeddings e armazenado com pgvector. A resposta deve guardar as fontes utilizadas e respeitar o escopo de acesso do usuário ou canal.
+[Heading2] 16.3 Ferramentas da IA
+Modelos com function calling podem solicitar ações como consultar cadastro, buscar pedido, abrir tarefa ou atualizar estágio. O modelo apenas propõe a ferramenta e os parâmetros; a aplicação valida permissão, executa a ação e retorna o resultado. A IA nunca recebe uma credencial de banco ou provedor.
+[Heading2] 16.4 Segurança e avaliação
+[ListBullet] Prompts versionados, ambientes de teste e conjunto de casos de avaliação antes de publicar.
+[ListBullet] Saída estruturada validada por schema e fallback quando a resposta não for válida.
+[ListBullet] Redação ou mascaramento de dados pessoais quando não forem necessários para a tarefa.
+[ListBullet] Lista de ferramentas permitidas por agente, canal e contexto.
+[ListBullet] Confirmação humana para ações de alto impacto, como cancelamento, alteração financeira ou disparo em massa.
+[ListBullet] Métricas de precisão, resolução, transferência, custo, latência, aceitação da sugestão e incidentes.
+[Heading1] 17. Modelo de dados no Supabase
+A seguir está uma estrutura inicial. Os nomes podem ser ajustados ao padrão da equipe, mas a separação por domínios deve ser mantida para facilitar permissões, auditoria e evolução.
+=== TABELA ===
+Domínio | Tabelas sugeridas
+Identidade e organização | organizations, business_units, teams, users, organization_members, roles, permissions, role_permissions, api_keys
+Canais | channels, channel_accounts, whatsapp_numbers, email_senders, social_accounts, webchat_widgets, webhook_endpoints
+CRM | contacts, contact_identifiers, companies, contact_company_links, leads, pipelines, pipeline_stages, deals, activities, tasks, tags, contact_tags, custom_fields, custom_field_values
+Consentimento | consents, communication_preferences, suppression_entries, legal_bases, data_subject_requests
+Atendimento | inboxes, queues, queue_members, conversations, conversation_assignments, messages, message_parts, attachments, internal_notes, canned_responses, sla_policies, sla_events, satisfaction_surveys
+Chatbot | bot_projects, bot_flows, bot_flow_versions, bot_nodes, bot_edges, bot_sessions, bot_session_events, bot_variables, bot_test_runs
+Campanhas | segments, segment_rules, lists, list_members, campaigns, campaign_variants, campaign_audiences, campaign_jobs, campaign_deliveries, campaign_metrics
+E-mail | email_templates, email_template_versions, email_modules, brand_kits, email_domains, email_events, email_unsubscribes, email_suppressions
+Jornadas | journeys, journey_versions, journey_nodes, journey_edges, journey_enrollments, journey_steps, journey_goals, journey_exclusions
+IA e conhecimento | ai_providers, ai_models, ai_prompts, ai_runs, ai_tool_calls, ai_evaluations, knowledge_bases, knowledge_documents, knowledge_chunks, embeddings
+Eventos e integração | domain_events, webhook_events, integration_connections, integration_runs, idempotency_keys, outbox_events
+Governança | audit_logs, security_events, data_retention_policies, export_jobs, deletion_jobs, incidents, feature_flags
+=== FIM TABELA ===
+
+[Heading2] 17.1 Campos transversais
+As tabelas de negócio devem considerar: id UUID, organization_id, created_at, updated_at, created_by, updated_by, status, metadata JSONB, source, external_id e deleted_at quando soft delete for necessário. Tabelas de eventos usam occurred_at, received_at, processed_at, correlation_id e idempotency_key.
+[Heading2] 17.2 Outbox pattern
+Alterações que precisam gerar evento devem escrever o dado de negócio e o registro de outbox na mesma transação. Um worker publica ou processa o evento e marca o registro como concluído. Isso reduz o risco de atualizar o CRM e perder a automação correspondente.
+[Heading1] 18. Segurança, LGPD e governança
+=== TABELA ===
+Controle | Requisito
+Autenticação | MFA para perfis sensíveis, sessão curta, refresh seguro, bloqueio por risco e SSO empresarial em etapa posterior.
+Autorização | RLS, RBAC, escopo por organização/unidade/equipe e verificação server-side para todas as ações.
+Segredos | Vault ou secrets manager; rotação; segregação por ambiente; nunca gravar tokens em logs ou frontend.
+Criptografia | TLS em trânsito, criptografia em repouso, URLs assinadas, proteção de backups e campos adicionais cifrados quando necessário.
+Auditoria | Log de login, exportação, alteração de permissão, publicação, disparo, acesso a dados sensíveis e ações de IA.
+Retenção | Políticas por categoria, anonimização, expurgo programado, preservação legal e registro do motivo.
+Consentimento | Fonte, finalidade, canal, texto aceito, data, versão e prova; retirada simples e propagada a todos os módulos.
+Incidentes | Classificação, contenção, investigação, evidências, comunicação, aprendizado e plano de recuperação.
+Fornecedores | DPA, localização de dados, suboperadores, retenção, segurança, disponibilidade e processo de saída.
+=== FIM TABELA ===
+
+A empresa deve formalizar os papéis de controlador, operador e encarregado, além de mapear finalidades, bases legais e fluxos de dados. A implementação técnica não substitui revisão jurídica e de privacidade.
+=== TABELA ===
+Privacidade por desenhoAntes de adicionar qualquer campo pessoal ao CRM, registrar por que ele é necessário, quem pode acessá-lo, por quanto tempo será mantido e como o titular poderá exercer seus direitos.
+=== FIM TABELA ===
+
+[Heading1] 19. Requisitos não funcionais
+=== TABELA ===
+Atributo | Critério
+Disponibilidade | Definir SLO por módulo. Inbox e webhooks são mais críticos do que relatórios e exportações.
+Desempenho | Inbox deve atualizar em tempo real; consultas comuns precisam de índices; listas grandes usam paginação e virtualização.
+Escalabilidade | Filas por canal, workers horizontais, rate limit distribuído, particionamento e arquivamento conforme volume.
+Confiabilidade | Idempotência, outbox, retentativas exponenciais, circuit breaker, DLQ e reprocessamento assistido.
+Recuperação | Backups testados, RPO/RTO definidos, restauração periódica e runbooks de incidente.
+Acessibilidade | Navegação por teclado, contraste, textos alternativos, foco visível e compatibilidade com leitores de tela.
+Internacionalização | pt-BR inicialmente, porém textos e datas preparados para tradução e fuso horário.
+Manutenibilidade | Monorepo ou contratos bem definidos, testes, lint, migrações versionadas e documentação de APIs.
+Observabilidade | Logs estruturados, traces, métricas, dashboards, alertas e correlation_id ponta a ponta.
+Custo | Métrica por mensagem, campanha, execução de jornada, token de IA, armazenamento e organização.
+=== FIM TABELA ===
+
+[Heading1] 20. DevOps, ambientes e operação
+[ListBullet] Ambientes separados: desenvolvimento, homologação e produção, com projetos Supabase e credenciais independentes.
+[ListBullet] Infraestrutura como código para recursos críticos e checklist de configuração de canais.
+[ListBullet] CI com lint, testes, análise de segurança, migração validada e build reproduzível.
+[ListBullet] CD progressivo, feature flags e possibilidade de rollback da aplicação e dos fluxos publicados.
+[ListBullet] Migrações de banco compatíveis com versões em execução e plano para backfill.
+[ListBullet] Runbooks: canal fora do ar, fila acumulada, token expirado, campanha com erro, webhook duplicado, provedor de IA indisponível e restauração de backup.
+[ListBullet] Painel operacional com profundidade das filas, taxa de erro, latência, workers, eventos pendentes, custos e provedores.
+[Heading1] 21. Estratégia de testes
+=== TABELA ===
+Tipo | Cobertura
+Unitários | Regras de negócio, normalização, segmentação, permissões, cálculo de SLA e validação de fluxos.
+Integração | Supabase, webhooks, provedores, filas, mídia, e-mail, WhatsApp e ferramentas de IA.
+Contrato | Schemas de webhooks e APIs externas para detectar mudanças antes de afetar produção.
+End-to-end | Receber mensagem, identificar contato, executar bot, transferir, responder e encerrar.
+Carga | Picos de webhook, campanhas, atualizações realtime, consultas de segmento e ingestão de eventos.
+Resiliência | Timeout, duplicidade, queda de worker, provedor indisponível, retry e DLQ.
+Segurança | RLS, escalada de privilégio, acesso entre tenants, upload, injeção, XSS e vazamento em logs.
+IA | Conjunto de casos, rubricas, regressão de prompts, ferramenta correta, resposta fundamentada e custo.
+Aceitação | Roteiros por área com evidências e aprovação formal antes de cada onda.
+=== FIM TABELA ===
+
+
+[Heading1] 22. Estratégia de implantação e coexistência
+A implantação deve ocorrer de forma incremental. A Salesforce continuará operando durante a construção do CRM interno, evitando uma troca abrupta de sistema e permitindo validar cada módulo com dados, usuários e processos reais.
+=== TABELA ===
+Diretriz de transição: coexistir antes de substituirNos primeiros ciclos, o novo CRM receberá eventos, espelhará dados selecionados e assumirá apenas processos-piloto. A migração de responsabilidade ocorrerá por domínio — atendimento, contatos, oportunidades, campanhas e jornadas — após critérios de reconciliação, estabilidade, segurança e adoção.
+=== FIM TABELA ===
+[Heading2] 22.1 Sistemas de registro durante a transição
+=== TABELA ===
+Domínio | Fonte inicial | Estratégia
+Contato e identidade | Cadastro mestre provisoriamente compartilhado | Definir propriedade por campo; o novo CRM consolida identidade e Salesforce mantém os objetos atuais até o corte.
+Oportunidades e funil | Salesforce no início | Sincronização bidirecional controlada; novos pilotos podem nascer no CRM interno após validação.
+Atendimento WhatsApp | CRM interno por número piloto | Conversas, filas, SLA e histórico passam a ser nativos no novo produto.
+Automação Salesforce | Salesforce durante a coexistência | Os dois especialistas mantêm o ambiente atual, documentam regras e convertem automações prioritárias para o novo motor.
+Campanhas e jornadas | Operação híbrida | Novas jornadas simples podem ser testadas no CRM; jornadas críticas permanecem na Salesforce até equivalência funcional.
+Analytics | Camada consolidada | BigQuery/Supabase recebem eventos dos dois ambientes com chaves comuns e indicadores reconciliados.
+=== FIM TABELA ===
+[Heading2] 22.2 Critérios para transferir um processo
+[ListBullet] Paridade funcional mínima aprovada pelo dono do processo e pelos usuários-piloto.
+[ListBullet] Reconciliação de dados sem divergência material durante pelo menos dois ciclos operacionais.
+[ListBullet] Retentativas, idempotência, observabilidade, auditoria e plano de rollback testados.
+[ListBullet] Treinamento concluído, documentação publicada e suporte de primeira semana definido.
+[ListBullet] Indicadores do novo fluxo iguais ou melhores que a linha de base do processo anterior.
+[Heading1] 23. Plano de início: primeiros 90 dias
+O objetivo dos primeiros 90 dias não é entregar todo o CRM. O objetivo é estabelecer a fundação técnica e colocar em produção um fluxo real de atendimento com WhatsApp, contato 360º, integração mínima com Salesforce, dashboards e governança.
+=== TABELA ===
+Período | Foco | Trabalho principal | Saída obrigatória
+Semanas 1–2 | Mobilização e descoberta | Inventário de processos, objetos, automações, números, canais, usuários, SLAs, métricas e riscos. Definição dos donos de dados e do número piloto. | Mapa atual, backlog inicial, matriz de propriedade e riscos.
+Semanas 3–4 | Produto, dados e provas de conceito | Protótipo do Inbox/Contato 360º; modelo de dados Supabase; PoC WhatsApp; PoC sincronização Salesforce; arquitetura de filas e eventos. | Protótipo validado, arquitetura aprovada e PoCs funcionais.
+Semanas 5–6 | Fundação da plataforma | Auth, organizações, perfis, RLS, auditoria, secrets, webhooks, event store, outbox, workers, CI/CD e observabilidade. | Ambientes de dev/homologação, segurança e pipeline básico.
+Semanas 7–8 | CRM essencial | Contatos, empresas, leads, tags, campos, timeline, tarefas, notas, busca, dedupe e importação controlada. | Contato 360º utilizável em homologação.
+Semanas 9–10 | WhatsApp e Inbox piloto | Conectar um número, receber/enviar mensagens, mídia, templates, fila, atribuição, transferências, status e respostas rápidas. | Atendimento ponta a ponta em homologação.
+Semanas 11–12 | Piloto produtivo | Usuários-piloto, SLA, dashboards, reconciliação com Salesforce, ajustes, documentação, treinamento e plano de expansão. | Primeiro número e primeiro time operando em produção.
+=== FIM TABELA ===
+[Heading2] 23.1 Portões de decisão dos 90 dias
+=== TABELA ===
+Gate | Condição para avançar
+Gate 1 — fim da semana 2 | Escopo e número piloto definidos; responsáveis e dados conhecidos.
+Gate 2 — fim da semana 4 | PoCs confirmam viabilidade de WhatsApp, Supabase, Salesforce e filas.
+Gate 3 — fim da semana 8 | CRM essencial atende busca, dedupe, timeline e permissões.
+Gate 4 — fim da semana 10 | Atendimento completo passa nos testes de carga, segurança e falhas.
+Gate 5 — fim da semana 12 | Piloto produtivo aprovado ou retorno controlado ao processo anterior.
+=== FIM TABELA ===
+
+[Heading1] 24. Divisão do projeto entre 6 colaboradores
+A composição abaixo distribui produto, experiência, engenharia, qualidade, dados e conhecimento Salesforce. Os nomes podem ser substituídos posteriormente; o importante é preservar os papéis e suas responsabilidades.
+=== TABELA ===
+Pessoa | Papel sugerido | Responsabilidades centrais | Dedicação inicial
+Colaborador 1 | Product Owner e Analista de Processos | Prioridades, requisitos, jornadas, regras de negócio, backlog, aceite, treinamento e adoção. | 80%
+Colaborador 2 | UX/UI e Front-end | Design system, protótipos, acessibilidade, Inbox, CRM 360º, builders visuais e testes de usabilidade. | 100%
+Colaborador 3 | Back-end, Supabase e Integrações | Modelo de dados, APIs, RLS, eventos, filas, workers, WhatsApp, e-mail, performance e arquitetura. | 100%
+Colaborador 4 | Dados, QA, DevOps e Analytics | Testes, automação de QA, CI/CD, observabilidade, reconciliação, dashboards, catálogo de eventos e documentação técnica. | 80%
+Colaborador 5 | Especialista Salesforce — Sales/Service | Objetos, Flow, Sales Cloud, Service, regras de atendimento, APIs, mapeamento de campos, coexistência e migração. | 60% projeto / 40% operação atual
+Colaborador 6 | Especialista Salesforce — Marketing/Jornadas | Marketing Cloud, Journey Builder, campanhas, audiências, templates, automações, consentimento e migração de jornadas. | 60% projeto / 40% operação atual
+=== FIM TABELA ===
+=== TABELA ===
+Proteção da operação SalesforceOs colaboradores 5 e 6 não devem ser retirados integralmente da rotina atual no início. A reserva de capacidade operacional evita falhas nas automações existentes e transforma o conhecimento deles em documentação, testes de equivalência e regras para o novo CRM.
+=== FIM TABELA ===
+[Heading2] 24.1 Liderança por etapa
+=== TABELA ===
+Etapa | Líder | Apoio principal | Responsabilidade
+Mobilização e descoberta | Colaborador 1 | Colaboradores 5 e 6 | Inventário, processos, backlog, donos de dados e objetivos.
+Arquitetura e Supabase | Colaborador 3 | Colaborador 4 | Modelo, segurança, eventos, filas, observabilidade e ambientes.
+UX e protótipos | Colaborador 2 | Colaborador 1 | Fluxos do usuário, design system, telas e validações.
+Salesforce coexistência | Colaborador 5 | Colaboradores 3 e 6 | Objetos, APIs, field ownership, sincronização e reconciliação.
+CRM e Inbox piloto | Colaborador 3 | Colaboradores 2 e 4 | Atendimento, contato 360º, WhatsApp, QA e métricas.
+Campanhas e jornadas | Colaborador 6 | Colaboradores 1, 2 e 3 | Segmentos, mensagens, jornadas, consentimento e analytics.
+IA e conhecimento | Colaborador 3 | Colaboradores 1, 4 e 6 | Gateway, RAG, ferramentas, avaliação, segurança e custos.
+Go-live e adoção | Colaborador 1 | Todos | Treinamento, suporte, indicadores, correções e expansão.
+=== FIM TABELA ===
+[Heading2] 24.2 Matriz RACI simplificada
+Legenda: R = executa; A = responde pelo resultado; C = consultado; I = informado.
+=== TABELA ===
+Entrega | C1 | C2 | C3 | C4 | C5 | C6
+Backlog e regras de negócio | A/R | C | C | C | C | C
+Design e experiência | C | A/R | C | C | C | C
+Supabase, APIs e filas | C | C | A/R | C | C | C
+QA, observabilidade e dados | C | C | C | A/R | C | C
+Sales/Service Salesforce | C | I | C | C | A/R | C
+Marketing/Journey Salesforce | C | C | C | C | C | A/R
+Piloto e go-live | A | R | R | R | R | R
+=== FIM TABELA ===
+[Heading2] 24.3 Rotina de trabalho
+[ListBullet] Daily de 15 minutos para impedimentos; participantes técnicos e Product Owner.
+[ListBullet] Refinamento semanal com requisitos, critérios de aceite, dependências de Salesforce e riscos.
+[ListBullet] Demonstração quinzenal com usuários reais de atendimento, comercial e marketing.
+[ListBullet] Revisão técnica semanal de arquitetura, segurança, dados e integrações.
+[ListBullet] Revisão mensal de roadmap, capacidade e indicadores com direção.
+[ListBullet] Plantão de go-live com escala definida, canal de incidentes e responsável por rollback.
+
+[Heading1] 25. Benchmark ampliado: Salesforce e RD Station
+A plataforma não deve copiar interfaces ou propriedade intelectual de terceiros. As referências servem para identificar padrões maduros de produto, operação e governança que serão reinterpretados para a realidade da Contabilidade Facilitada.
+=== TABELA ===
+Referência | Padrões observados | Aplicação no CRM interno
+Salesforce — Sales/Service | Objetos configuráveis, console de atendimento, casos, filas, roteamento por disponibilidade/capacidade, histórico, permissões e extensibilidade. | Governança robusta, estados claros, roteamento por competência, auditoria e capacidade de customização.
+Salesforce — Journey Builder | Jornadas responsivas orientadas a eventos, atividades, divisões, esperas, metas, reentrada e integração com canais. | Motor de jornadas versionado, entradas por eventos, decisões auditáveis, metas e controle de publicação.
+Salesforce — Flow e automações | Automação declarativa, ações, decisões, atualizações de registros e integrações. | Builder visual com validação, testes, logs, limites, rollback e permissões por componente.
+RD Station CRM | Funil visual, tarefas, automações de vendas, integração com WhatsApp, relatórios e operação simplificada. | Baixa curva de aprendizado, produtividade do vendedor e configuração sem dependência técnica excessiva.
+RD Station Marketing | Segmentação, lead scoring, automação, campanhas de e-mail/WhatsApp, formulários, landing pages e análise de resultados. | Jornada de aquisição simples, score transparente, campanhas acessíveis e visão de conversão.
+RD Station Conversas | Atendimento centralizado, múltiplos atendentes, chatbot no-code, campanhas WhatsApp, agentes de IA e integração com CRM/Marketing. | Ativação rápida, operação visual, histórico unificado, IA assistiva e integração entre atendimento e vendas.
+=== FIM TABELA ===
+[Heading2] 25.1 Posicionamento desejado do produto
+=== TABELA ===
+Fórmula de produtoGovernança e extensibilidade em nível Salesforce + simplicidade e velocidade de adoção próximas à RD Station + experiência visual de chatbot inspirada em Blip/Omnichat + editor de e-mail incorporável no padrão Stripo + núcleo de dados e eventos no Supabase.
+=== FIM TABELA ===
+[Heading2] 25.2 Princípios derivados das referências
+[ListBullet] Configuração por usuários de negócio, mas com guardrails técnicos, permissões e aprovação.
+[ListBullet] Uma única linha do tempo para marketing, vendas, atendimento, financeiro e vida acadêmica.
+[ListBullet] Automação orientada a eventos e metas, não apenas a listas e agendamentos.
+[ListBullet] Operação fácil no dia a dia, com complexidade técnica escondida atrás de defaults seguros.
+[ListBullet] Objetos e campos extensíveis sem exigir alteração de código para toda necessidade.
+[ListBullet] Dashboards operacionais e gerenciais nativos, com rastreabilidade até o evento de origem.
+[ListBullet] IA como copiloto e agente controlado, com avaliação, limites e confirmação humana.
+
+[Heading1] 26. Catálogo ampliado de funções e recursos
+O catálogo abaixo organiza o produto por domínio e prioridade. MVP representa o necessário para a primeira operação real; P1 é a evolução imediata; P2 amplia escala e diferenciação; Futuro reúne capacidades que dependem de maturidade ou volume.
+[Heading2] 26.1 CRM, vendas e relacionamento
+=== TABELA ===
+Prioridade | Recursos
+MVP | Contato 360º; empresas; leads; oportunidades; funis; etapas; tarefas; notas; tags; campos personalizados; timeline; busca; importação; deduplicação.
+P1 | Lead scoring; cadências comerciais; metas; forecast; motivos de perda; produtos/ofertas; propostas; regras de distribuição; playbooks; aprovação de descontos.
+P2 | Territórios; múltiplas moedas quando necessário; hierarquia de contas; parceiros; comissionamento; recomendação de próxima ação; inteligência de conversas.
+Futuro | CPQ completo, contratos eletrônicos, portal de parceiros e gestão avançada de receita recorrente.
+=== FIM TABELA ===
+[Heading2] 26.2 Atendimento omnichannel
+=== TABELA ===
+Prioridade | Recursos
+MVP | Inbox unificado; filas; atribuição; transferência; presença; SLA; respostas rápidas; notas internas; anexos; histórico; pesquisa; WhatsApp piloto.
+P1 | Instagram, Messenger, webchat e e-mail; roteamento por habilidade e capacidade; macros; menções; supervisão; CSAT; motivos; horários e feriados.
+P2 | Quality assurance por amostragem; monitoramento em tempo real; whisper/sugestões; workforce; base de conhecimento; portal de autoatendimento.
+Futuro | Voz/telefonia, gravação, transcrição, screen pop e gestão completa de contact center.
+=== FIM TABELA ===
+[Heading2] 26.3 Marketing e aquisição
+=== TABELA ===
+Prioridade | Recursos
+MVP | Listas e segmentos; campanhas WhatsApp/e-mail; templates; agendamento; teste; UTM; opt-out; supressão; métricas de envio, entrega, resposta e conversão.
+P1 | Lead scoring comportamental; formulários; landing pages; centro de preferências; A/B; frequência; calendário; aprovação; biblioteca de públicos.
+P2 | Atribuição multitoque; cohorts; lookalike exports; web tracking first-party; conteúdo dinâmico; recomendação de canal e horário.
+Futuro | Gestão de mídia paga, social publishing e otimização autônoma de orçamento.
+=== FIM TABELA ===
+[Heading2] 26.4 Chatbot e agentes
+=== TABELA ===
+Prioridade | Recursos
+MVP | Builder visual; mensagem; menu; condição; coleta; variável; webhook; espera; transferência; encerramento; simulador; versão e publicação.
+P1 | Subfluxos; componentes reutilizáveis; calendário; pagamento; consulta CRM; fila; horário; SLA; fallback; testes automatizados e analytics por bloco.
+P2 | Agentes de IA com ferramentas; RAG; memória controlada; intents híbridas; handoff contextual; avaliação contínua; experimentos de prompts.
+Futuro | Orquestração multiagente e otimização automática de fluxos com aprovação humana.
+=== FIM TABELA ===
+[Heading2] 26.5 E-mail Studio
+=== TABELA ===
+Prioridade | Recursos
+MVP | Editor drag-and-drop incorporável; templates; blocos; brand kit; merge tags; prévia; testes; fila; descadastro; bounce; complaint; métricas.
+P1 | Conteúdo condicional; módulos bloqueados; aprovação; versionamento; validação de links; spam checks; domínio e remetente por marca.
+P2 | AMP quando aplicável; recomendações de assunto; otimização de horário; heatmap; testes multivariados; catálogo de componentes.
+Futuro | Geração assistida de layouts completos com regras de marca e performance histórica.
+=== FIM TABELA ===
+[Heading2] 26.6 Jornadas e automações
+=== TABELA ===
+Prioridade | Recursos
+MVP | Entradas por evento/lista/data; condição; espera; enviar mensagem; atualizar contato; criar tarefa; webhook; meta; saída; logs e retentativas.
+P1 | Reentrada; prioridade; frequência; múltiplos canais; subjourneys; aprovação; ambiente de teste; replay; pausa; cancelamento e análise por etapa.
+P2 | Orquestração de campanhas e atendimento; decisões por score; next best action; otimização por conversão; conflitos entre jornadas.
+Futuro | Planejamento autônomo assistido por IA e simulação preditiva de impacto.
+=== FIM TABELA ===
+[Heading2] 26.7 Educação e sucesso do aluno
+=== TABELA ===
+Prioridade | Recursos
+MVP | Vínculo aluno-produto; matrícula; status de acesso; produtos adquiridos; documentos; pendências; tickets; histórico e responsável.
+P1 | Eventos de progresso; risco de evasão; certificado; prorrogação; renovação; comunidade; satisfação; jornadas de onboarding e conclusão.
+P2 | Health score; recomendação de conteúdo; previsão de churn; oportunidades de cross-sell; visão por turma e curso.
+Futuro | Portal completo do aluno e intervenções adaptativas baseadas em comportamento acadêmico.
+=== FIM TABELA ===
+[Heading2] 26.8 Dados, analytics e governança
+=== TABELA ===
+Prioridade | Recursos
+MVP | Dashboards de atendimento, vendas e campanhas; catálogo de eventos; auditoria; exportação; reconciliação Salesforce; logs e custos.
+P1 | Builder de relatórios; filtros salvos; metas; alertas; cohort; funil; SLA; qualidade; data lineage; dicionário de métricas.
+P2 | Modelos semânticos; detecção de anomalias; previsões; atribuição; consultas em linguagem natural com proteção.
+Futuro | Camada analítica self-service completa e automação de decisões sob políticas.
+=== FIM TABELA ===
+[Heading2] 26.9 Plataforma e administração
+=== TABELA ===
+Prioridade | Recursos
+MVP | Multiempresa; usuários; times; RBAC/RLS; MFA; canais; credenciais; webhooks; APIs; feature flags; auditoria; backups e ambientes.
+P1 | Marketplace interno de integrações; rate limits; quotas; sandbox de automação; gestão de segredos; IP allowlist; SSO.
+P2 | Extensões e apps; custom objects; event subscriptions; pacote de SDK; políticas por tenant e data residency quando necessário.
+Futuro | Ecossistema de parceiros e loja de componentes certificados.
+=== FIM TABELA ===
+
+[Heading1] 27. Arquitetura de integração com Salesforce
+A integração deve ser tratada como produto interno, não como um conjunto de requisições isoladas. Cada objeto e campo precisa de propriedade, direção de sincronização, regra de conflito, chave de idempotência e reconciliação.
+[Heading2] 27.1 Objetos e eventos prioritários
+=== TABELA ===
+Domínio | Conteúdo | Direção inicial
+Lead/Contato/Conta | IDs externos, identidade, origem, owner, estágio, consentimento, dados de contato e campos críticos. | Bidirecional seletiva
+Oportunidade | Etapa, valor, produto, owner, previsão, ganho/perda e datas. | Salesforce → CRM no início
+Caso/Atendimento | Motivo, prioridade, status, SLA, responsável, solução e histórico resumido. | Por processo piloto
+Campanha/Membro | Origem, público, status, resposta e conversão. | Salesforce/Marketing → camada analítica
+Jornadas e automações | Inventário, gatilhos, condições, ações, dependências, volumes e criticidade. | Documentação e migração gradual
+Atividades | Tarefas, ligações, reuniões e notas relevantes. | Bidirecional com regra de dono
+Eventos de integração | Criação, alteração, exclusão lógica, erro, retry e reconciliação. | Event bus interno
+=== FIM TABELA ===
+[Heading2] 27.2 Matriz de propriedade de campos
+[ListBullet] Cada campo terá um sistema responsável: Salesforce, CRM interno, sistema acadêmico, financeiro ou derivado.
+[ListBullet] Campos derivados não devem ser editáveis manualmente; precisam registrar regra e data de cálculo.
+[ListBullet] Conflitos serão resolvidos por propriedade, versão e timestamp — nunca apenas pelo último update recebido.
+[ListBullet] Alterações críticas exigem trilha com valor anterior, novo valor, origem, usuário e correlation_id.
+[ListBullet] A reconciliação diária compara contagens, chaves, versões e indicadores de divergência.
+[Heading2] 27.3 Padrão técnico de sincronização
+1. Capturar mudança por API, evento disponível ou leitura incremental controlada.
+2. Persistir o evento bruto antes de transformar.
+3. Validar schema, tenant, identidade, versão e consentimento.
+4. Aplicar deduplicação e regra de propriedade.
+5. Atualizar o modelo canônico e registrar outbox para efeitos posteriores.
+6. Executar envio ao destino com retry exponencial e dead-letter queue.
+7. Confirmar resultado, emitir métrica e permitir replay seguro.
+8. Executar job de reconciliação e abrir incidente quando houver divergência material.
+[Heading2] 27.4 Papel dos dois especialistas Salesforce
+=== TABELA ===
+Responsável | Entregas
+Especialista Sales/Service | Inventariar objetos, Flows, validações, filas, casos, permissões, owners, integrações e relatórios; definir equivalência no CRM.
+Especialista Marketing/Journeys | Inventariar Data Extensions, públicos, jornadas, automações, templates, canais, consentimento, frequências e métricas.
+Ambos | Classificar automações por criticidade, volume, dependência, complexidade e estratégia: manter, integrar, redesenhar ou desativar.
+=== FIM TABELA ===
+[Heading1] 28. Roadmap completo por fases
+=== TABELA ===
+Fase | Janela | Objetivo | Entregas | Decisão
+Fase 0 | Semanas 1–2 | Descoberta e governança | Inventário, processos, riscos, responsáveis, objetivos, número piloto e baseline. | Gate 1
+Fase 1 | Semanas 3–4 | Produto e arquitetura | Protótipos, modelo de dados, PoCs, integração Salesforce e backlog do MVP. | Gate 2
+Fase 2 | Semanas 5–8 | Fundação e CRM | Supabase, segurança, eventos, filas, observabilidade, contato 360º e dedupe. | Gate 3
+Fase 3 | Semanas 9–14 | Inbox e WhatsApp piloto | Atendimento produtivo, SLA, dashboards, treinamento e expansão controlada. | Gate 4
+Fase 4 | Semanas 15–20 | Chatbot e campanhas | Builder, runtime, templates, segmentos, campanhas, opt-out e analytics. | Gate 5
+Fase 5 | Semanas 21–28 | E-mail e jornadas | Email Studio, infraestrutura de entrega, Journey Builder interno e multicanal. | Gate 6
+Fase 6 | Semanas 29–36 | IA, conhecimento e escala | Copiloto, RAG, agentes controlados, avaliações, otimização e novos canais. | Gate 7
+Fase 7 | Após semana 36 | Migração e expansão | Transferência por domínio, desativação seletiva, voz, self-service e ecossistema. | 
+=== FIM TABELA ===
+[Heading2] 28.1 Critérios de saída por fase
+=== TABELA ===
+Fase | Critério mínimo
+Fase 0 | Escopo, responsáveis e baseline formalmente aprovados.
+Fase 1 | PoCs viáveis, arquitetura revisada e backlog estimável.
+Fase 2 | Segurança, logs, filas, dados e CRM essencial passam nos testes.
+Fase 3 | Piloto produtivo estável, usuários treinados e SLA acompanhado.
+Fase 4 | Bot e campanhas respeitam consentimento, versionamento, testes e métricas.
+Fase 5 | E-mails e jornadas entregam, reprocessam, descadastram e medem corretamente.
+Fase 6 | IA atinge metas de precisão, custo, segurança e transferência humana.
+Fase 7 | Cada corte possui reconciliação, rollback e responsável operacional.
+=== FIM TABELA ===
+[Heading2] 28.2 Dependências que podem alterar o cronograma
+[ListBullet] Acesso e aprovação da Meta/WhatsApp, qualidade dos números e templates.
+[ListBullet] Disponibilidade das APIs, limites e licenças Salesforce utilizadas atualmente.
+[ListBullet] Volume real de mensagens, eventos, contatos e histórico a migrar.
+[ListBullet] Qualidade dos cadastros e complexidade da deduplicação entre sistemas.
+[ListBullet] Escolha do provedor de e-mail e requisitos de reputação de domínio.
+[ListBullet] Disponibilidade dos usuários-piloto e velocidade de validação do negócio.
+[ListBullet] Tempo reservado dos seis colaboradores e manutenção das demandas operacionais existentes.
+
+[Heading1] 29. Backlog inicial por sprint e colaborador
+=== TABELA ===
+Sprint | Responsável(is) | Entrega
+Sprint 0 — sem. 1–2 | C1 | Workshop, objetivos, personas, jornadas, critérios, baseline e backlog.
+Sprint 0 — sem. 1–2 | C2 | Mapas de fluxo, wireframes e design tokens iniciais.
+Sprint 0 — sem. 1–2 | C3 | Inventário técnico, arquitetura preliminar e riscos de integração.
+Sprint 0 — sem. 1–2 | C4 | Plano de testes, indicadores, ambientes e dados de baseline.
+Sprint 0 — sem. 1–2 | C5 | Inventário Sales/Service, objetos, Flows, casos, owners e APIs.
+Sprint 0 — sem. 1–2 | C6 | Inventário Marketing Cloud, journeys, automations, públicos e templates.
+Sprint 1 — sem. 3–4 | C1+C2 | Protótipos navegáveis e validação com atendimento/comercial.
+Sprint 1 — sem. 3–4 | C3+C4 | PoC Supabase, RLS, eventos, filas, observabilidade e WhatsApp.
+Sprint 1 — sem. 3–4 | C5+C6 | PoC Salesforce, field ownership e estratégia de coexistência.
+Sprint 2 — sem. 5–6 | C2+C3 | Shell da aplicação, Auth, organizações, navegação e APIs básicas.
+Sprint 2 — sem. 5–6 | C4 | CI/CD, testes, logs, dashboards técnicos e runbooks.
+Sprint 2 — sem. 5–6 | C5+C6 | Matriz de objetos/campos e conjuntos de dados de teste.
+Sprint 3 — sem. 7–8 | C1+C2+C3 | Contato 360º, leads, timeline, tarefas, tags, busca e dedupe.
+Sprint 3 — sem. 7–8 | C4+C5+C6 | Testes, reconciliação, migração amostral e validação das regras.
+Sprint 4 — sem. 9–10 | C2+C3 | Inbox, mensagens, filas, transferência, mídia, templates e status.
+Sprint 4 — sem. 9–10 | C4+C5 | Testes de falha/carga, integração de casos e dashboards de SLA.
+Sprint 4 — sem. 9–10 | C1+C6 | Scripts operacionais, templates de comunicação e treinamento piloto.
+Sprint 5 — sem. 11–12 | Todos | Go-live controlado, monitoramento, correções, documentação e retrospectiva.
+=== FIM TABELA ===
+[Heading2] 29.1 Definition of Done do projeto
+[ListBullet] Critérios de aceite validados e evidência de teste anexada.
+[ListBullet] Logs, métricas, alertas, timeout, retry e idempotência implementados.
+[ListBullet] Permissões, RLS, auditoria e tratamento de dados pessoais revisados.
+[ListBullet] Documentação técnica e operacional atualizada.
+[ListBullet] Migração/backfill, rollback, reconciliação e aprovação do Product Owner/especialista definidos, sem vulnerabilidade crítica ou erro conhecido de alto impacto.
+[Heading1] 30. Indicadores, metas e critérios de sucesso
+=== TABELA ===
+Área | Indicadores | Critério de sucesso
+Adoção | Usuários ativos, atendimentos realizados, funcionalidades usadas e taxa de retorno ao sistema anterior. | Adoção crescente e retorno excepcional.
+Atendimento | Tempo de primeira resposta, espera, SLA, resolução, transferência, abandono, CSAT e reabertura. | Piloto igual ou melhor que baseline.
+Comercial | Conversão por etapa, tempo de ciclo, tarefas vencidas, forecast, perda e receita influenciada. | Visibilidade e previsibilidade superiores.
+Campanhas | Elegibilidade, envio, entrega, leitura, resposta, conversão, opt-out, falha e custo. | Métricas reconciliadas e acionáveis.
+Automação | Execuções, sucesso, erro, retry, latência, backlog, reprocessamento e intervenção humana. | Taxa de sucesso e recuperação dentro do SLO.
+IA | Precisão, resolução, aceitação da sugestão, transferência, alucinação, custo e latência. | Metas por caso de uso; sem autonomia não avaliada.
+Dados | Duplicidade, completude, divergência Salesforce, eventos órfãos e atraso de sincronização. | Divergência material próxima de zero.
+Plataforma | Disponibilidade, p95, profundidade de filas, incidentes, custo por contato e custo por mensagem. | SLO definido e acompanhado.
+=== FIM TABELA ===
+[Heading2] 30.1 OKRs sugeridos para o primeiro trimestre
+[ListBullet] Objetivo 1 — Colocar um atendimento real no novo CRM sem interromper a operação atual.
+[ListBullet] KR: conectar um número oficial; habilitar um time piloto; registrar 100% das mensagens e eventos; medir SLA e permitir rollback.
+[ListBullet] Objetivo 2 — Criar uma base confiável de contato e integração.
+[ListBullet] KR: definir propriedade dos campos; executar dedupe; reconciliar objetos prioritários; manter trilha de auditoria.
+[ListBullet] Objetivo 3 — Estabelecer capacidade de entrega sustentável.
+[ListBullet] KR: ambientes separados; CI/CD; testes automatizados; observabilidade; runbooks; cerimônias e backlog governado.
+
+[Heading1] 31. Segurança, LGPD e controles adicionais
+=== TABELA ===
+Controle | Aplicação
+Consentimento e preferências | Origem, finalidade, canal, data, prova, versão, revogação e lista de supressão.
+Acesso | MFA, menor privilégio, RBAC/RLS, segregação por tenant, time e dado sensível.
+Auditoria | Leituras críticas, alterações, exportações, campanhas, jornadas, prompts e ferramentas da IA.
+Segredos | Vault/secret manager, rotação, escopo por ambiente e proibição de credenciais no banco ou código.
+Retenção | Política por categoria; anonimização; exclusão; legal hold quando necessário.
+Campanhas | Aprovação, dupla checagem de público, limite de frequência, quiet hours, teste e cancelamento.
+IA | Mascaramento, fontes permitidas, saída estruturada, avaliação, tool allowlist e confirmação humana.
+Incidentes | Classificação, responsável, comunicação, evidências, contenção, recuperação e pós-incidente.
+=== FIM TABELA ===
+[Heading2] 31.1 Controles específicos para disparos
+[ListBullet] Prévia obrigatória da quantidade elegível, excluída e motivo de exclusão.
+[ListBullet] Envio de teste para lista interna antes de liberar produção.
+[ListBullet] Aprovação por perfil autorizado acima de limites configuráveis.
+[ListBullet] Controle de velocidade, lote, prioridade, janela e custo estimado.
+[ListBullet] Botão de pausa e cancelamento para itens ainda não enviados.
+[ListBullet] Alertas por taxa de erro, opt-out, bloqueio, complaint e queda de qualidade.
+[ListBullet] Deduplicação por campanha, contato, canal, versão e período.
+
+[Heading1] 32. Riscos principais e mitigação
+=== TABELA ===
+Risco | Mitigação
+Escopo amplo demais | Dividir por fases, bloquear novos épicos durante o piloto e usar gates de decisão.
+Big bang contra Salesforce | Coexistência, field ownership, sincronização, reconciliação e corte por domínio.
+Sobrecarga dos especialistas Salesforce | Dedicação parcial protegida, inventário priorizado e redução de demandas não críticas.
+Dados duplicados ou conflitantes | Identity graph, chaves externas, regras por campo, dedupe e jobs de reconciliação.
+Bloqueio ou baixa qualidade no WhatsApp | API oficial, opt-in, templates, frequência, monitoramento e ramp-up de volume.
+Entregabilidade de e-mail | Domínios separados, SPF/DKIM/DMARC, aquecimento, bounces, complaints e supressão.
+IA errar ou executar ação indevida | RAG autorizado, schemas, avaliação, tool allowlist e confirmação humana.
+Supabase mal configurado | RLS testada, projetos separados, secrets, backups, pool de conexão e revisão de performance.
+Baixa adesão dos times | Usuários-piloto, UX simples, treinamento, champions, métricas e melhoria contínua.
+Equipe insuficiente para múltiplos módulos | Limitar WIP, contratar apoio pontual quando necessário e priorizar o fluxo de maior valor.
+=== FIM TABELA ===
+[Heading2] 32.1 Sinais de que o projeto deve desacelerar
+[ListBullet] Filas ou sincronizações sem observabilidade e reprocessamento confiável.
+[ListBullet] Divergências crescentes entre CRM e Salesforce.
+[ListBullet] Mais de um módulo crítico iniciado sem equipe suficiente para concluir o anterior.
+[ListBullet] Mudanças frequentes no modelo de identidade sem governança.
+[ListBullet] Usuários-piloto abandonando o sistema por fricção ou perda de contexto.
+[ListBullet] Aumento de opt-out, reclamações ou problemas de qualidade dos canais.
+
+[Heading1] 33. Critérios de aceite do MVP ampliado
+=== TABELA ===
+Área | Aceite mínimo
+Plataforma | Login, MFA, empresas, times, perfis, RLS, auditoria, ambientes, CI/CD, backups e observabilidade.
+CRM | Contato 360º, leads, empresas, tags, campos, tarefas, notas, timeline, busca, importação e dedupe.
+Salesforce | Objetos prioritários mapeados, sincronização testada, conflito definido, reconciliação e replay.
+WhatsApp | Um número oficial recebe e envia texto, mídia e template; status e webhooks persistidos.
+Inbox | Fila, atribuição, transferência, presença, respostas rápidas, notas, SLA, busca e histórico.
+Operação | Usuários-piloto treinados, dashboard, runbook, suporte, rollback e retrospectiva.
+Segurança | Consentimento, supressão, permissões, secrets, logs, retenção e revisão LGPD.
+Qualidade | Testes funcionais, integração, carga, falha, segurança e evidências de aceite.
+Dados | Contagens e campos críticos reconciliados sem divergência material.
+Adoção | Piloto executa o processo diário no novo CRM e a liderança acompanha indicadores.
+=== FIM TABELA ===
+
+[Heading1] 34. Próximas decisões e ações imediatas
+1. Nomear formalmente os seis colaboradores e confirmar a dedicação de cada um.
+2. Definir qual dos dois especialistas ficará com Sales/Service e qual ficará com Marketing/Journeys — ou dividir por processos equivalentes.
+3. Escolher o número de WhatsApp e o time piloto.
+4. Inventariar todas as automações Salesforce e classificá-las por criticidade, volume, dono e estratégia.
+5. Definir os sistemas mestres de contato, oportunidade, aluno, pedido, pagamento e consentimento durante a transição.
+6. Realizar os workshops das semanas 1 e 2 e aprovar o mapa de processos.
+7. Criar protótipos das telas Inbox, Contato 360º, Pipeline, Chatbot Builder e Journey Builder.
+8. Executar as quatro PoCs: WhatsApp, Supabase/RLS, sincronização Salesforce e fila de mensagens.
+9. Fechar o backlog do MVP e congelar o escopo até o primeiro piloto produtivo.
+10. Definir os indicadores de baseline antes de alterar a operação.
+=== TABELA ===
+Primeiro marco recomendadoAo final de 90 dias, um time deve conseguir atender por um número oficial de WhatsApp dentro do novo CRM, visualizar o contato 360º, respeitar SLA, registrar tudo na timeline, sincronizar os dados prioritários com Salesforce e acompanhar o processo em dashboards.
+=== FIM TABELA ===
+
+[Heading1] 35. Referências oficiais consultadas
+[ListBullet] Salesforce — Agentforce Service (antigo Service Cloud): https://www.salesforce.com/service/
+[ListBullet] Salesforce Help — Configurar o Omni-Channel: https://help.salesforce.com/s/articleView?id=service.service_presence_intro.htm&language=pt_BR&type=5
+[ListBullet] Salesforce Developers — Journey Builder API Overview: https://developer.salesforce.com/docs/marketing/marketing-cloud/guide/journey-builder-api-overview.html
+[ListBullet] Salesforce — Journey Orchestration: https://www.salesforce.com/marketing/journey-orchestration/
+[ListBullet] RD Station — Produtos Marketing, CRM e Conversas: https://www.rdstation.com/produtos/
+[ListBullet] RD Station Marketing — automação multicanal: https://www.rdstation.com/produtos/marketing/
+[ListBullet] RD Station Conversas — atendimento centralizado: https://www.rdstation.com/produtos/conversas/
+[ListBullet] RD Station Conversas — agentes de IA: https://www.rdstation.com/produtos/conversas/agentes-de-ia/
+[ListBullet] RD Station CRM — vendas por WhatsApp: https://www.rdstation.com/produtos/crm/vendas/vender-pelo-whatsapp/
+[ListBullet] Supabase Docs — Database, Auth, Realtime, Edge Functions, Queues e pgvector: https://supabase.com/docs
+[ListBullet] Meta — WhatsApp Business Platform: https://developers.facebook.com/docs/whatsapp/
+[ListBullet] Stripo Plugin — editor de e-mail incorporável: https://stripo.email/plugin/
+[ListBullet] Anthropic Docs — Claude API e tool use: https://docs.anthropic.com/
+[ListBullet] Google AI for Developers — Gemini API: https://ai.google.dev/
+[ListBullet] ANPD — orientações de proteção de dados: https://www.gov.br/anpd/pt-br
+Referências acessadas para esta versão em 27 de julho de 2026. As funcionalidades e nomes comerciais podem mudar; a arquitetura deve ser validada contra a documentação vigente no momento da implementação.
+=== TABELA ===
+Recomendação finalComeçar pequeno, com um processo real e mensurável. A ambição é construir uma plataforma completa; a disciplina é entregar um núcleo estável, auditável e adotado antes de abrir novas frentes.
+=== FIM TABELA ===
+Documento preparado para planejamento interno — Contabilidade Facilitada | Versão 2.0
+

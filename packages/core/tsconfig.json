@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // DOM entra por causa do cliente do AI Gateway, que usa `fetch`, `Response`
+    // e `TextDecoder`. `types: []` continua vazio de propósito: o pacote não
+    // depende de tipos de Node, e o acesso a `process.env` é feito de forma
+    // defensiva por `globalThis` para que ele rode em qualquer runtime.
+    "lib": ["ES2022", "DOM"],
+    "types": []
+  },
+  "include": ["src/**/*.ts"]
+}

@@ -1,0 +1,22 @@
+node_modules/
+.next/
+# Diretórios de build alternativos (NEXT_DIST_DIR), usados para verificar
+# em paralelo sem o build derrubar o servidor de desenvolvimento.
+.next-*/
+out/
+dist/
+build/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+.env
+.env.local
+.env.*.local
+!.env.example
+
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+pnpm-debug.log*
