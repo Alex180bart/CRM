@@ -1,13 +1,26 @@
-﻿import type { BotFlow, FlowRunState, WebchatWidget, WebchatWidgetVersion } from "@crm/core";
+﻿import type {
+  AgentPendingAction,
+  AgentTraceStep,
+  AiAgentVersion,
+  BotFlow,
+  FlowRunState,
+  WebchatWidget,
+  WebchatWidgetVersion,
+} from "@crm/core";
 import {
   BOT_RUN_OPTIONS,
+  activeAgentVersion,
   answerFlow,
+  idempotencyKey,
   isWithinSchedule,
   now,
   offsetIso,
+  publishEvent,
   repositories,
   startFlow,
 } from "@crm/core";
+
+import { runAgentTurn } from "@/lib/ai/agent-runtime";
 
 /**
  * Servidor do webchat.
@@ -64,6 +77,42 @@ export interface WebchatSession {
   /** Fila que recebeu a conversa. */
   queueId: string;
   visitorName?: string;
+
+  /* Agente de IA ----------------------------------------------------------- */
+
+  /**
+   * Estado do agente, quando é ele que conduz.
+   *
+   * Turnos e custo ficam na sessão, e não no turno, porque os tetos da seção
+   * 16.4 são **por conversa**. Contá-los por turno deixaria um laço de vinte
+   * turnos baratos passar por baixo de um teto pensado para impedir exatamente
+   * isso.
+   */
+  agentId?: string;
+  agentTurns: number;
+  agentSpentCents: number;
+  /** Rastro acumulado — o que o Inbox mostra para explicar o que a IA fez. */
+  agentSteps: AgentTraceStep[];
+  /** Escritas que o agente pediu e esperam confirmação de uma pessoa. */
+  agentPending: AgentPendingAction[];
+  /** Resumo do handoff, quando o agente transferiu. */
+  handoffSummary?: string;
+  handoffReason?: string;
+
+  /* Satisfação -------------------------------------------------------------- */
+
+  /**
+   * Nota do visitante, quando ele responde.
+   *
+   * `surveyOffered` existe separado da nota porque as duas ausências significam
+   * coisas diferentes: pesquisa não oferecida é decisão nossa; pesquisa
+   * oferecida e não respondida é sinal — e é o sinal que some se guardarmos só
+   * a nota.
+   */
+  surveyOffered: boolean;
+  surveyScore?: number;
+  surveyComment?: string;
+  surveyAnsweredAt?: string;
 }
 
 /**
@@ -180,7 +229,7 @@ export function publicConfig({ widget, version }: ResolvedWidget): WebchatPublic
     prechatFields: version.behavior.prechatFields,
     open: isWithinSchedule(version, now()),
     outsideHours: version.behavior.outsideHours,
-    hasBot: Boolean(version.behavior.botFlowId),
+    hasBot: version.behavior.responder !== "ninguem",
   };
 }
 
@@ -248,10 +297,46 @@ export interface SessionView {
   awaitingAnswer: boolean;
   handedOff: boolean;
   open: boolean;
+  /** Pesquisa a exibir agora; ausente quando não é hora ou já foi respondida. */
+  survey?: {
+    question: string;
+    askComment: boolean;
+    commentBelowScore: number;
+  };
+  surveyAnswered?: boolean;
+  surveyThanks?: string;
 }
 
-function view(session: WebchatSession, open: boolean): SessionView {
+/**
+ * Quando perguntar.
+ *
+ * Só depois de o agente ou o fluxo encerrarem a própria participação, e só se o
+ * visitante tiver falado — pesquisa em cima de quem abriu o widget e não disse
+ * nada mede a curiosidade dele, não o atendimento.
+ *
+ * A pergunta some assim que é respondida: manter as carinhas na tela depois da
+ * resposta convida ao segundo clique e estraga o número.
+ */
+function surveyFor(session: WebchatSession, version: WebchatWidgetVersion): SessionView["survey"] {
+  const config = version.behavior.survey;
+
+  if (!config.enabled) return undefined;
+  if (session.surveyScore !== undefined) return undefined;
+  if (!session.handedOff) return undefined;
+  if (!session.messages.some((message) => message.role === "visitante")) return undefined;
+
+  session.surveyOffered = true;
+
+  return {
+    question: config.question,
+    askComment: config.askComment,
+    commentBelowScore: config.commentBelowScore,
+  };
+}
+
+function view(session: WebchatSession, open: boolean, version?: WebchatWidgetVersion): SessionView {
   const awaiting = session.flow?.awaiting;
+
   return {
     sessionId: session.id,
     messages: session.messages,
@@ -259,7 +344,45 @@ function view(session: WebchatSession, open: boolean): SessionView {
     awaitingAnswer: Boolean(awaiting),
     handedOff: session.handedOff,
     open,
+    survey: version ? surveyFor(session, version) : undefined,
+    surveyAnswered: session.surveyScore !== undefined,
+    surveyThanks: version?.behavior.survey.thanks,
   };
+}
+
+/**
+ * Registra a nota do visitante.
+ *
+ * A nota é imutável: a primeira resposta é a que vale. Sem isso, o mesmo
+ * visitante clicando de novo sobrescreveria o número, e a média passaria a medir
+ * quem clica mais.
+ */
+export function recordSurvey(sessionId: string, score: number, comment?: string): boolean {
+  const session = sessions.get(sessionId);
+  if (!session) return false;
+  if (session.surveyScore !== undefined) return false;
+  if (!Number.isFinite(score) || score < 1 || score > 5) return false;
+
+  session.surveyScore = Math.round(score);
+  session.surveyComment = comment?.trim().slice(0, 500) || undefined;
+  session.surveyAnsweredAt = offsetIso({});
+
+  publishEvent({
+    name: "survey.answered",
+    source: "webchat",
+    idempotencyKey: idempotencyKey("pesquisa", session.id),
+    subjectType: "conversa",
+    subjectId: session.id,
+    payload: {
+      score: session.surveyScore,
+      comment: session.surveyComment,
+      handledBy: session.agentId ? "agente_ia" : "humano",
+      agentId: session.agentId,
+    },
+  });
+  touch(session);
+  sessions.set(session.id, session);
+  return true;
 }
 
 /**
@@ -272,7 +395,9 @@ function view(session: WebchatSession, open: boolean): SessionView {
 function messagesFromFlow(state: FlowRunState, alreadyEmitted: number): WebchatMessage[] {
   return state.entries
     .slice(alreadyEmitted)
-    .filter((entry) => entry.role === "bot" || (entry.role === "sistema" && entry.kind === "transferir"))
+    .filter(
+      (entry) => entry.role === "bot" || (entry.role === "sistema" && entry.kind === "transferir"),
+    )
     .map((entry) => ({
       id: `msg_${entry.id}`,
       role: entry.role === "bot" ? ("bot" as const) : ("sistema" as const),
@@ -282,6 +407,120 @@ function messagesFromFlow(state: FlowRunState, alreadyEmitted: number): WebchatM
           : "Estou passando você para um atendente. Já já alguém responde por aqui.",
       occurredAt: offsetIso({}),
     }));
+}
+
+/* Agente de IA --------------------------------------------------------------- */
+
+/**
+ * Fatos que o agente recebe antes da primeira palavra.
+ *
+ * São as respostas do formulário, traduzidas para frase. O agente precisa disso
+ * pelo mesmo motivo que o fluxo precisava: sem os fatos, o primeiro ato dele é
+ * perguntar o nome de quem acabou de digitar o nome.
+ */
+function agentFacts(prechat: Record<string, string>): string[] {
+  const labels: Record<string, string> = {
+    "contato.nome": "nome",
+    "contato.telefone": "telefone",
+    "contato.email": "e-mail",
+    "campo.origem_detalhada": "assunto que trouxe a pessoa",
+  };
+
+  return Object.entries(prechat)
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${labels[key] ?? key}: ${value}`);
+}
+
+async function resolveAgentVersion(agentId: string): Promise<AiAgentVersion | null> {
+  const agent = await repositories.agents.getById(agentId);
+  if (!agent || agent.status !== "ativo") return null;
+  return activeAgentVersion(agent) ?? null;
+}
+
+/**
+ * Roda um turno do agente e converte o resultado em mensagens da sessão.
+ *
+ * **Falha do agente não pode virar silêncio no widget.** O provedor pode estar
+ * sem credencial, fora do ar ou recusando conteúdo, e nada disso é problema do
+ * visitante: nesses casos a conversa cai para a fila com a mensagem de ausência,
+ * que é o comportamento que o widget já tinha antes de existir agente.
+ */
+async function runAgent(
+  session: WebchatSession,
+  version: WebchatWidgetVersion,
+  open: boolean,
+): Promise<void> {
+  const agentVersion = session.agentId ? await resolveAgentVersion(session.agentId) : null;
+
+  if (!agentVersion) {
+    session.messages.push({
+      id: nextId("msg"),
+      role: "bot",
+      body: open ? version.messages.awayInside : version.messages.awayOutside,
+      occurredAt: offsetIso({}),
+    });
+    session.handedOff = true;
+    return;
+  }
+
+  try {
+    const result = await runAgentTurn({
+      version: agentVersion,
+      channel: "webchat",
+      contactName: session.visitorName ?? "visitante",
+      contactFacts: agentFacts(session.prechat),
+      messages: session.messages
+        .filter((message) => message.role === "visitante" || message.role === "bot")
+        .map((message) => ({
+          role: message.role === "visitante" ? ("contato" as const) : ("agente" as const),
+          body: message.body,
+          at: message.occurredAt,
+        })),
+      turnsUsed: session.agentTurns,
+      spentUsdCents: session.agentSpentCents,
+      withinBusinessHours: open,
+    });
+
+    session.agentTurns += 1;
+    session.agentSpentCents += result.costUsdCents;
+    session.agentSteps.push(...result.steps);
+    session.agentPending.push(...result.pending);
+
+    if (result.reply) {
+      session.messages.push({
+        id: nextId("msg"),
+        role: "bot",
+        body: result.reply,
+        occurredAt: offsetIso({}),
+      });
+    }
+
+    if (result.handoff) {
+      session.handedOff = true;
+      session.queueId = result.handoff.queueId;
+      session.handoffReason = result.handoff.reason;
+      session.handoffSummary = result.handoff.summary;
+
+      session.messages.push({
+        id: nextId("msg"),
+        role: "sistema",
+        body: "Estou passando você para um atendente. Já já alguém responde por aqui.",
+        occurredAt: offsetIso({}),
+      });
+      return;
+    }
+
+    session.handedOff = result.ended;
+  } catch (error) {
+    console.error("[webchat] o agente falhou; a conversa foi para a fila", error);
+    session.messages.push({
+      id: nextId("msg"),
+      role: "bot",
+      body: open ? version.messages.awayInside : version.messages.awayOutside,
+      occurredAt: offsetIso({}),
+    });
+    session.handedOff = true;
+  }
 }
 
 export async function startSession(input: {
@@ -308,6 +547,12 @@ export async function startSession(input: {
     handedOff: false,
     queueId: version.behavior.queueId,
     visitorName: input.prechat["contato.nome"],
+    agentId: version.behavior.responder === "agente" ? version.behavior.agentId : undefined,
+    agentTurns: 0,
+    agentSpentCents: 0,
+    agentSteps: [],
+    agentPending: [],
+    surveyOffered: false,
   };
 
   // Fora do horário: o comportamento configurado decide, e nenhum deles é
@@ -321,10 +566,71 @@ export async function startSession(input: {
     });
     session.handedOff = version.behavior.outsideHours === "recado";
     sessions.set(session.id, session);
-    return view(session, open);
+    return view(session, open, version);
   }
 
-  const flow = await publishedFlow(version);
+  await openConversation(session, version, input.prechat, open);
+
+  /**
+   * A conversa nasce como fato no barramento.
+   *
+   * A chave é o identificador da sessão: o widget pode reenviar a abertura
+   * quando a resposta se perde na rede, e sem ela o mesmo visitante viraria
+   * duas conversas na fila.
+   */
+  publishEvent({
+    name: "conversation.opened",
+    source: "webchat",
+    idempotencyKey: idempotencyKey("webchat", session.id),
+    subjectType: "conversa",
+    subjectId: session.id,
+    payload: {
+      widgetId: widget.id,
+      queueId: session.queueId,
+      origin: session.origin,
+      visitorName: session.visitorName,
+      conduzidoPor: session.agentId ? "agente_ia" : version.behavior.responder,
+    },
+  });
+
+  sessions.set(session.id, session);
+  return view(session, open, version);
+}
+
+/**
+ * Quem fala primeiro, segundo o condutor configurado.
+ *
+ * O agente com saudação fixa **não gasta chamada** para abrir: escrever a
+ * primeira frase é justamente o que ele não precisa de modelo para fazer.
+ * Saudação vazia é a escolha de quem quer abertura contextual — aí sim vale a
+ * chamada, porque o agente já tem os dados do formulário e abre falando do
+ * assunto em vez de recitar.
+ */
+async function openConversation(
+  session: WebchatSession,
+  version: WebchatWidgetVersion,
+  prechat: Record<string, string>,
+  open: boolean,
+): Promise<void> {
+  if (session.agentId) {
+    const agentVersion = await resolveAgentVersion(session.agentId);
+    const greeting = agentVersion?.identity.greeting.trim();
+
+    if (greeting) {
+      session.messages.push({
+        id: nextId("msg"),
+        role: "bot",
+        body: greeting,
+        occurredAt: offsetIso({}),
+      });
+      return;
+    }
+
+    await runAgent(session, version, open);
+    return;
+  }
+
+  const flow = version.behavior.responder === "fluxo" ? await publishedFlow(version) : null;
   const document = flow ? publishedDocument(flow) : null;
 
   if (document) {
@@ -332,24 +638,22 @@ export async function startSession(input: {
       document.nodes,
       document.edges,
       BOT_RUN_OPTIONS,
-      flowVariables(input.prechat),
+      flowVariables(prechat),
     );
     session.flow = state;
     session.messages.push(...messagesFromFlow(state, 0));
     session.handedOff = state.status === "encerrado" || state.status === "limite";
-  } else {
-    // Sem chatbot, a saudação configurada abre a conversa e o humano assume.
-    session.messages.push({
-      id: nextId("msg"),
-      role: "bot",
-      body: version.messages.greeting,
-      occurredAt: offsetIso({}),
-    });
-    session.handedOff = true;
+    return;
   }
 
-  sessions.set(session.id, session);
-  return view(session, open);
+  // Sem condutor, a saudação configurada abre a conversa e o humano assume.
+  session.messages.push({
+    id: nextId("msg"),
+    role: "bot",
+    body: version.messages.greeting,
+    occurredAt: offsetIso({}),
+  });
+  session.handedOff = true;
 }
 
 export async function receiveMessage(input: {
@@ -374,6 +678,19 @@ export async function receiveMessage(input: {
   });
   touch(session);
 
+  /**
+   * O agente responde enquanto não transferiu.
+   *
+   * A checagem de `handedOff` é o que impede o agente de continuar falando por
+   * cima do atendente humano depois da transferência — seria o pior defeito
+   * possível deste módulo: duas vozes na mesma conversa, uma delas inventando.
+   */
+  if (session.agentId && !session.handedOff) {
+    await runAgent(session, version, open);
+    sessions.set(session.id, session);
+    return view(session, open, version);
+  }
+
   // Fluxo esperando resposta: ele continua o percurso.
   if (session.flow?.awaiting) {
     const flow = await publishedFlow(version);
@@ -393,7 +710,7 @@ export async function receiveMessage(input: {
       session.messages.push(...messagesFromFlow(next, emitted));
       session.handedOff = next.status === "encerrado" || next.status === "limite";
       sessions.set(session.id, session);
-      return view(session, open);
+      return view(session, open, version);
     }
   }
 
@@ -410,7 +727,7 @@ export async function receiveMessage(input: {
 
   session.handedOff = true;
   sessions.set(session.id, session);
-  return view(session, open);
+  return view(session, open, version);
 }
 
 export function getSession(sessionId: string): WebchatSession | null {
@@ -422,7 +739,7 @@ export async function pollSession(sessionId: string): Promise<SessionView | null
   if (!session) return null;
   const resolved = await resolveById(session.widgetId, session.versionId);
   const open = resolved ? isWithinSchedule(resolved.version, now()) : false;
-  return view(session, open);
+  return view(session, open, resolved?.version);
 }
 
 async function resolveById(widgetId: string, versionId: string): Promise<ResolvedWidget | null> {

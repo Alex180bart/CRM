@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type {
+  AiAgent,
   BotFlow,
   Queue,
   WebchatWidget,
@@ -85,6 +86,7 @@ import {
   Plus,
   Rocket,
   ShieldCheck,
+  Sparkles,
   Trash2,
   TriangleAlert,
   X,
@@ -135,11 +137,13 @@ export function WidgetEditor({
   widget: initialWidget,
   queues,
   botFlows,
+  agents,
   origin,
 }: {
   widget: WebchatWidget;
   queues: Queue[];
   botFlows: BotFlow[];
+  agents: AiAgent[];
   origin: string;
 }) {
   const [widget, setWidget] = useState(initialWidget);
@@ -161,6 +165,7 @@ export function WidgetEditor({
   const warnings = issues.filter((issue) => issue.severity === "alerta");
   const contrast = checkWidgetContrast(version.appearance.brandColor);
   const selectedFlow = botFlows.find((flow) => flow.id === version.behavior.botFlowId);
+  const selectedAgent = agents.find((agent) => agent.id === version.behavior.agentId);
 
   /**
    * As primeiras falas do fluxo escolhido.
@@ -610,14 +615,15 @@ export function WidgetEditor({
                       }
                     />
                     <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
-                      Endereço de imagem, não arquivo: o upload com antivírus e URL assinada da seção
-                      11 ainda não existe, e um <code className="bg-muted rounded px-1">blob:</code>{" "}
-                      morreria ao fechar a aba. Use PNG ou SVG quadrado, de fundo transparente.
+                      Endereço de imagem, não arquivo: o upload com antivírus e URL assinada da
+                      seção 11 ainda não existe, e um{" "}
+                      <code className="bg-muted rounded px-1">blob:</code> morreria ao fechar a aba.
+                      Use PNG ou SVG quadrado, de fundo transparente.
                     </p>
                     {!version.appearance.logoUrl ? (
                       <Callout variant="warning" className="mt-2">
-                        Sem endereço, o lançador cai no balão — um quadrado vazio no canto do site do
-                        cliente seria pior que um ícone genérico.
+                        Sem endereço, o lançador cai no balão — um quadrado vazio no canto do site
+                        do cliente seria pior que um ícone genérico.
                       </Callout>
                     ) : null}
                   </div>
@@ -671,15 +677,23 @@ export function WidgetEditor({
               <div className="bg-card shadow-card rounded-lg p-4">
                 <Eyebrow className="mb-2">Quem responde</Eyebrow>
 
-                <div className="grid gap-2 sm:grid-cols-2">
+                {/**
+                 * Três opções, não duas. O agente entrou como condutor
+                 * alternativo ao fluxo, e a escolha é campo próprio
+                 * (`responder`) em vez de deduzida da presença do
+                 * identificador: assim dá para trocar de condutor sem apagar a
+                 * configuração do outro, que é o que se faz ao experimentar.
+                 */}
+                <div className="grid gap-2 sm:grid-cols-3">
                   <button
                     type="button"
                     disabled={readOnly}
-                    onClick={() => patchBehavior({ botFlowId: undefined })}
-                    aria-pressed={!version.behavior.botFlowId}
+                    onClick={() => patchBehavior({ responder: "ninguem" })}
+                    aria-pressed={version.behavior.responder === "ninguem"}
                     className={cn(
                       "bg-muted/50 rounded-lg p-3 text-left transition-all",
-                      !version.behavior.botFlowId && "ring-accent bg-card shadow-card ring-2",
+                      version.behavior.responder === "ninguem" &&
+                        "ring-accent bg-card shadow-card ring-2",
                     )}
                   >
                     <span className="block text-xs font-medium">Só as mensagens fixas</span>
@@ -692,12 +706,16 @@ export function WidgetEditor({
                     type="button"
                     disabled={readOnly}
                     onClick={() =>
-                      patchBehavior({ botFlowId: version.behavior.botFlowId ?? botFlows[0]?.id })
+                      patchBehavior({
+                        responder: "fluxo",
+                        botFlowId: version.behavior.botFlowId ?? botFlows[0]?.id,
+                      })
                     }
-                    aria-pressed={Boolean(version.behavior.botFlowId)}
+                    aria-pressed={version.behavior.responder === "fluxo"}
                     className={cn(
                       "bg-muted/50 rounded-lg p-3 text-left transition-all",
-                      version.behavior.botFlowId && "ring-accent bg-card shadow-card ring-2",
+                      version.behavior.responder === "fluxo" &&
+                        "ring-accent bg-card shadow-card ring-2",
                     )}
                   >
                     <span className="flex items-center gap-1.5 text-xs font-medium">
@@ -705,12 +723,85 @@ export function WidgetEditor({
                       Um fluxo de chatbot
                     </span>
                     <span className="text-muted-foreground mt-0.5 block text-[11px] leading-relaxed">
-                      O bot qualifica antes e transfere quando precisar de gente.
+                      Caminho desenhado: menu, coleta e roteamento sempre iguais.
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={readOnly}
+                    onClick={() =>
+                      patchBehavior({
+                        responder: "agente",
+                        agentId: version.behavior.agentId ?? agents[0]?.id,
+                      })
+                    }
+                    aria-pressed={version.behavior.responder === "agente"}
+                    className={cn(
+                      "bg-muted/50 rounded-lg p-3 text-left transition-all",
+                      version.behavior.responder === "agente" &&
+                        "ring-accent bg-card shadow-card ring-2",
+                    )}
+                  >
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
+                      <Sparkles className="size-3.5" aria-hidden />
+                      Um agente de IA
+                    </span>
+                    <span className="text-muted-foreground mt-0.5 block text-[11px] leading-relaxed">
+                      Decide a cada mensagem: consulta a base e transfere sozinho.
                     </span>
                   </button>
                 </div>
 
-                {version.behavior.botFlowId ? (
+                {version.behavior.responder === "agente" ? (
+                  <div className="mt-3">
+                    <Label className="mb-1.5 block">Agente publicado</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={version.behavior.agentId ?? ""}
+                        disabled={readOnly}
+                        onValueChange={(value) => patchBehavior({ agentId: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha um agente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {agents.map((agent) => (
+                            <SelectItem key={agent.id} value={agent.id}>
+                              {agent.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Tooltip content="Abre a tela do agente para configurar e testar.">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href="/agentes">
+                            <Plus />
+                            Configurar
+                          </Link>
+                        </Button>
+                      </Tooltip>
+                    </div>
+
+                    {selectedAgent ? (
+                      <>
+                        <p className="text-muted-foreground mt-1.5 text-[11px] leading-relaxed">
+                          {selectedAgent.description}
+                        </p>
+                        {selectedAgent.status !== "ativo" || !selectedAgent.activeVersionId ? (
+                          <Callout variant="warning" className="mt-2">
+                            Este agente está pausado ou sem versão publicada. O widget só executa a
+                            versão publicada de um agente ativo — enquanto isso, a conversa vai
+                            direto para a fila.
+                          </Callout>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {version.behavior.responder === "fluxo" ? (
                   <div className="mt-3">
                     <Label className="mb-1.5 block">Fluxo publicado</Label>
                     <div className="flex gap-2">

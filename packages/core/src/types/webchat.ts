@@ -161,15 +161,72 @@ export const OUTSIDE_HOURS_LABEL: Record<OutsideHoursBehavior, string> = {
   bot: "Deixar o chatbot atender",
 };
 
+/**
+ * Quem conduz a conversa antes do humano.
+ *
+ * Campo explícito, e não a presença de `botFlowId` ou `agentId`, porque os dois
+ * podem estar preenchidos ao mesmo tempo — alguém experimenta o agente e não
+ * apaga o fluxo antigo. Deduzir o condutor da presença do identificador
+ * transformaria essa situação comum num estado ambíguo, resolvido por
+ * precedência escondida no código. Aqui a escolha é dado, e a validação recusa
+ * escolher "agente" sem agente.
+ *
+ * A diferença entre os dois é a da seção 26.4: o fluxo percorre um caminho
+ * desenhado; o agente decide. Fluxo para o que se repete igual — menu, coleta,
+ * roteamento fixo. Agente para o que varia — dúvida escrita em texto livre.
+ */
+/**
+ * Pesquisa de satisfação do widget.
+ *
+ * Uma pergunta e cinco carinhas. O comentário é opcional e aparece **depois** da
+ * nota, nunca junto: pedir os dois de uma vez derruba a taxa de resposta de quem
+ * só queria dar a nota e sair.
+ */
+export interface WidgetSurvey {
+  enabled: boolean;
+  question: string;
+  /** Texto exibido depois da resposta. */
+  thanks: string;
+  /** Abre o campo de comentário depois da nota. */
+  askComment: boolean;
+  /**
+   * Nota a partir da qual o comentário não é pedido.
+   *
+   * Quem avaliou bem não tem o que explicar, e insistir gasta a boa vontade que
+   * a nota alta acabou de demonstrar. Nota baixa é onde o motivo vale ouro.
+   */
+  commentBelowScore: number;
+}
+
+export type WidgetResponder = "ninguem" | "fluxo" | "agente";
+
+export const WIDGET_RESPONDER_LABEL: Record<WidgetResponder, string> = {
+  ninguem: "Entrar direto na fila",
+  fluxo: "Fluxo de chatbot",
+  agente: "Agente de IA",
+};
+
 export interface WidgetBehavior {
   prechatEnabled: boolean;
   prechatFields: PrechatField[];
   /** Fila que recebe as conversas abertas por este widget. */
   queueId: Id;
-  /** Fluxo de chatbot que atende antes do humano. Ausente entra direto na fila. */
+  responder: WidgetResponder;
+  /** Fluxo de chatbot que atende antes do humano. */
   botFlowId?: Id;
+  /** Agente de IA que atende antes do humano (seção 16.1, autoatendimento). */
+  agentId?: Id;
   schedule: WidgetSchedule[];
   outsideHours: OutsideHoursBehavior;
+  /**
+   * Pesquisa de satisfação ao fim da conversa.
+   *
+   * Fica no widget, e não no agente, porque a conversa pode terminar com o
+   * agente **ou** com uma pessoa — e a nota tem de ser comparável entre os dois.
+   * Amarrá-la ao agente mediria só o que a IA resolveu sozinha, que é o recorte
+   * mais favorável e o menos útil.
+   */
+  survey: WidgetSurvey;
   /** Minutos de inatividade antes de encerrar a sessão do visitante. */
   idleTimeoutMinutes: number;
   /** Oferece transcrição por e-mail ao encerrar. */
@@ -254,7 +311,9 @@ export type WidgetValidationRule =
   | "selecao_sem_opcoes"
   | "consentimento_sem_texto"
   | "horario_vazio"
-  | "fora_do_horario_sem_bot";
+  | "fora_do_horario_sem_bot"
+  | "condutor_sem_fluxo"
+  | "condutor_sem_agente";
 
 export const WIDGET_VALIDATION_LABEL: Record<WidgetValidationRule, string> = {
   sem_dominio: "Nenhum domínio autorizado",
@@ -265,6 +324,8 @@ export const WIDGET_VALIDATION_LABEL: Record<WidgetValidationRule, string> = {
   consentimento_sem_texto: "Consentimento sem texto",
   horario_vazio: "Nenhum dia de atendimento",
   fora_do_horario_sem_bot: "Fora do horário sem chatbot",
+  condutor_sem_fluxo: "Atendimento por fluxo sem fluxo escolhido",
+  condutor_sem_agente: "Atendimento por agente sem agente escolhido",
 };
 
 export interface WidgetValidationIssue {

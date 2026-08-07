@@ -476,7 +476,7 @@ const CONVERSATION_SEEDS: ConversationSeed[] = [
     id: "cnv_007",
     contactId: "cnt_010",
     channel: "webchat",
-    channelAccountId: "chan_webchat_site",
+    channelAccountId: "chan_wgt_site",
     queueId: "queue_comercial",
     state: "nova",
     subject: "Simulação de abertura de empresa",

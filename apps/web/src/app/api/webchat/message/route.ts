@@ -32,7 +32,8 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const record = (body ?? {}) as Record<string, unknown>;
   const sessionId = typeof record.sessionId === "string" ? record.sessionId : "";
-  const text = typeof record.body === "string" ? record.body.trim().slice(0, MAX_MESSAGE_LENGTH) : "";
+  const text =
+    typeof record.body === "string" ? record.body.trim().slice(0, MAX_MESSAGE_LENGTH) : "";
   const portId = typeof record.portId === "string" ? record.portId : undefined;
 
   if (!sessionId) return failWithCors("invalido", "Sessão ausente.", origin, 400);

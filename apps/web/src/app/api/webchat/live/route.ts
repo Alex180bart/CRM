@@ -14,6 +14,7 @@
  * da sessão.
  */
 
+import type { AgentPendingAction, AgentTraceStep } from "@crm/core";
 import type { NextRequest } from "next/server";
 
 import { listLiveSessions, replyFromAgent } from "@/lib/webchat/server";
@@ -32,6 +33,34 @@ export interface LiveConversation {
   handedOff: boolean;
   prechat: Record<string, string>;
   messages: Array<{ id: string; role: string; body: string; occurredAt: string }>;
+
+  /**
+   * O que a IA fez, quando foi um agente que atendeu.
+   *
+   * Vai junto da conversa e não numa rota separada por um motivo prático: quem
+   * assume a conversa precisa do rastro **no mesmo instante** em que a lê. Uma
+   * segunda chamada significaria abrir o painel e esperar, e o que se espera
+   * ninguém consulta.
+   */
+  agentId?: string;
+  agentTurns: number;
+  agentCostCents: number;
+  agentSteps: AgentTraceStep[];
+  agentPending: AgentPendingAction[];
+  handoffReason?: string;
+  handoffSummary?: string;
+
+  /**
+   * Avaliação do atendimento.
+   *
+   * `surveyOffered` viaja junto da nota porque as duas ausências dizem coisas
+   * diferentes: não perguntamos, ou perguntamos e a pessoa não respondeu. A
+   * segunda é sinal — e some se guardarmos só a nota.
+   */
+  surveyOffered: boolean;
+  surveyScore?: number;
+  surveyComment?: string;
+  surveyAnsweredAt?: string;
 }
 
 export function GET(): Response {
@@ -48,6 +77,17 @@ export function GET(): Response {
     handedOff: session.handedOff,
     prechat: session.prechat,
     messages: session.messages,
+    agentId: session.agentId,
+    agentTurns: session.agentTurns,
+    agentCostCents: session.agentSpentCents,
+    agentSteps: session.agentSteps,
+    agentPending: session.agentPending,
+    handoffReason: session.handoffReason,
+    handoffSummary: session.handoffSummary,
+    surveyOffered: session.surveyOffered,
+    surveyScore: session.surveyScore,
+    surveyComment: session.surveyComment,
+    surveyAnsweredAt: session.surveyAnsweredAt,
   }));
 
   return Response.json({ conversations }, { headers: { "Cache-Control": "no-store" } });

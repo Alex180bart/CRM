@@ -10,9 +10,21 @@
 
 import type { Id, IsoDateTime } from "./common";
 
-/** Tarefas do copiloto do atendente hoje suportadas (seção 16.1). */
+/**
+ * Tarefas hoje suportadas (seção 16.1).
+ *
+ * `atender` é a única que fala **com o contato** em vez de com o atendente — é
+ * o autoatendimento da 16.1. A diferença não é de grau: nas outras, o texto
+ * passa por revisão humana antes de sair; nesta, não passa. É o que justifica o
+ * agente ter guardas, teto de custo e transferência próprios.
+ */
 export type AiTask =
-  "analisar_conversa" | "sugerir_resposta" | "reescrever" | "perguntar" | "redigir_email";
+  | "analisar_conversa"
+  | "sugerir_resposta"
+  | "reescrever"
+  | "perguntar"
+  | "redigir_email"
+  | "atender";
 
 /**
  * Registro de execução — é o que torna a IA auditável e mensurável.

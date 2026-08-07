@@ -62,6 +62,9 @@ interface SessionView {
   awaitingAnswer: boolean;
   handedOff: boolean;
   open: boolean;
+  survey?: { question: string; askComment: boolean; commentBelowScore: number };
+  surveyAnswered?: boolean;
+  surveyThanks?: string;
 }
 
 export function LiveWidget({
@@ -116,13 +119,11 @@ export function LiveWidget({
 
     void (async () => {
       try {
-        const response = await fetch(
-          `/api/webchat/config?key=${encodeURIComponent(embedKey)}`,
-          { cache: "no-store" },
-        );
+        const response = await fetch(`/api/webchat/config?key=${encodeURIComponent(embedKey)}`, {
+          cache: "no-store",
+        });
         const payload = (await response.json()) as
-          | WebchatPublicConfig
-          | { error: { message: string } };
+          WebchatPublicConfig | { error: { message: string } };
 
         if (cancelled) return;
 
@@ -216,7 +217,9 @@ export function LiveWidget({
   if (error) {
     return (
       <div className="flex h-full items-end justify-end p-3">
-        <p className="rounded-lg bg-white px-3 py-2 text-[11px] text-[#8A3A3A] shadow-lg">{error}</p>
+        <p className="rounded-lg bg-white px-3 py-2 text-[11px] text-[#8A3A3A] shadow-lg">
+          {error}
+        </p>
       </div>
     );
   }
@@ -264,6 +267,30 @@ export function LiveWidget({
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Envia a nota e some com a pesquisa na hora.
+   *
+   * O estado local é atualizado antes da resposta do servidor de propósito:
+   * quem avaliou espera que a pergunta suma no clique, e a leitura periódica
+   * chega até quatro segundos depois. Se o envio falhar, a próxima leitura
+   * traz a pesquisa de volta — perder a nota é aceitável; travar as carinhas
+   * na tela depois do clique não é.
+   */
+  async function sendSurvey(score: number, comment?: string) {
+    setSession((current) =>
+      current ? { ...current, survey: undefined, surveyAnswered: true } : current,
+    );
+
+    const active = session;
+    if (!active) return;
+
+    await fetch("/api/webchat/survey", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: embedKey, sessionId: active.sessionId, score, comment }),
+    }).catch(() => undefined);
   }
 
   async function send(text: string, portId?: string) {
@@ -322,7 +349,10 @@ export function LiveWidget({
           isBar ? "" : left ? "justify-start" : "justify-end"
         }`}
       >
-        <div ref={launcherRef} className={`webchat-launcher-in ${isBar ? "w-full" : "inline-flex"}`}>
+        <div
+          ref={launcherRef}
+          className={`webchat-launcher-in ${isBar ? "w-full" : "inline-flex"}`}
+        >
           {isBar ? (
             <button
               type="button"
@@ -379,217 +409,253 @@ export function LiveWidget({
           } as React.CSSProperties
         }
       >
-      <div
-        className="flex items-center gap-2.5 px-3 py-2.5"
-        style={{ backgroundColor: brand, color: ink }}
-      >
-        <span
-          className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-bold"
-          style={{ backgroundColor: `${ink}22` }}
-        >
-          {config.appearance.icon === "logo" && config.appearance.logoUrl ? (
-                  <img src={config.appearance.logoUrl} alt="" className="size-full object-contain" />
-          ) : (
-            (config.appearance.avatarInitials || "CF")
-          )}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-semibold leading-tight">
-            {config.appearance.headerTitle}
-          </span>
-          <span className="block truncate text-[10px] leading-tight opacity-80">
-            {config.open ? config.appearance.headerSubtitle : "Fora do horário de atendimento"}
-          </span>
-        </span>
-        <button
-          type="button"
-          onClick={() => toggle(false)}
-          aria-label="Minimizar"
-          className="shrink-0 opacity-80 hover:opacity-100"
-        >
-          <Minus className="size-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => toggle(false)}
-          aria-label="Fechar"
-          className="shrink-0 opacity-80 hover:opacity-100"
-        >
-          <X className="size-4" />
-        </button>
-      </div>
-
-      <div
-        ref={listRef}
-        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3"
-        style={{ backgroundColor: lighten(brand, 0.96) }}
-      >
-        {!session && greetingVisible ? (
-          <Bubble radius={radius.bubble} tone="agent">
-            {config.messages.greeting}
-          </Bubble>
-        ) : null}
-        {!session && !greetingVisible ? <TypingBubble radius={radius.bubble} /> : null}
-
-        {session?.messages.map((message) =>
-          message.role === "visitante" ? (
-            <Bubble key={message.id} radius={radius.bubble} tone="visitor" brand={brand} ink={ink}>
-              {message.body}
-            </Bubble>
-          ) : message.role === "sistema" ? (
-            <p key={message.id} className="text-center text-[10px] text-[#6B7A90]">
-              {message.body}
-            </p>
-          ) : (
-            <Bubble key={message.id} radius={radius.bubble} tone="agent">
-              {message.body}
-            </Bubble>
-          ),
-        )}
-
-        {/* Formulário anterior à conversa */}
-        {needsForm ? (
-          <div
-            className="bg-white p-3 shadow-[0_1px_3px_rgba(16,40,80,0.12)]"
-            style={{ borderRadius: radius.bubble }}
-          >
-            {config.messages.prechatIntro ? (
-              <p className="mb-2.5 text-[11px] leading-relaxed text-[#48566B]">
-                {config.messages.prechatIntro}
-              </p>
-            ) : null}
-
-            <div className="space-y-2">
-              {config.prechatFields.map((field) => {
-                const slot = field.mapsTo ?? field.id;
-                return (
-                  <div key={field.id}>
-                    <label
-                      htmlFor={`pf-${field.id}`}
-                      className="mb-0.5 block text-[10px] font-medium text-[#48566B]"
-                    >
-                      {field.label}
-                      {field.required ? <span style={{ color: brand }}> *</span> : null}
-                    </label>
-                    {field.kind === "selecao" ? (
-                      <select
-                        id={`pf-${field.id}`}
-                        value={prechat[slot] ?? ""}
-                        onChange={(event) =>
-                          setPrechat((current) => ({ ...current, [slot]: event.target.value }))
-                        }
-                        className="w-full rounded border border-[#D6DBE3] bg-white px-2 py-1.5 text-[11px] text-[#1E2A3B]"
-                      >
-                        <option value="">Escolha uma opção</option>
-                        {(field.options ?? []).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        id={`pf-${field.id}`}
-                        type={
-                          field.kind === "email" ? "email" : field.kind === "telefone" ? "tel" : "text"
-                        }
-                        value={prechat[slot] ?? ""}
-                        placeholder={field.placeholder}
-                        onChange={(event) =>
-                          setPrechat((current) => ({ ...current, [slot]: event.target.value }))
-                        }
-                        className="w-full rounded border border-[#D6DBE3] px-2 py-1.5 text-[11px] text-[#1E2A3B]"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {config.privacy.consentRequired ? (
-              <label className="mt-2.5 flex items-start gap-1.5 text-[9.5px] leading-relaxed text-[#6B7A90]">
-                <input
-                  type="checkbox"
-                  checked={consent}
-                  onChange={(event) => setConsent(event.target.checked)}
-                  className="mt-px"
-                  style={{ accentColor: brand }}
-                />
-                <span>
-                  {config.privacy.consentText}
-                  {config.privacy.privacyUrl ? (
-                    <>
-                      {" "}
-                      <a
-                        href={config.privacy.privacyUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline"
-                      >
-                        Política de privacidade
-                      </a>
-                    </>
-                  ) : null}
-                </span>
-              </label>
-            ) : null}
-
-            <button
-              type="button"
-              disabled={requiredMissing || consentMissing}
-              onClick={() => void beginSession()}
-              className="mt-2.5 w-full py-2 text-[11px] font-semibold disabled:opacity-50"
-              style={{ backgroundColor: brand, color: ink, borderRadius: radius.bubble }}
-            >
-              Começar conversa
-            </button>
-          </div>
-        ) : null}
-
-        {/* Respostas rápidas do fluxo */}
-        {session?.options.length ? (
-          <div className="flex flex-wrap justify-end gap-1.5">
-            {session.options.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => void send(option.label, option.id)}
-                className="border px-2.5 py-1 text-[11px] font-medium"
-                style={{ borderColor: brand, color: darken(brand, 0.1), borderRadius: radius.bubble }}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      {/* Compositor */}
-      <form
-        className="flex items-center gap-1.5 border-t border-[#E9EDF2] bg-white px-2.5 py-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void send(draft);
-        }}
-      >
-        <input
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder={config.messages.placeholder}
-          disabled={needsForm}
-          aria-label="Mensagem"
-          className="min-w-0 flex-1 text-[11.5px] text-[#1E2A3B] outline-none disabled:bg-white"
-        />
-        <button
-          type="submit"
-          disabled={!draft.trim() || sending || needsForm}
-          aria-label="Enviar"
-          className="flex size-7 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
+        <div
+          className="flex items-center gap-2.5 px-3 py-2.5"
           style={{ backgroundColor: brand, color: ink }}
         >
-          <Send className="size-3.5" />
-        </button>
-      </form>
+          <span
+            className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-bold"
+            style={{ backgroundColor: `${ink}22` }}
+          >
+            {config.appearance.icon === "logo" && config.appearance.logoUrl ? (
+              <img src={config.appearance.logoUrl} alt="" className="size-full object-contain" />
+            ) : (
+              config.appearance.avatarInitials || "CF"
+            )}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13px] font-semibold leading-tight">
+              {config.appearance.headerTitle}
+            </span>
+            <span className="block truncate text-[10px] leading-tight opacity-80">
+              {config.open ? config.appearance.headerSubtitle : "Fora do horário de atendimento"}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => toggle(false)}
+            aria-label="Minimizar"
+            className="shrink-0 opacity-80 hover:opacity-100"
+          >
+            <Minus className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => toggle(false)}
+            aria-label="Fechar"
+            className="shrink-0 opacity-80 hover:opacity-100"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div
+          ref={listRef}
+          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3"
+          style={{ backgroundColor: lighten(brand, 0.96) }}
+        >
+          {!session && greetingVisible ? (
+            <Bubble radius={radius.bubble} tone="agent">
+              {config.messages.greeting}
+            </Bubble>
+          ) : null}
+          {!session && !greetingVisible ? <TypingBubble radius={radius.bubble} /> : null}
+
+          {session?.messages.map((message) =>
+            message.role === "visitante" ? (
+              <Bubble
+                key={message.id}
+                radius={radius.bubble}
+                tone="visitor"
+                brand={brand}
+                ink={ink}
+              >
+                {message.body}
+              </Bubble>
+            ) : message.role === "sistema" ? (
+              <p key={message.id} className="text-center text-[10px] text-[#6B7A90]">
+                {message.body}
+              </p>
+            ) : (
+              <Bubble key={message.id} radius={radius.bubble} tone="agent">
+                {message.body}
+              </Bubble>
+            ),
+          )}
+
+          {/* Formulário anterior à conversa */}
+          {needsForm ? (
+            <div
+              className="bg-white p-3 shadow-[0_1px_3px_rgba(16,40,80,0.12)]"
+              style={{ borderRadius: radius.bubble }}
+            >
+              {config.messages.prechatIntro ? (
+                <p className="mb-2.5 text-[11px] leading-relaxed text-[#48566B]">
+                  {config.messages.prechatIntro}
+                </p>
+              ) : null}
+
+              <div className="space-y-2">
+                {config.prechatFields.map((field) => {
+                  const slot = field.mapsTo ?? field.id;
+                  return (
+                    <div key={field.id}>
+                      <label
+                        htmlFor={`pf-${field.id}`}
+                        className="mb-0.5 block text-[10px] font-medium text-[#48566B]"
+                      >
+                        {field.label}
+                        {field.required ? <span style={{ color: brand }}> *</span> : null}
+                      </label>
+                      {field.kind === "selecao" ? (
+                        <select
+                          id={`pf-${field.id}`}
+                          value={prechat[slot] ?? ""}
+                          onChange={(event) =>
+                            setPrechat((current) => ({ ...current, [slot]: event.target.value }))
+                          }
+                          className="w-full rounded border border-[#D6DBE3] bg-white px-2 py-1.5 text-[11px] text-[#1E2A3B]"
+                        >
+                          <option value="">Escolha uma opção</option>
+                          {(field.options ?? []).map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          id={`pf-${field.id}`}
+                          type={
+                            field.kind === "email"
+                              ? "email"
+                              : field.kind === "telefone"
+                                ? "tel"
+                                : "text"
+                          }
+                          value={prechat[slot] ?? ""}
+                          placeholder={field.placeholder}
+                          onChange={(event) =>
+                            setPrechat((current) => ({ ...current, [slot]: event.target.value }))
+                          }
+                          className="w-full rounded border border-[#D6DBE3] px-2 py-1.5 text-[11px] text-[#1E2A3B]"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {config.privacy.consentRequired ? (
+                <label className="mt-2.5 flex items-start gap-1.5 text-[9.5px] leading-relaxed text-[#6B7A90]">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(event) => setConsent(event.target.checked)}
+                    className="mt-px"
+                    style={{ accentColor: brand }}
+                  />
+                  <span>
+                    {config.privacy.consentText}
+                    {config.privacy.privacyUrl ? (
+                      <>
+                        {" "}
+                        <a
+                          href={config.privacy.privacyUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline"
+                        >
+                          Política de privacidade
+                        </a>
+                      </>
+                    ) : null}
+                  </span>
+                </label>
+              ) : null}
+
+              <button
+                type="button"
+                disabled={requiredMissing || consentMissing}
+                onClick={() => void beginSession()}
+                className="mt-2.5 w-full py-2 text-[11px] font-semibold disabled:opacity-50"
+                style={{ backgroundColor: brand, color: ink, borderRadius: radius.bubble }}
+              >
+                Começar conversa
+              </button>
+            </div>
+          ) : null}
+
+          {/* Pesquisa de satisfação */}
+          {session?.survey ? (
+            <SurveyCard
+              question={session.survey.question}
+              askComment={session.survey.askComment}
+              commentBelowScore={session.survey.commentBelowScore}
+              brand={brand}
+              ink={ink}
+              radius={radius.bubble}
+              onSubmit={(score, comment) => void sendSurvey(score, comment)}
+            />
+          ) : null}
+
+          {session?.surveyAnswered && session.surveyThanks ? (
+            <p
+              className="mx-auto max-w-[85%] px-3 py-2 text-center text-[11px] text-[#5B6678]"
+              style={{ borderRadius: radius.bubble }}
+            >
+              {session.surveyThanks}
+            </p>
+          ) : null}
+
+          {/* Respostas rápidas do fluxo */}
+          {session?.options.length ? (
+            <div className="flex flex-wrap justify-end gap-1.5">
+              {session.options.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => void send(option.label, option.id)}
+                  className="border px-2.5 py-1 text-[11px] font-medium"
+                  style={{
+                    borderColor: brand,
+                    color: darken(brand, 0.1),
+                    borderRadius: radius.bubble,
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Compositor */}
+        <form
+          className="flex items-center gap-1.5 border-t border-[#E9EDF2] bg-white px-2.5 py-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void send(draft);
+          }}
+        >
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder={config.messages.placeholder}
+            disabled={needsForm}
+            aria-label="Mensagem"
+            className="min-w-0 flex-1 text-[11.5px] text-[#1E2A3B] outline-none disabled:bg-white"
+          />
+          <button
+            type="submit"
+            disabled={!draft.trim() || sending || needsForm}
+            aria-label="Enviar"
+            className="flex size-7 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
+            style={{ backgroundColor: brand, color: ink }}
+          >
+            <Send className="size-3.5" />
+          </button>
+        </form>
 
         {config.appearance.showBranding ? (
           <p className="bg-white pb-2 text-center text-[9px] text-[#A6B0BF]">
@@ -656,3 +722,113 @@ function TypingBubble({ radius }: { radius: number }) {
   );
 }
 
+/* Pesquisa de satisfação ------------------------------------------------------ */
+
+/**
+ * As cinco carinhas.
+ *
+ * Emoji e não ícone de biblioteca pelo mesmo motivo do lançador: isto roda no
+ * site de terceiro, e uma fonte de ícones a mais é peso que não se justifica —
+ * emoji já está no sistema de quem visita.
+ *
+ * A escala é de 1 a 5 e cabe numa linha. NPS de onze botões não cabe na janela
+ * do widget e, mais que isso, não é respondido no celular.
+ */
+const FACES: Array<{ score: number; face: string; label: string }> = [
+  { score: 1, face: "😠", label: "Péssimo" },
+  { score: 2, face: "🙁", label: "Ruim" },
+  { score: 3, face: "😐", label: "Regular" },
+  { score: 4, face: "🙂", label: "Bom" },
+  { score: 5, face: "😄", label: "Ótimo" },
+];
+
+function SurveyCard({
+  question,
+  askComment,
+  commentBelowScore,
+  brand,
+  ink,
+  radius,
+  onSubmit,
+}: {
+  question: string;
+  askComment: boolean;
+  commentBelowScore: number;
+  brand: string;
+  ink: string;
+  radius: number;
+  onSubmit: (score: number, comment?: string) => void;
+}) {
+  const [score, setScore] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+
+  /**
+   * O comentário só aparece **depois** da nota, e só quando ela é baixa.
+   *
+   * Pedir os dois de uma vez derruba a resposta de quem só queria dar a nota e
+   * sair. E insistir com quem avaliou bem gasta a boa vontade que a nota alta
+   * acabou de demonstrar — quem elogiou não tem o que explicar.
+   */
+  const wantsComment = askComment && score !== null && score < commentBelowScore;
+
+  if (score !== null && !wantsComment) return null;
+
+  return (
+    <div
+      className="mx-auto w-full max-w-[92%] border border-[#E9EDF2] bg-white px-3 py-2.5"
+      style={{ borderRadius: radius }}
+    >
+      <p className="mb-2 text-center text-[11.5px] font-medium text-[#1E2A3B]">{question}</p>
+
+      {score === null ? (
+        <div className="flex items-center justify-between gap-1">
+          {FACES.map((option) => (
+            <button
+              key={option.score}
+              type="button"
+              aria-label={option.label}
+              title={option.label}
+              onClick={() => {
+                setScore(option.score);
+                // Nota alta encerra na hora: não há segunda etapa a esperar.
+                if (!askComment || option.score >= commentBelowScore) onSubmit(option.score);
+              }}
+              className="flex-1 rounded-lg py-1 text-lg transition-transform hover:scale-110"
+            >
+              {option.face}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <textarea
+            rows={2}
+            value={comment}
+            autoFocus
+            onChange={(event) => setComment(event.target.value)}
+            placeholder="O que faltou? (opcional)"
+            className="w-full resize-none border border-[#D5DCE5] px-2 py-1.5 text-[11.5px] text-[#1E2A3B] outline-none"
+            style={{ borderRadius: radius }}
+          />
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => onSubmit(score, comment)}
+              className="flex-1 px-3 py-1.5 text-[11px] font-semibold"
+              style={{ backgroundColor: brand, color: ink, borderRadius: radius }}
+            >
+              Enviar
+            </button>
+            <button
+              type="button"
+              onClick={() => onSubmit(score)}
+              className="px-3 py-1.5 text-[11px] text-[#5B6678]"
+            >
+              Pular
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

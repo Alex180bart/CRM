@@ -37,7 +37,10 @@ export async function middleware(request: NextRequest) {
   let domains: string[] = [];
   try {
     const response = await fetch(
-      new URL(`/api/webchat/allowed-domains?key=${encodeURIComponent(key)}`, request.nextUrl.origin),
+      new URL(
+        `/api/webchat/allowed-domains?key=${encodeURIComponent(key)}`,
+        request.nextUrl.origin,
+      ),
       { cache: "no-store" },
     );
     if (response.ok) {

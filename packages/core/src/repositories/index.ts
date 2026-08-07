@@ -19,3 +19,5 @@ export const repositories: Repositories = {
   ...memoryRepositories,
   ai: aiGatewayRepository,
 };
+
+export * from "./events-memory";

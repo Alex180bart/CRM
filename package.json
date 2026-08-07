@@ -16,7 +16,9 @@
     "lint": "eslint . --ext .ts,.tsx,.js,.cjs,.mjs --max-warnings=0",
     "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,md,json,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,cjs,mjs,md,json,css}\"",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.20.0",
@@ -26,6 +28,7 @@
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "turbo": "^2.5.0",
-    "typescript": "~5.7.3"
+    "typescript": "~5.7.3",
+    "vitest": "^4"
   }
 }

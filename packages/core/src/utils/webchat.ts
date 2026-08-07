@@ -96,13 +96,33 @@ export function validateWidget(
     });
   }
 
-  if (behavior.outsideHours === "bot" && !behavior.botFlowId) {
+  if (behavior.responder === "fluxo" && !behavior.botFlowId) {
+    issues.push({
+      id: "sem_fluxo",
+      rule: "condutor_sem_fluxo",
+      severity: "erro",
+      message:
+        "O widget está configurado para ser atendido por fluxo, mas nenhum fluxo foi escolhido.",
+    });
+  }
+
+  if (behavior.responder === "agente" && !behavior.agentId) {
+    issues.push({
+      id: "sem_agente",
+      rule: "condutor_sem_agente",
+      severity: "erro",
+      message:
+        "O widget está configurado para ser atendido por agente de IA, mas nenhum agente foi escolhido.",
+    });
+  }
+
+  if (behavior.outsideHours === "bot" && behavior.responder === "ninguem") {
     issues.push({
       id: "fora_horario",
       rule: "fora_do_horario_sem_bot",
       severity: "erro",
       message:
-        "Fora do horário está configurado para o chatbot atender, mas nenhum fluxo foi escolhido.",
+        "Fora do horário está configurado para o chatbot atender, mas o widget não tem fluxo nem agente.",
     });
   }
 

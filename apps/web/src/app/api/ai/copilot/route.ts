@@ -39,11 +39,17 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Só as tarefas que operam sobre uma conversa. Redigir e-mail é do Gateway
- * também, mas entra por `/api/ai/email`: o corpo não tem conversa nenhuma, e
- * aceitá-lo aqui obrigaria a afrouxar a exigência de contexto.
+ * Só as tarefas que assistem o **atendente** sobre uma conversa.
+ *
+ * Duas ficam de fora, cada uma por um motivo. Redigir e-mail entra por
+ * `/api/ai/email`: o corpo não tem conversa nenhuma, e aceitá-lo aqui
+ * obrigaria a afrouxar a exigência de contexto. Atender entra por
+ * `/api/ai/agent`, e a razão é mais forte que roteamento: ali o texto vai
+ * **direto ao contato**, sem revisão de ninguém. Compartilhar rota faria as
+ * duas coisas dividirem o mesmo freio de uso e a mesma forma de erro, quando o
+ * risco de cada uma é de outra ordem.
  */
-type CopilotTask = Exclude<AiTask, "redigir_email">;
+type CopilotTask = Exclude<AiTask, "redigir_email" | "atender">;
 
 const TASKS: CopilotTask[] = ["analisar_conversa", "sugerir_resposta", "reescrever", "perguntar"];
 

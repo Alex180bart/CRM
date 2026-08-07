@@ -34,7 +34,6 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-
 /** oEmbed do YouTube: host fixo, então não passa pela guarda de destino. */
 const YOUTUBE_OEMBED = "https://www.youtube.com/oembed";
 

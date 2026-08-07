@@ -723,3 +723,137 @@
     transform: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Carregador em cubo — marca em movimento
+
+   Mora aqui, e não no componente, pelo mesmo motivo das animações do webchat:
+   é neste arquivo que o `prefers-reduced-motion` do fim da folha alcança tudo
+   de uma vez. Um `<style jsx>` dentro do componente ficaria fora daquele
+   alcance, e o cubo continuaria girando para quem pediu para o sistema parar
+   de animar — que é justamente quem passa mal com isso.
+
+   A paleta é uma só: o laranja da marca, com opacidade decrescente por eixo.
+   O original trazia ciano, roxo e índigo, que não existem em token nenhum
+   deste produto. Três cores dariam profundidade; a opacidade por eixo dá a
+   mesma leitura e mantém a peça reconhecível como Arena CF.
+   --------------------------------------------------------------------------- */
+
+.cube-scene {
+  perspective: 1200px;
+}
+
+.cube-3d {
+  transform-style: preserve-3d;
+}
+
+.cube-spin {
+  animation: cube-spin 8s linear infinite;
+}
+
+.cube-core {
+  animation: cube-core 2s ease-in-out infinite;
+}
+
+.cube-shadow {
+  animation: cube-shadow 3s ease-in-out infinite;
+}
+
+.cube-side {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.cube-face {
+  position: absolute;
+  inset: 0;
+  border: 2px solid hsl(var(--accent));
+  background: hsl(var(--accent) / 0.1);
+  border-radius: 2px;
+  animation: cube-breathe 3s ease-in-out infinite;
+}
+
+/* Profundidade por opacidade, não por matiz: um acento por tela. */
+.cube-side-x .cube-face {
+  opacity: 0.7;
+}
+
+.cube-side-y .cube-face {
+  opacity: 0.45;
+}
+
+.cube-front {
+  transform: rotateY(0deg);
+}
+.cube-back {
+  transform: rotateY(180deg);
+}
+.cube-right {
+  transform: rotateY(90deg);
+}
+.cube-left {
+  transform: rotateY(-90deg);
+}
+.cube-top {
+  transform: rotateX(90deg);
+}
+.cube-bottom {
+  transform: rotateX(-90deg);
+}
+
+@keyframes cube-spin {
+  from {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(360deg) rotateY(360deg);
+  }
+}
+
+/* 48px é metade da aresta de 96px: é a distância que fecha o cubo. */
+@keyframes cube-breathe {
+  0%,
+  100% {
+    transform: translateZ(48px);
+  }
+  50% {
+    transform: translateZ(76px);
+    border-color: hsl(var(--accent) / 0.55);
+  }
+}
+
+@keyframes cube-core {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.9;
+  }
+}
+
+@keyframes cube-shadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.22;
+  }
+  50% {
+    transform: scale(1.45);
+    opacity: 0.1;
+  }
+}
+
+/*
+   Movimento reduzido: o cubo para **montado**, não desmontado.
+
+   A regra global do fim da folha corta a duração para 0,01 ms e a repetição
+   para 1, o que leva cada animação ao quadro final. Em `cube-breathe`, o
+   quadro final é `translateZ(48px)` — o cubo fechado. É por isso que os
+   extremos da animação são o estado de repouso e o meio é a expansão, e não o
+   contrário: invertê-los deixaria a peça congelada explodida, parecendo
+   defeito.
+*/

@@ -18,6 +18,15 @@ export default async function AdministracaoPage() {
     audit,
     flags,
     retention,
+    schedules,
+    skills,
+    closingReasons,
+    customFields,
+    tags,
+    cannedResponses,
+    customRoles,
+    accessPolicy,
+    invitations,
   ] = await Promise.all([
     repositories.directory.getOrganization(),
     repositories.directory.listUsers(),
@@ -28,6 +37,15 @@ export default async function AdministracaoPage() {
     repositories.governance.listAudit(),
     repositories.governance.listFeatureFlags(),
     repositories.governance.listRetentionPolicies(),
+    repositories.directory.listSchedules(),
+    repositories.directory.listSkills(),
+    repositories.directory.listClosingReasons(),
+    repositories.directory.listCustomFields(),
+    repositories.directory.listTags(),
+    repositories.directory.listCannedResponses(),
+    repositories.directory.listCustomRoles(),
+    repositories.directory.getAccessPolicy(),
+    repositories.directory.listInvitations(),
   ]);
 
   return (
@@ -35,7 +53,7 @@ export default async function AdministracaoPage() {
       <PageHeader
         compact
         title="Administração"
-        description="Pessoas, filas, canais, permissões e as políticas que protegem a base."
+        description="Pessoas, filas e distribuição, escalas, canais, catálogo, perfis e as políticas que protegem a base."
         meta={<Badge variant="neutral">{organization.name}</Badge>}
       />
       <AdminConsole
@@ -48,6 +66,15 @@ export default async function AdministracaoPage() {
         audit={audit}
         flags={flags}
         retention={retention}
+        schedules={schedules}
+        skills={skills}
+        closingReasons={closingReasons}
+        customFields={customFields}
+        tags={tags}
+        cannedResponses={cannedResponses}
+        customRoles={customRoles}
+        accessPolicy={accessPolicy}
+        invitations={invitations}
       />
     </div>
   );

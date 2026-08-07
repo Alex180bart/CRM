@@ -1,7 +1,14 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Contact, Conversation, InternalNote, Message } from "@crm/core";
+import type {
+  AgentPendingAction,
+  AgentTraceStep,
+  Contact,
+  Conversation,
+  InternalNote,
+  Message,
+} from "@crm/core";
 import { ORG_ID, offsetIso } from "@crm/core";
 
 import type { LiveConversation } from "@/app/api/webchat/live/route";
@@ -41,6 +48,40 @@ export interface LiveWebchatData {
   contacts: Contact[];
   /** Sessão de origem, para o envio do atendente saber para onde escrever. */
   sessionByConversation: Record<string, string>;
+  /**
+   * O que o agente de IA fez nesta conversa.
+   *
+   * Só existe nas conversas conduzidas por agente. Quem assume precisa disso
+   * antes de escrever a primeira linha: sem o rastro, o atendente repete a
+   * pergunta que a IA já fez, e o cliente conta a história duas vezes.
+   */
+  agentByConversation: Record<string, LiveAgentActivity>;
+  surveyByConversation: Record<string, LiveSurvey>;
+}
+
+export interface LiveAgentActivity {
+  agentId: string;
+  turns: number;
+  costCents: number;
+  steps: AgentTraceStep[];
+  pending: AgentPendingAction[];
+  handoffReason?: string;
+  handoffSummary?: string;
+}
+
+/**
+ * Avaliação do atendimento, por conversa.
+ *
+ * Separada de `LiveAgentActivity` porque vale para conversa com ou sem agente —
+ * e é justamente a comparação entre as duas que dá sentido ao número. Amarrá-la
+ * ao agente mediria só o que a IA resolveu sozinha, que é o recorte mais
+ * favorável e o menos útil.
+ */
+export interface LiveSurvey {
+  offered: boolean;
+  score?: number;
+  comment?: string;
+  answeredAt?: string;
 }
 
 const EMPTY: LiveWebchatData = {
@@ -49,6 +90,8 @@ const EMPTY: LiveWebchatData = {
   notesByConversation: {},
   contacts: [],
   sessionByConversation: {},
+  agentByConversation: {},
+  surveyByConversation: {},
 };
 
 /** Iniciais a partir do nome informado; "?" quando o widget não perguntou. */
@@ -99,7 +142,7 @@ function toConversation(live: LiveConversation): Conversation {
     // vincular. Apontar para um contato inventado sujaria a base.
     contactId: `visitante_${live.sessionId}`,
     channel: "webchat",
-    channelAccountId: "chan_webchat_site",
+    channelAccountId: "chan_wgt_site",
     queueId: live.queueId,
     observerIds: [],
     state: live.handedOff ? "nova" : "em_triagem",
@@ -138,7 +181,11 @@ function toMessages(live: LiveConversation): Message[] {
         message.role === "visitante"
           ? live.visitorName
           : message.role === "bot"
-            ? "Chatbot"
+            ? // Rotular de "Chatbot" o que foi escrito por um agente de IA
+              // esconderia justamente a diferença que importa numa auditoria.
+              live.agentId
+              ? "Agente de IA"
+              : "Chatbot"
             : "Atendimento",
       channel: "webchat" as const,
       body: message.body,
@@ -192,6 +239,8 @@ export function useLiveWebchat(): LiveWebchatData & {
         notesByConversation: {},
         contacts: [],
         sessionByConversation: {},
+        agentByConversation: {},
+        surveyByConversation: {},
       };
 
       for (const live of payload.conversations) {
@@ -201,6 +250,27 @@ export function useLiveWebchat(): LiveWebchatData & {
         next.messagesByConversation[conversation.id] = toMessages(live);
         next.notesByConversation[conversation.id] = toNotes(live);
         next.sessionByConversation[conversation.id] = live.sessionId;
+
+        if (live.surveyOffered) {
+          next.surveyByConversation[conversation.id] = {
+            offered: true,
+            score: live.surveyScore,
+            comment: live.surveyComment,
+            answeredAt: live.surveyAnsweredAt,
+          };
+        }
+
+        if (live.agentId) {
+          next.agentByConversation[conversation.id] = {
+            agentId: live.agentId,
+            turns: live.agentTurns,
+            costCents: live.agentCostCents,
+            steps: live.agentSteps,
+            pending: live.agentPending,
+            handoffReason: live.handoffReason,
+            handoffSummary: live.handoffSummary,
+          };
+        }
       }
 
       setData(next);

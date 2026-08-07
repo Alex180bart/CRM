@@ -10,8 +10,21 @@
  * duas revisões sobre o mesmo conjunto de conversas.
  */
 
-import type { AiConversationContext, AiEmailDraftInput, AiToneAdjustment } from "@crm/core";
+import type {
+  AgentConversationMessage,
+  AiAgentVersion,
+  AiConversationContext,
+  AiEmailDraftInput,
+  AiToneAdjustment,
+} from "@crm/core";
 import {
+  AGENT_EMOJI_LABEL,
+  AGENT_LENGTH_LABEL,
+  AGENT_OBJECTIVE_HINT,
+  AGENT_OBJECTIVE_LABEL,
+  AGENT_TONE_HINT,
+  AGENT_TONE_LABEL,
+  AGENT_TOOLS,
   AI_EMAIL_OBJECTIVE_LABEL,
   AI_EMAIL_TONE_LABEL,
   AI_TONE_LABEL,
@@ -26,27 +39,39 @@ export const PROMPT_VERSIONS = {
   reescrever: "copiloto.reescrita.v2",
   perguntar: "copiloto.pergunta.v2",
   redigir_email: "studio.email.v1",
+  // v2 acrescentou o bloco de estilo e o roteamento por necessidade.
+  atender: "agente.atendimento.v2",
 } as const;
 
 /**
- * Fundamento comum a todas as tarefas.
+ * O ofício, comum a todas as tarefas.
  *
- * Três regras carregam quase toda a qualidade: falar de contabilidade
- * brasileira com o vocabulário certo, nunca inventar número ou prazo que não
- * esteja na conversa, e assumir que o texto será lido por um cliente pagante.
- * O modelo propõe; quem envia é o atendente.
+ * Falar de contabilidade brasileira com o vocabulário certo carrega boa parte
+ * da qualidade percebida: o cliente reconhece na primeira frase se quem
+ * responde conhece o assunto.
  */
-const SYSTEM_BASE = `Você é o copiloto de atendimento da Contabilidade Facilitada, um escritório de contabilidade brasileiro que atende micro e pequenas empresas, MEIs, clínicas e alunos de cursos próprios.
+const DOMAIN_CONTEXT = `Contexto do ofício: você conhece Simples Nacional, Lucro Presumido, Lucro Real, MEI, DAS, DCTFWeb, eSocial, SPED, retenções (INSS, ISS, IRRF), pró-labore, fator R, certidões e obrigações acessórias. Use o termo técnico correto em português do Brasil.`;
 
-Contexto do ofício: você conhece Simples Nacional, Lucro Presumido, Lucro Real, MEI, DAS, DCTFWeb, eSocial, SPED, retenções (INSS, ISS, IRRF), pró-labore, fator R, certidões e obrigações acessórias. Use o termo técnico correto em português do Brasil.
-
-Regras que não se quebram:
+/**
+ * As seis regras valem para toda tarefa, inclusive a do agente que fala direto
+ * com o cliente. Ficam separadas do resto porque a **última frase** do
+ * `SYSTEM_BASE` — "nada que você escreve é enviado sem revisão" — é verdadeira
+ * para o copiloto e falsa para o agente. Misturar as duas coisas num texto só
+ * faria o agente herdar uma licença que ele não tem.
+ */
+const HARD_RULES = `Regras que não se quebram:
 1. Não invente valor, alíquota, código de receita, data de vencimento ou nome de documento que não esteja na conversa. Se o dado não está lá, diga que precisa ser verificado.
 2. Não prometa prazo em nome do escritório. Quem promete prazo é o atendente.
 3. Não dê parecer jurídico nem garanta resultado de fiscalização.
 4. Nunca peça senha, código de acesso do gov.br, token ou dado de cartão.
 5. Trate o cliente pelo primeiro nome, com você, sem "prezado" e sem gerúndio de call center ("vou estar verificando").
-6. Não repita o que o cliente acabou de dizer antes de responder.
+6. Não repita o que o cliente acabou de dizer antes de responder.`;
+
+const SYSTEM_BASE = `Você é o copiloto de atendimento da Contabilidade Facilitada, um escritório de contabilidade brasileiro que atende micro e pequenas empresas, MEIs, clínicas e alunos de cursos próprios.
+
+${DOMAIN_CONTEXT}
+
+${HARD_RULES}
 
 Você é um assistente do atendente humano. Nada que você escreve é enviado ao cliente sem revisão.`;
 
@@ -456,5 +481,298 @@ Seja curto: 1 a 3 parágrafos curtos, ou uma lista quando a pergunta pedir passo
     user: `${renderContext(context)}${previous}
 
 Pergunta do atendente: ${question.trim()}`,
+  };
+}
+
+/* Agente de atendimento ------------------------------------------------------ */
+
+/**
+ * Schema do turno do agente.
+ *
+ * **Todo campo é obrigatório, inclusive os que muitas vezes vêm vazios.** Não é
+ * descuido: `toStrictSchema` converte este schema para o modo estrito da
+ * OpenAI, onde campo opcional vira anulável — e um `enum` anulável quebraria,
+ * porque a lista de valores não incluiria `null`. Por isso `tool` é obrigatório
+ * e ganhou o valor `nenhuma` em vez de ser omitido, e `reply` aceita string
+ * vazia. É exatamente a armadilha que o CLAUDE.md já anotava; aqui ela seria a
+ * primeira a aparecer.
+ *
+ * `params` é lista de pares e não objeto livre porque schema de objeto com
+ * chaves dinâmicas não existe nos dois provedores — e a alternativa, um campo
+ * por parâmetro possível, acoplaria o schema ao catálogo de ferramentas.
+ */
+export const AGENT_SCHEMA = {
+  type: "object",
+  properties: {
+    rationale: {
+      type: "string",
+      description:
+        "Uma frase curta explicando a decisão deste turno. Vai para o rastro de depuração, NUNCA para o contato.",
+    },
+    action: {
+      type: "string",
+      enum: ["responder", "usar_ferramenta", "transferir", "encerrar"],
+      description: "A única ação deste turno.",
+    },
+    reply: {
+      type: "string",
+      description:
+        "O texto enviado ao contato. Vazio quando a ação é usar_ferramenta. Em transferir, uma frase avisando que vai chamar alguém.",
+    },
+    tool: {
+      type: "string",
+      enum: [
+        "nenhuma",
+        "consultar_crm",
+        "buscar_conhecimento",
+        "consultar_horario",
+        "criar_tarefa",
+        "agendar_retorno",
+        "atualizar_cadastro",
+        "mover_etapa",
+      ],
+      description: "A ferramenta pedida. Use 'nenhuma' quando a ação não for usar_ferramenta.",
+    },
+    params: {
+      type: "array",
+      description:
+        "Parâmetros da ferramenta, como pares nome/valor. Lista vazia quando não houver.",
+      items: {
+        type: "object",
+        properties: {
+          nome: { type: "string" },
+          valor: { type: "string" },
+        },
+        required: ["nome", "valor"],
+        propertyOrdering: ["nome", "valor"],
+      },
+    },
+    evidence: {
+      type: "string",
+      description:
+        "Trecho literal da conversa que sustenta o pedido. Obrigatório em ferramenta de escrita; vazio nas demais.",
+    },
+    handoffQueue: {
+      type: "string",
+      description:
+        "Identificador EXATO da fila de destino, tirado da lista de filas do contexto. Vazio quando não for transferir.",
+    },
+    handoffReason: {
+      type: "string",
+      description:
+        "Por que está transferindo, em uma frase, para quem for assumir. Vazio quando não for transferir.",
+    },
+    confidence: {
+      type: "integer",
+      description:
+        "0 a 100. O quanto você confia nesta decisão. Baixo quando a base não respondeu ou o assunto está fora do escopo.",
+    },
+  },
+  required: [
+    "rationale",
+    "action",
+    "reply",
+    "tool",
+    "params",
+    "evidence",
+    "handoffQueue",
+    "handoffReason",
+    "confidence",
+  ],
+  propertyOrdering: [
+    "rationale",
+    "action",
+    "reply",
+    "tool",
+    "params",
+    "evidence",
+    "handoffQueue",
+    "handoffReason",
+    "confidence",
+  ],
+} as const;
+
+export interface AgentPromptInput {
+  version: AiAgentVersion;
+  channel: string;
+  contactName: string;
+  contactFacts?: string[];
+  messages: AgentConversationMessage[];
+  /** Filas para as quais este agente pode transferir, já resolvidas. */
+  queues: Array<{ id: string; name: string; description: string }>;
+  /** O que as ferramentas devolveram neste turno, na ordem em que foram usadas. */
+  observations: Array<{ toolId: string; result: string }>;
+  /** Quantas chamadas de ferramenta ainda restam neste turno. */
+  toolCallsLeft: number;
+  /** Quantos turnos ainda restam nesta conversa. */
+  turnsLeft: number;
+}
+
+const AGENT_BASE = `Você é um agente de atendimento da Contabilidade Facilitada, um escritório de contabilidade brasileiro que atende micro e pequenas empresas, MEIs, clínicas e alunos de cursos próprios.
+
+${DOMAIN_CONTEXT}
+
+${HARD_RULES}
+
+O que você escreve em \`reply\` é enviado ao contato **sem revisão de ninguém**. Não existe atendente lendo antes. Por isso, na dúvida entre responder e transferir, transfira.`;
+
+/**
+ * Instruções do laço.
+ *
+ * Duas regras aqui saíram de teste e não são óbvias. A proibição de anunciar
+ * efeito de escrita: sem ela o agente lia o retorno da ferramenta pendente como
+ * sucesso e dizia "já agendei". E a de não repetir busca: ao não gostar do
+ * trecho recuperado, o modelo refazia a mesma consulta com outras palavras até
+ * estourar o teto de chamadas do turno.
+ */
+const AGENT_PROTOCOL = `Como você trabalha:
+
+- Você age **uma vez por turno**. Escolha entre responder, usar uma ferramenta, transferir ou encerrar.
+- Ao usar ferramenta, deixe \`reply\` vazio: o contato não vê este passo. Você recebe o resultado e decide de novo.
+- Ferramenta de ESCRITA não executa sozinha. O pedido fica esperando confirmação de uma pessoa. Nunca diga ao contato que algo "já foi feito", "já está agendado" ou "já registrei" — diga que vai encaminhar.
+- Não repita a mesma busca com outras palavras. Se a base não respondeu na primeira, não vai responder na segunda: use a mensagem de desconhecimento e transfira.
+- Transferir não é fracasso. É o resultado certo sempre que o assunto está fora do escopo, o contato pede uma pessoa, ou você não tem base para afirmar.
+- \`rationale\` é para quem depura o agente, não para o contato. Escreva ali o motivo real da escolha.`;
+
+function renderAgentContext(input: AgentPromptInput): string {
+  const { version, queues, messages, observations } = input;
+  const { identity, mission, knowledge, handoff, guards } = version;
+
+  const tools = version.tools
+    .filter((policy) => policy.enabled)
+    .map((policy) => {
+      const spec = AGENT_TOOLS.find((item) => item.id === policy.toolId);
+      if (!spec) return null;
+      const kind =
+        spec.impact === "escrita" ? "ESCRITA — precisa de confirmação humana" : "leitura";
+      return `- \`${spec.id}\` (${kind}): ${spec.description} Parâmetros: ${spec.params}`;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  const rules = handoff.rules
+    .map((rule) => {
+      const queue = queues.find((item) => item.id === rule.queueId);
+      return `- Se ${rule.when} → \`${rule.queueId}\`${queue ? ` (${queue.name})` : ""}`;
+    })
+    .join("\n");
+
+  /**
+   * Instrução de roteamento, por modo.
+   *
+   * No modo automático o catálogo de filas deixa de ser referência e passa a ser
+   * **a** decisão: é por ele que o agente escolhe o setor a partir da
+   * necessidade que identificou. Por isso a instrução manda ler a descrição de
+   * cada fila, e não só o nome — nome de fila é abreviação interna, e escolher
+   * por ele produz o roteamento de quem adivinha.
+   */
+  const routing =
+    handoff.routing === "regras"
+      ? "Encaminhe **apenas** pelas regras acima. Nenhuma delas casando, use a fila padrão."
+      : handoff.routing === "automatico"
+        ? "Não há regra fixa: **você identifica a necessidade e escolhe o setor**. Leia a descrição de cada fila abaixo e escolha aquela cuja competência resolve o que a pessoa precisa — não a que tem o nome mais parecido com a palavra que ela usou. Se nenhuma resolver, use a fila padrão e diga por quê em `handoffReason`."
+        : "As regras acima valem primeiro. Se nenhuma casar, **identifique a necessidade e escolha o setor** pela descrição das filas abaixo, em vez de cair na padrão. Só use a padrão quando nenhuma competência servir.";
+
+  const queueList = queues
+    .map((queue) => `- \`${queue.id}\` — ${queue.name}: ${queue.description}`)
+    .join("\n");
+
+  const facts = input.contactFacts?.length
+    ? `\nO que já sabemos: ${input.contactFacts.join("; ")}.`
+    : "";
+
+  const transcript = messages
+    .slice(-MAX_CONTEXT_MESSAGES)
+    .map(
+      (message) =>
+        `[${formatDateTime(message.at)}] ${message.role === "contato" ? "CONTATO" : "VOCÊ"}: ${message.body}`,
+    )
+    .join("\n");
+
+  /**
+   * As observações entram como bloco separado, no fim.
+   *
+   * Junto da transcrição, o modelo tratava o resultado da ferramenta como fala
+   * do contato — e respondia ao próprio dado que acabara de consultar.
+   */
+  const observed = observations.length
+    ? `\n\nO que as ferramentas devolveram neste turno:\n${observations
+        .map((item) => `[${item.toolId}]\n${item.result}`)
+        .join("\n\n")}`
+    : "";
+
+  return `Agora: ${formatDateTime(offsetIso({}))} (fuso de Brasília, -03:00)
+Canal: ${input.channel}
+Contato: ${input.contactName}${facts}
+
+QUEM VOCÊ É
+Nome: ${identity.displayName} · Papel: ${identity.role}
+Tom — ${AGENT_TONE_LABEL[identity.tone]}: ${AGENT_TONE_HINT[identity.tone]}
+${identity.discloseAi ? "Se perguntarem, assuma que você é uma inteligência artificial. Não finja ser pessoa." : "Não levante o assunto de ser ou não uma inteligência artificial."}
+
+COMO VOCÊ ESCREVE
+${AGENT_LENGTH_LABEL[identity.style.messageLength]}.
+${AGENT_EMOJI_LABEL[identity.style.emojiUse]}.
+${identity.style.useFirstName ? "Trate a pessoa pelo primeiro nome." : "Trate por você, sem usar o nome a toda hora."}
+${identity.style.explainJargon ? "Traduza o jargão contábil: diga o nome técnico e explique em seguida, em poucas palavras. Quem não conhece a sigla não pergunta — só sai da conversa." : "Pode usar o termo técnico direto: quem fala com você conhece o vocabulário."}${
+    identity.style.signature
+      ? `\nAo encerrar ou transferir, feche com: "${identity.style.signature}"`
+      : ""
+  }
+
+SEU OBJETIVO
+${AGENT_OBJECTIVE_LABEL[mission.objective]} — ${AGENT_OBJECTIVE_HINT[mission.objective]}
+Você terminou bem quando: ${mission.successCriteria}
+
+Você atende: ${mission.scope.join("; ")}.
+Você NÃO atende, e transfere ao encontrar: ${mission.outOfScope.join("; ")}.
+
+CONHECIMENTO
+${
+  knowledge.mode === "somente_base"
+    ? "Responda APENAS com o que a ferramenta de busca devolver. Conhecimento geral seu não vale como fonte aqui: se a busca não trouxe, você não sabe."
+    : "Use a base para tudo que for específico do escritório: prazo, procedimento, política. Conhecimento geral do ofício só para explicar conceito — nunca para afirmar valor, alíquota ou data."
+}${knowledge.citeSources ? "\nCite o título do artigo de onde veio a resposta." : ""}
+
+FERRAMENTAS DISPONÍVEIS
+${tools || "Nenhuma."}
+
+TRANSFERÊNCIA
+${routing}
+
+${rules || "Sem regras escritas."}
+- Quando o contato pedir uma pessoa: ${handoff.transferOnRequest ? "transfira, mesmo que você saiba responder." : "tente resolver antes de transferir."}
+- Quando você não tiver confiança: ${handoff.transferOnUncertainty ? `transfira se a sua confiança ficar abaixo de ${guards.confidenceFloor}.` : "responda mesmo assim, deixando claro o que é incerto."}
+- Fila padrão, quando nenhuma regra casar: \`${handoff.defaultQueueId}\`
+
+FILAS EXISTENTES (use o identificador exato)
+${queueList || "Nenhuma."}
+
+O QUE VOCÊ NÃO FAZ
+Assuntos proibidos: ${guards.forbiddenTopics.join("; ") || "nenhum"}.
+Nunca peça: ${guards.neverAsk.join("; ") || "nada além do necessário"}.
+Quando não souber, diga exatamente isto e transfira: "${guards.fallbackMessage}"
+
+ORÇAMENTO DESTE TURNO
+Chamadas de ferramenta restantes: ${input.toolCallsLeft}. Turnos restantes na conversa: ${input.turnsLeft}.${
+    input.turnsLeft <= 1
+      ? " Este é o último turno: resolva ou transfira, e não faça pergunta nova."
+      : ""
+  }
+
+CONVERSA ATÉ AQUI
+${transcript || "(o contato ainda não disse nada)"}${observed}`;
+}
+
+export function agentPrompt(input: AgentPromptInput): { system: string; user: string } {
+  return {
+    system: `${AGENT_BASE}
+
+${AGENT_PROTOCOL}
+
+Responda apenas com o JSON do schema.`,
+    user: `${renderAgentContext(input)}
+
+Decida o próximo passo.`,
   };
 }

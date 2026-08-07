@@ -218,7 +218,7 @@ export function WidgetPreview({
               {appearance.icon === "logo" && appearance.logoUrl ? (
                 <img src={appearance.logoUrl} alt="" className="size-full object-contain" />
               ) : (
-                (appearance.avatarInitials || "CF")
+                appearance.avatarInitials || "CF"
               )}
             </span>
             <span className="min-w-0 flex-1">

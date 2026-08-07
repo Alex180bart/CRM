@@ -906,6 +906,8 @@ export function InboxWorkspace(data: InboxData) {
               onApply: handleApplyProposal,
               onDismiss: handleDismissProposal,
             }}
+            agentActivity={liveWebchat.agentByConversation[selected.id]}
+            survey={liveWebchat.surveyByConversation[selected.id]}
           />
         ) : null}
       </div>

@@ -14,10 +14,11 @@ export default async function WebchatWidgetPage({
 }) {
   const { widgetId } = await params;
 
-  const [widget, queues, botFlows, headerList] = await Promise.all([
+  const [widget, queues, botFlows, agents, headerList] = await Promise.all([
     repositories.webchat.getById(widgetId),
     repositories.directory.listQueues(),
     repositories.automations.listBotFlows(),
+    repositories.agents.list(),
     headers(),
   ]);
 
@@ -39,6 +40,7 @@ export default async function WebchatWidgetPage({
       widget={widget}
       queues={queues}
       botFlows={botFlows}
+      agents={agents}
       origin={`${protocol}://${host}`}
     />
   );

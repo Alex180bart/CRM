@@ -20,6 +20,7 @@ import {
 } from "@crm/ui";
 import { ChevronsLeft, ChevronsRight, LogOut, Settings, ShieldCheck } from "lucide-react";
 
+import { SidebarBrand } from "./logo";
 import { NAV_GROUPS } from "@/lib/nav";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -47,17 +48,7 @@ export function AppSidebar({
           collapsed && "justify-center px-0",
         )}
       >
-        <span className="bg-accent font-display text-accent-foreground shadow-raised flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold">
-          CF
-        </span>
-        {collapsed ? null : (
-          <div className="min-w-0 flex-1">
-            <p className="font-display truncate text-sm font-semibold leading-tight">CRM CF</p>
-            <p className="text-sidebar-muted truncate text-[11px] leading-tight">
-              {organization.name}
-            </p>
-          </div>
-        )}
+        <SidebarBrand organizationName={organization.name} collapsed={collapsed} />
       </div>
 
       {/* Navegação */}

@@ -42,6 +42,7 @@ import type {
 import { offsetIso } from "@crm/core";
 
 import {
+  AGENT_SCHEMA,
   ANALYSIS_SCHEMA,
   EMAIL_SCHEMA,
   PROMPT_VERSIONS,
@@ -86,6 +87,19 @@ const TASK_POLICY: Record<AiTask, CompletionPolicy> = {
     temperature: 0.75,
     maxOutputTokens: 1600,
     schema: EMAIL_SCHEMA,
+  },
+  /**
+   * Temperatura baixa: o agente decide caminho, não redige peça criativa.
+   *
+   * A saída carrega ao mesmo tempo a decisão (ferramenta, transferência) e o
+   * texto que vai ao contato. Subir a temperatura para melhorar a redação
+   * degradaria a decisão junto — e decisão errada aqui não é frase esquisita, é
+   * conversa entregue na fila errada.
+   */
+  atender: {
+    temperature: 0.3,
+    maxOutputTokens: 1200,
+    schema: AGENT_SCHEMA,
   },
 };
 
@@ -182,7 +196,7 @@ export function redactCredentials(text: string): string {
  * mascaramento, validação da saída e o registro de execução.
  */
 
-function buildMeta(input: {
+export function buildMeta(input: {
   task: AiTask;
   provider: ProviderId;
   model: string;

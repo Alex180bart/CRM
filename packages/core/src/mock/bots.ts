@@ -442,7 +442,6 @@ const qualificacaoEdges: FlowEdge[] = [
   { id: "qe_14", source: "qn_12", sourcePort: "out", target: "qn_13" },
 ];
 
-
 /**
  * Fluxo do webchat do site.
  *

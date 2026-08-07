@@ -9,13 +9,17 @@
 import type { Id } from "../types/common";
 import { CURRENT_USER_ID } from "../mock/organization";
 import { botFlows } from "../mock/bots";
-import { cannedResponses, conversations, internalNotes, messages } from "../mock/inbox";
+import { conversations, internalNotes, messages } from "../mock/inbox";
 import { companies, contacts } from "../mock/contacts";
 import { deals, pipelines, tasks } from "../mock/pipeline";
 import { journeyEnrollments, journeys } from "../mock/journeys";
 import { campaigns, messageTemplates, segments } from "../mock/campaigns";
 import { automationRules, ruleRuns } from "../mock/rules";
 import { webchatWidgets } from "../mock/webchat";
+import { deriveWebchatChannel } from "../utils/channels";
+import { aiAgents, agentKnowledgeSources } from "../mock/agents";
+import { adminMemoryRepository } from "./admin-memory";
+import { store } from "./store";
 import {
   brandKits,
   emailDeliveryStats,
@@ -39,8 +43,7 @@ import {
   REFERENCE_HOUR,
   revenueWonSeries,
 } from "../mock/analytics";
-import { channelAccounts, organization, queues, tags, teams, users } from "../mock/organization";
-import { auditLog, featureFlags, permissionMatrix, retentionPolicies } from "../mock/governance";
+import { organization } from "../mock/organization";
 import { timeline } from "../mock/timeline";
 import type {
   AutomationRepository,
@@ -54,6 +57,7 @@ import type {
   EmailStudioRepository,
   RuleRepository,
   WebchatRepository,
+  AgentRepository,
   GovernanceRepository,
   InsightsRepository,
   Repositories,
@@ -72,22 +76,67 @@ const directory: DirectoryRepository = {
     return organization;
   },
   async listUsers() {
-    return users;
+    return store.users;
   },
   async listTeams() {
-    return teams;
+    return store.teams;
   },
   async listQueues() {
-    return queues;
+    return store.queues;
   },
+  /**
+   * Canal de webchat é **derivado**, não cadastrado.
+   *
+   * Criar um widget cria o canal; excluir o widget o remove. Antes, a conta era
+   * cadastrada à mão na Administração e o widget apontava para ela — e a
+   * primeira coisa que se esquecia era criar a conta, produzindo um widget
+   * publicado que abre conversa sem destino.
+   *
+   * Derivar elimina o estado a dessincronizar: não há como o nome do canal
+   * divergir do nome do widget, nem como sobrar canal órfão.
+   */
   async listChannelAccounts() {
-    return channelAccounts;
+    return [
+      ...store.channelAccounts.filter((account) => account.kind !== "webchat"),
+      ...webchatWidgets.map(deriveWebchatChannel),
+    ];
   },
+  /**
+   * Catálogo sai do armazém, não do `mock/`.
+   *
+   * Tag e resposta rápida ganharam tela de edição na Administração — servi-las
+   * do arranjo imutável faria a Contatos continuar mostrando a lista antiga
+   * depois de alguém criar uma tag, e o sintoma seria "salvei e não apareceu".
+   */
   async listTags() {
-    return tags;
+    return store.tags;
   },
   async listCannedResponses() {
-    return cannedResponses;
+    return store.cannedResponses;
+  },
+  async listSchedules() {
+    return store.schedules;
+  },
+  async listSkills() {
+    return store.skills;
+  },
+  async listClosingReasons() {
+    return store.closingReasons;
+  },
+  async listCustomFields() {
+    return store.customFields;
+  },
+  async listCustomRoles() {
+    return store.customRoles;
+  },
+  async getAccessPolicy() {
+    return store.accessPolicy;
+  },
+  async listInvitations() {
+    return store.invitations;
+  },
+  async getRotation(queueId: Id) {
+    return store.rotations.find((item) => item.queueId === queueId)?.lastUserId;
   },
 };
 
@@ -270,6 +319,18 @@ const webchatRepository: WebchatRepository = {
   },
 };
 
+const agentRepository: AgentRepository = {
+  async list() {
+    return aiAgents;
+  },
+  async getById(id: Id) {
+    return aiAgents.find((agent) => agent.id === id) ?? null;
+  },
+  async listKnowledge() {
+    return agentKnowledgeSources;
+  },
+};
+
 const emailStudioRepository: EmailStudioRepository = {
   async listTemplates() {
     return emailTemplates;
@@ -355,16 +416,16 @@ const automationRepository: AutomationRepository = {
 
 const governanceRepository: GovernanceRepository = {
   async listAudit() {
-    return auditLog;
+    return store.audit;
   },
   async listPermissions() {
-    return permissionMatrix;
+    return store.permissions;
   },
   async listFeatureFlags() {
-    return featureFlags;
+    return store.flags;
   },
   async listRetentionPolicies() {
-    return retentionPolicies;
+    return store.retention;
   },
 };
 
@@ -383,6 +444,8 @@ export const memoryRepositories: Omit<Repositories, "ai"> = {
   rules: ruleRepository,
   emailStudio: emailStudioRepository,
   webchat: webchatRepository,
+  agents: agentRepository,
   insights: insightsRepository,
   governance: governanceRepository,
+  admin: adminMemoryRepository,
 };

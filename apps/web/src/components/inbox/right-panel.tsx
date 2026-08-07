@@ -1,12 +1,15 @@
 ﻿"use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { AiConversationContext, Company, Contact, Deal, Tag, User } from "@crm/core";
 import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from "@crm/ui";
-import { Sparkles, UserRound } from "lucide-react";
+import { Bot, Sparkles, UserRound } from "lucide-react";
 
+import { AgentActivityPanel } from "./agent-activity-panel";
 import { ContactContextPanel } from "./contact-context-panel";
 import { CopilotPanel, type TabulationBinding } from "./copilot-panel";
 import type { CopilotController } from "./use-copilot";
+import type { LiveAgentActivity, LiveSurvey } from "./use-live-webchat";
 
 /**
  * Coluna da direita.
@@ -33,6 +36,8 @@ export function InboxRightPanel({
   copilotAvailable,
   onUseReply,
   tabulation,
+  agentActivity,
+  survey,
   className,
 }: {
   contact?: Contact;
@@ -48,8 +53,43 @@ export function InboxRightPanel({
   copilotAvailable: boolean;
   onUseReply: (text: string) => void;
   tabulation?: TabulationBinding;
+  /** Só existe quando um agente de IA conduziu esta conversa. */
+  agentActivity?: LiveAgentActivity;
+  /** Avaliação do atendimento, quando a pesquisa foi oferecida. */
+  survey?: LiveSurvey;
   className?: string;
 }) {
+  /**
+   * Quando um agente de IA conduziu a conversa, a aba dele abre primeiro: quem
+   * assume precisa saber o que a IA já disse **antes** de pedir sugestão ao
+   * copiloto sobre o que dizer. Na ordem inversa, o atendente escreve por cima
+   * do que a máquina acabou de prometer.
+   *
+   * Não dá para fazer isso com `defaultValue`. O painel monta antes da leitura
+   * periódica do webchat trazer a atividade, e `defaultValue` é congelado na
+   * montagem — a aba nascia em "Copiloto" e nunca mudava. Daí o controle
+   * explícito, com um registro de qual conversa já teve a escolha aplicada:
+   * assim a chegada do dado abre a aba uma vez, e a troca manual depois disso
+   * não é desfeita pela leitura seguinte.
+   */
+  const [tab, setTab] = useState("copiloto");
+  const settledFor = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!copilotConversationId) return;
+    if (settledFor.current === copilotConversationId) return;
+
+    if (agentActivity) {
+      setTab("ia");
+      settledFor.current = copilotConversationId;
+      return;
+    }
+
+    // Sem atividade ainda: fica no copiloto, mas sem marcar como decidido — se
+    // a leitura seguinte trouxer o rastro, a aba ainda abre.
+    setTab("copiloto");
+  }, [copilotConversationId, agentActivity]);
+
   return (
     <aside
       className={cn(
@@ -59,8 +99,17 @@ export function InboxRightPanel({
         className,
       )}
     >
-      <Tabs defaultValue="copiloto" className="flex min-h-0 flex-1 flex-col">
+      <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
         <TabsList className="shrink-0 px-2">
+          {agentActivity ? (
+            <TabsTrigger value="ia" className="flex-1 gap-1.5 py-2 text-xs">
+              <Bot className="size-3.5" aria-hidden />
+              IA
+              {agentActivity.pending.length > 0 ? (
+                <span className="bg-warning size-1.5 rounded-full" aria-hidden />
+              ) : null}
+            </TabsTrigger>
+          ) : null}
           <TabsTrigger value="copiloto" className="flex-1 gap-1.5 py-2 text-xs">
             <Sparkles className="size-3.5" aria-hidden />
             Copiloto
@@ -70,6 +119,15 @@ export function InboxRightPanel({
             Contato
           </TabsTrigger>
         </TabsList>
+
+        {agentActivity ? (
+          <TabsContent
+            value="ia"
+            className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+          >
+            <AgentActivityPanel activity={agentActivity} survey={survey} />
+          </TabsContent>
+        ) : null}
 
         <TabsContent
           value="copiloto"

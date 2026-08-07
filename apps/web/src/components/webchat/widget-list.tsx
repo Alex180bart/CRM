@@ -198,7 +198,9 @@ export function WidgetList({
                       <span
                         className={cn(
                           "ml-auto shrink-0 font-medium",
-                          isWithinSchedule(shown, reference) ? "text-success" : "text-muted-foreground",
+                          isWithinSchedule(shown, reference)
+                            ? "text-success"
+                            : "text-muted-foreground",
                         )}
                       >
                         {isWithinSchedule(shown, reference) ? "atendendo agora" : "fora do horário"}
@@ -206,7 +208,11 @@ export function WidgetList({
                     </p>
                     <p className="text-muted-foreground text-[11px]">
                       Fila: {queue?.name ?? "não definida"}
-                      {shown.behavior.botFlowId ? " · com chatbot antes do humano" : ""}
+                      {shown.behavior.responder === "fluxo"
+                        ? " · fluxo de chatbot antes do humano"
+                        : shown.behavior.responder === "agente"
+                          ? " · agente de IA antes do humano"
+                          : ""}
                       {shown.behavior.prechatEnabled
                         ? ` · ${shown.behavior.prechatFields.length} campos antes de conversar`
                         : " · sem formulário"}

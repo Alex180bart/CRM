@@ -44,7 +44,10 @@ export function LauncherIcon({
     ),
     mensagem: (
       <>
-        <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11Z" fill="currentColor" />
+        <path
+          d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11Z"
+          fill="currentColor"
+        />
         <path
           d="m4.5 7 7.5 5.5L19.5 7"
           stroke="var(--launcher-ink, #fff)"

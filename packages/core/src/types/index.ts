@@ -10,3 +10,8 @@ export * from "./analytics";
 export * from "./webchat";
 export * from "./governance";
 export * from "./ai";
+export * from "./agents";
+export * from "./whatsapp";
+export * from "./events";
+export * from "./scheduling";
+export * from "./catalog";

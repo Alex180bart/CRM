@@ -5,11 +5,67 @@ import * as React from "react";
 import { cn } from "../lib/cn";
 
 /**
+ * Uma orquestração já rodou nesta região?
+ *
+ * Fora de um `RevealScope` o valor é `false` para sempre, que é o comportamento
+ * histórico: toda montagem anima. É o padrão certo para quem não tem abas.
+ */
+const RevealSettled = React.createContext(false);
+
+/**
+ * Delimita **uma** orquestração de entrada.
+ *
+ * ## O problema que isto resolve
+ *
+ * `Reveal` anima na montagem, e o Radix desmonta o painel de aba inativo. O
+ * resultado é que trocar de aba reexecuta a orquestração inteira: o conteúdo já
+ * está em memória e mesmo assim fica escondido em `opacity: 0` por até 910 ms
+ * (`6 × 60 ms` de escalonamento mais `550 ms` de duração).
+ *
+ * Medido em build de produção, a troca de aba custa **menos de 2 ms de script** —
+ * ou seja, a lentidão percebida ali é inteiramente animação, não trabalho. E ela
+ * contradiz a regra que este próprio arquivo enuncia: uma orquestração **por
+ * página**. Trocar de aba não é entrar numa página nova.
+ *
+ * ## Por que um relógio, e não "animar só na primeira montagem"
+ *
+ * Contar montagens exigiria identidade estável por elemento — e `Reveal` é usado
+ * dentro de listas cujo conteúdo muda. O relógio pergunta a coisa certa: *a
+ * entrada da página já terminou?* Depois disso, qualquer montagem é navegação
+ * interna e deve mostrar o conteúdo na hora.
+ *
+ * `settleMs` cobre o pior caso com folga. Encurtá-lo demais faria a última
+ * seção da primeira orquestração perder a animação no meio; alongá-lo faria a
+ * primeira troca de aba ainda animar.
+ */
+export function RevealScope({
+  settleMs = 1_200,
+  children,
+}: {
+  settleMs?: number;
+  children: React.ReactNode;
+}) {
+  const [settled, setSettled] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => setSettled(true), settleMs);
+    return () => window.clearTimeout(timer);
+  }, [settleMs]);
+
+  return <RevealSettled.Provider value={settled}>{children}</RevealSettled.Provider>;
+}
+
+/**
  * Entrada em sequência.
  *
  * A página inteira usa **uma** orquestração: cada seção sobe 10 px e aparece,
  * com 60 ms de atraso por índice. Nada pisca, nada repete em laço. Sob
  * `prefers-reduced-motion` o efeito é anulado no CSS.
+ *
+ * Dentro de um `RevealScope` já assentado, o elemento nasce sem a classe — sem
+ * `opacity: 0`, sem animação, visível no primeiro quadro. A troca de classe não
+ * produz salto porque `.reveal` termina em `opacity: 1` (a animação é
+ * `forwards`), que é o mesmo estado do elemento sem a classe.
  */
 export function Reveal({
   index = 0,
@@ -21,10 +77,12 @@ export function Reveal({
   index?: number;
   as?: React.ElementType;
 }) {
+  const settled = React.useContext(RevealSettled);
+
   return (
     <Component
-      className={cn("reveal", className)}
-      style={{ "--reveal-index": index } as React.CSSProperties}
+      className={cn(!settled && "reveal", className)}
+      style={settled ? undefined : ({ "--reveal-index": index } as React.CSSProperties)}
       {...props}
     >
       {children}

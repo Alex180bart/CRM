@@ -152,7 +152,9 @@ export function SitePreview({
 
       {site && !site.framable ? (
         <Callout variant="warning" icon={<Info />} className="text-[11px]">
-          <span className="block font-medium">Este site não permite ser exibido dentro de um quadro.</span>
+          <span className="block font-medium">
+            Este site não permite ser exibido dentro de um quadro.
+          </span>
           {site.reason} Isso não afeta o widget — ele funciona normalmente lá. A prévia abaixo segue
           no site genérico.
         </Callout>
@@ -222,8 +224,7 @@ function FloatingLauncher({ version }: { version: WebchatWidgetVersion }) {
   // Mesma escolha de tinta do widget: quem decide é a razão de contraste.
   const ink = readableInk(brand).hex;
 
-  const radius =
-    appearance.corner === "arredondado" ? 999 : appearance.corner === "suave" ? 12 : 4;
+  const radius = appearance.corner === "arredondado" ? 999 : appearance.corner === "suave" ? 12 : 4;
 
   // A barra ocupa a largura da página e não leva ícone: é uma faixa de chamada,
   // não um botão flutuante. Desenhá-la como bolha esconderia justamente o que

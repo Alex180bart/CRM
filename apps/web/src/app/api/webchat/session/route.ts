@@ -9,7 +9,13 @@
 
 import type { NextRequest } from "next/server";
 
-import { assertOrigin, failWithCors, jsonWithCors, preflight, readOrigin } from "@/lib/webchat/http";
+import {
+  assertOrigin,
+  failWithCors,
+  jsonWithCors,
+  preflight,
+  readOrigin,
+} from "@/lib/webchat/http";
 import { resolveByKey, startSession } from "@/lib/webchat/server";
 
 export const runtime = "nodejs";

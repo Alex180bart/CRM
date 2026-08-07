@@ -62,7 +62,10 @@ function readFrameRules(response: Response): { framable: boolean; reason?: strin
   if (directive) {
     const value = directive[1]?.trim().toLowerCase() ?? "";
     if (value.includes("'none'")) {
-      return { framable: false, reason: "A política de segurança do site usa frame-ancestors 'none'." };
+      return {
+        framable: false,
+        reason: "A política de segurança do site usa frame-ancestors 'none'.",
+      };
     }
     if (!value.includes("*")) {
       return {
@@ -83,9 +86,10 @@ export async function POST(request: NextRequest): Promise<Response> {
     return fail("invalido", "Corpo da requisição não é JSON válido.", 400);
   }
 
-  const raw = typeof (body as Record<string, unknown>)?.url === "string"
-    ? ((body as Record<string, unknown>).url as string).trim()
-    : "";
+  const raw =
+    typeof (body as Record<string, unknown>)?.url === "string"
+      ? ((body as Record<string, unknown>).url as string).trim()
+      : "";
 
   if (!raw) return fail("invalido", "Informe o endereço do site.", 400);
   if (raw.length > MAX_URL_LENGTH) return fail("invalido", "Endereço longo demais.", 400);

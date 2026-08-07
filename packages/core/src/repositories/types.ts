@@ -8,6 +8,7 @@
 
 import type { ChannelKind, Id } from "../types/common";
 import type { WebchatWidget } from "../types/webchat";
+import type { AgentKnowledgeSource, AiAgent } from "../types/agents";
 import type {
   Company,
   Contact,
@@ -44,8 +45,27 @@ import type {
   OperationCost,
   TimePoint,
 } from "../types/analytics";
-import type { ChannelAccount, Organization, Queue, Team, User } from "../types/organization";
-import type { AuditEntry, FeatureFlag, PermissionRow, RetentionPolicy } from "../types/governance";
+import type {
+  ChannelAccount,
+  ChannelConnection,
+  Organization,
+  Queue,
+  RoleKey,
+  Team,
+  User,
+} from "../types/organization";
+import type {
+  AccessPolicy,
+  AuditEntry,
+  CustomRole,
+  FeatureFlag,
+  Invitation,
+  PermissionLevel,
+  PermissionRow,
+  RetentionPolicy,
+} from "../types/governance";
+import type { BusinessSchedule } from "../types/scheduling";
+import type { ClosingReason, CustomFieldDefinition, SkillDefinition } from "../types/catalog";
 import type {
   AiAnalyzeInput,
   AiAskInput,
@@ -82,6 +102,21 @@ export interface DirectoryRepository {
   listChannelAccounts(): Promise<ChannelAccount[]>;
   listTags(): Promise<Tag[]>;
   listCannedResponses(): Promise<CannedResponse[]>;
+  listSchedules(): Promise<BusinessSchedule[]>;
+  listSkills(): Promise<SkillDefinition[]>;
+  listClosingReasons(): Promise<ClosingReason[]>;
+  listCustomFields(): Promise<CustomFieldDefinition[]>;
+  listCustomRoles(): Promise<CustomRole[]>;
+  getAccessPolicy(): Promise<AccessPolicy>;
+  listInvitations(): Promise<Invitation[]>;
+  /**
+   * Cursor da roleta por fila.
+   *
+   * Leitura separada porque é estado de execução, não configuração — e porque a
+   * única tela que precisa dele é o simulador de distribuição, que não deveria
+   * obrigar todas as outras a carregá-lo.
+   */
+  getRotation(queueId: Id): Promise<Id | undefined>;
 }
 
 export interface ContactRepository {
@@ -155,6 +190,196 @@ export interface WebchatRepository {
   getById(id: Id): Promise<WebchatWidget | null>;
 }
 
+/**
+ * Agentes de IA de atendimento.
+ *
+ * As fontes de conhecimento ficam aqui e não num repositório próprio porque hoje
+ * só o agente as consome. Quando o RAG da seção 16.2 entrar — com indexação,
+ * permissão e versionamento por documento — a base de conhecimento vira domínio
+ * próprio e esta chamada migra junto.
+ */
+export interface AgentRepository {
+  list(): Promise<AiAgent[]>;
+  getById(id: Id): Promise<AiAgent | null>;
+  listKnowledge(): Promise<AgentKnowledgeSource[]>;
+}
+
+/**
+ * Escrita administrativa.
+ *
+ * A primeira interface deste repositório que **altera** dado. Nasce aqui, e não
+ * em estado de componente, pela regra que vale para todo o resto: a aplicação
+ * conhece o contrato, nunca a origem. Quando o Supabase entrar, o corpo destes
+ * métodos muda e nenhuma tela sabe.
+ *
+ * Dois compromissos que a assinatura já declara:
+ *
+ * 1. **Toda escrita devolve `AdminWriteResult`**, não lança. Recusa de regra de
+ *    negócio — "é o último administrador" — não é exceção: é resposta, e precisa
+ *    chegar à tela com o motivo escrito para quem lê saber o que fazer.
+ * 2. **Toda escrita registra auditoria.** A seção 18 exige que alteração de
+ *    permissão e de configuração fique registrada com autor e horário. Fazer
+ *    isso dentro do repositório, e não em cada chamador, é o que garante que não
+ *    exista caminho de escrita sem rastro.
+ */
+export interface AdminWriteResult<T = unknown> {
+  ok: boolean;
+  /** Motivo da recusa, escrito para quem administra. Ausente em sucesso. */
+  reason?: string;
+  data?: T;
+}
+
+/** Quem está alterando — vai para a auditoria. */
+export interface AdminActor {
+  id: Id;
+  label: string;
+}
+
+export interface AdminRepository {
+  createUser(
+    actor: AdminActor,
+    data: Omit<User, "id" | "organizationId">,
+  ): Promise<AdminWriteResult<User>>;
+  updateUser(actor: AdminActor, id: Id, patch: Partial<User>): Promise<AdminWriteResult<User>>;
+  deleteUser(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  createTeam(actor: AdminActor, name: string): Promise<AdminWriteResult<Team>>;
+  updateTeam(actor: AdminActor, id: Id, name: string): Promise<AdminWriteResult<Team>>;
+  deleteTeam(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  createQueue(
+    actor: AdminActor,
+    data: Omit<Queue, "id" | "organizationId" | "createdAt" | "updatedAt">,
+  ): Promise<AdminWriteResult<Queue>>;
+  updateQueue(actor: AdminActor, id: Id, patch: Partial<Queue>): Promise<AdminWriteResult<Queue>>;
+  deleteQueue(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  createChannel(
+    actor: AdminActor,
+    data: Pick<ChannelAccount, "kind" | "label" | "address" | "queueId"> & {
+      connection?: ChannelConnection;
+    },
+  ): Promise<AdminWriteResult<ChannelAccount>>;
+  /** Grava a configuração de conexão. O segredo NÃO passa por aqui — vai ao cofre. */
+  setChannelConnection(
+    actor: AdminActor,
+    id: Id,
+    connection: ChannelConnection,
+  ): Promise<AdminWriteResult<ChannelAccount>>;
+  updateChannel(
+    actor: AdminActor,
+    id: Id,
+    patch: Partial<ChannelAccount>,
+  ): Promise<AdminWriteResult<ChannelAccount>>;
+  deleteChannel(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  setPermission(
+    actor: AdminActor,
+    resource: string,
+    role: RoleKey,
+    level: PermissionLevel,
+  ): Promise<AdminWriteResult>;
+
+  updateFlag(
+    actor: AdminActor,
+    key: string,
+    patch: Partial<FeatureFlag>,
+  ): Promise<AdminWriteResult>;
+
+  updateRetention(
+    actor: AdminActor,
+    category: string,
+    patch: Partial<RetentionPolicy>,
+  ): Promise<AdminWriteResult>;
+
+  /* Escalas ------------------------------------------------------------------ */
+
+  createSchedule(
+    actor: AdminActor,
+    data: Omit<BusinessSchedule, "id" | "organizationId" | "createdAt" | "updatedAt">,
+  ): Promise<AdminWriteResult<BusinessSchedule>>;
+  updateSchedule(
+    actor: AdminActor,
+    id: Id,
+    patch: Partial<BusinessSchedule>,
+  ): Promise<AdminWriteResult<BusinessSchedule>>;
+  deleteSchedule(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  /* Catálogo ----------------------------------------------------------------- */
+
+  createSkill(
+    actor: AdminActor,
+    data: Omit<SkillDefinition, "id" | "organizationId" | "createdAt" | "updatedAt">,
+  ): Promise<AdminWriteResult<SkillDefinition>>;
+  updateSkill(
+    actor: AdminActor,
+    id: Id,
+    patch: Partial<SkillDefinition>,
+  ): Promise<AdminWriteResult<SkillDefinition>>;
+  deleteSkill(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  createClosingReason(
+    actor: AdminActor,
+    data: Omit<ClosingReason, "id" | "organizationId" | "createdAt" | "updatedAt">,
+  ): Promise<AdminWriteResult<ClosingReason>>;
+  updateClosingReason(
+    actor: AdminActor,
+    id: Id,
+    patch: Partial<ClosingReason>,
+  ): Promise<AdminWriteResult<ClosingReason>>;
+  deleteClosingReason(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  createCustomField(
+    actor: AdminActor,
+    data: Omit<CustomFieldDefinition, "id" | "organizationId" | "createdAt" | "updatedAt">,
+  ): Promise<AdminWriteResult<CustomFieldDefinition>>;
+  updateCustomField(
+    actor: AdminActor,
+    id: Id,
+    patch: Partial<CustomFieldDefinition>,
+  ): Promise<AdminWriteResult<CustomFieldDefinition>>;
+  deleteCustomField(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  createTag(actor: AdminActor, name: string, hue: number): Promise<AdminWriteResult<Tag>>;
+  updateTag(actor: AdminActor, id: Id, patch: Partial<Tag>): Promise<AdminWriteResult<Tag>>;
+  deleteTag(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  createCannedResponse(
+    actor: AdminActor,
+    data: Omit<CannedResponse, "id" | "organizationId">,
+  ): Promise<AdminWriteResult<CannedResponse>>;
+  updateCannedResponse(
+    actor: AdminActor,
+    id: Id,
+    patch: Partial<CannedResponse>,
+  ): Promise<AdminWriteResult<CannedResponse>>;
+  deleteCannedResponse(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  /* Perfis e acesso ---------------------------------------------------------- */
+
+  createCustomRole(
+    actor: AdminActor,
+    data: Omit<CustomRole, "id" | "organizationId" | "createdAt" | "updatedAt">,
+  ): Promise<AdminWriteResult<CustomRole>>;
+  updateCustomRole(
+    actor: AdminActor,
+    id: Id,
+    patch: Partial<CustomRole>,
+  ): Promise<AdminWriteResult<CustomRole>>;
+  deleteCustomRole(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  updateAccessPolicy(
+    actor: AdminActor,
+    patch: Partial<AccessPolicy>,
+  ): Promise<AdminWriteResult<AccessPolicy>>;
+
+  createInvitation(
+    actor: AdminActor,
+    data: { email: string; role: string; teamIds: Id[] },
+  ): Promise<AdminWriteResult<Invitation>>;
+  revokeInvitation(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+}
+
 export interface InsightsRepository {
   /** Fila "precisa de você agora", já ordenada por gravidade e prazo. */
   listAttention(): Promise<AttentionItem[]>;
@@ -214,7 +439,9 @@ export interface Repositories {
   rules: RuleRepository;
   emailStudio: EmailStudioRepository;
   webchat: WebchatRepository;
+  agents: AgentRepository;
   insights: InsightsRepository;
   governance: GovernanceRepository;
+  admin: AdminRepository;
   ai: AiRepository;
 }

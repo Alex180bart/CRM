@@ -132,7 +132,11 @@ export function runFlowFrom(
 
     if (!visited.includes(node.id)) visited.push(node.id);
 
-    if (node.kind === "mensagem" || node.kind === "enviar_whatsapp" || node.kind === "enviar_email") {
+    if (
+      node.kind === "mensagem" ||
+      node.kind === "enviar_whatsapp" ||
+      node.kind === "enviar_email"
+    ) {
       entries.push({
         id: `run_${steps}_${node.id}`,
         role: "bot",
@@ -148,8 +152,7 @@ export function runFlowFrom(
       // Já respondida antes de o fluxo começar: segue direto, sem repetir.
       const known = alreadyAnswered(node, variables);
       if (known) {
-        const port =
-          node.outputs.find((item) => !item.fallback) ?? node.outputs[0];
+        const port = node.outputs.find((item) => !item.fallback) ?? node.outputs[0];
         const target = port ? nextNodeId(edges, node.id, port.id) : null;
         if (!target) break;
         current = target;
