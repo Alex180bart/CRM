@@ -68,7 +68,7 @@ const nextConfig = {
   devIndicators: false,
   reactStrictMode: true,
   // Os pacotes internos são publicados como TypeScript puro; o Next transpila.
-  transpilePackages: ["@crm/ui", "@crm/core"],
+  transpilePackages: ["@elora/ui", "@elora/core"],
   eslint: {
     // O lint roda na raiz do monorepo, com a mesma configuração para todos os pacotes.
     ignoreDuringBuilds: true,

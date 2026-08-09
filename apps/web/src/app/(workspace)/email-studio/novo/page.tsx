@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { repositories } from "@crm/core";
+import { repositories } from "@elora/core";
 
 import { EmailCreate } from "@/components/email/email-create";
 import { PageHeader } from "@/components/shell/page-header";

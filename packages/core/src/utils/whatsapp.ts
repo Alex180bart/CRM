@@ -1,7 +1,7 @@
 /**
  * Tradução do corpo do webhook da Meta para a forma canônica.
  *
- * Função pura, em `@crm/core`, pelo mesmo motivo da classificação de URL e da
+ * Função pura, em `@elora/core`, pelo mesmo motivo da classificação de URL e da
  * extração de texto: quem recebe (a rota) e quem testa precisam concordar sobre
  * o que aquele JSON significa. E ela é a **única** peça que conhece o formato da
  * Meta — trocar a versão da API, ou trocar a Cloud API por um BSP, mexe aqui e

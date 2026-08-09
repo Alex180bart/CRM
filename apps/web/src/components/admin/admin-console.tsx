@@ -22,7 +22,7 @@ import type {
   Tag,
   Team,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   CHANNEL_LABEL,
   CURRENT_USER_ID,
@@ -42,7 +42,7 @@ import {
   PERMISSION_LABEL,
   PRESENCE_LABEL,
   ROLE_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -62,7 +62,7 @@ import {
   TabsTrigger,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowUpRight,
   Building2,

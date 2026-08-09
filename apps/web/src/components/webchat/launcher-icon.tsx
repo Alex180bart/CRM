@@ -1,4 +1,4 @@
-import type { WidgetIcon } from "@crm/core";
+import type { WidgetIcon } from "@elora/core";
 
 /**
  * Glifo do lançador.

@@ -12,7 +12,7 @@ import type {
   Pipeline,
   Queue,
   TimePoint,
-} from "@crm/core";
+} from "@elora/core";
 import {
   CHANNEL_LABEL,
   CONVERSATION_STATE_LABEL,
@@ -20,7 +20,7 @@ import {
   formatDuration,
   formatNumber,
   formatPercent,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   BarSeries,
@@ -41,7 +41,7 @@ import {
   Tooltip,
   cn,
   seriesColor,
-} from "@crm/ui";
+} from "@elora/ui";
 import { BookOpen, TrendingDown, TrendingUp } from "lucide-react";
 
 const PERIODS = [

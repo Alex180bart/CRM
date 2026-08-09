@@ -20,8 +20,8 @@
  */
 
 import type { NextRequest } from "next/server";
-import type { AttachmentKind, MediaProvider } from "@crm/core";
-import { classifyUrl, fileNameFromUrl, kindFromMimeType, parseYouTube } from "@crm/core";
+import type { AttachmentKind, MediaProvider } from "@elora/core";
+import { classifyUrl, fileNameFromUrl, kindFromMimeType, parseYouTube } from "@elora/core";
 
 import {
   FETCH_TIMEOUT_MS,

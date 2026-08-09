@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { CURRENT_USER_ID, repositories } from "@crm/core";
+import { CURRENT_USER_ID, repositories } from "@elora/core";
 
 import { AppSidebar } from "@/components/shell/app-sidebar";
 

@@ -1,9 +1,9 @@
 ﻿"use client";
 
 import { useRef, useState } from "react";
-import type { BrandKit, EmailBlock, EmailBlockKind, EmailValidationIssue } from "@crm/core";
-import { applyMergeTags, EMAIL_BLOCK_LABEL, EMAIL_MERGE_TAGS } from "@crm/core";
-import { cn } from "@crm/ui";
+import type { BrandKit, EmailBlock, EmailBlockKind, EmailValidationIssue } from "@elora/core";
+import { applyMergeTags, EMAIL_BLOCK_LABEL, EMAIL_MERGE_TAGS } from "@elora/core";
+import { cn } from "@elora/ui";
 import {
   ArrowDown,
   ArrowUp,

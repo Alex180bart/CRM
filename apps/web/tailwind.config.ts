@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import preset from "@crm/config/tailwind-preset.cjs";
+import preset from "@elora/config/tailwind-preset.cjs";
 
 export default {
   presets: [preset as Config],

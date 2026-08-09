@@ -1,7 +1,7 @@
-# Design system — CRM CF
+# Design system — Elora
 
-Identidade **Arena CF** aplicada a um produto de uso contínuo. O sistema vive em `packages/ui` e é
-consumido por `@crm/ui`.
+Identidade **Arena Elora** aplicada a um produto de uso contínuo. O sistema vive em `packages/ui` e é
+consumido por `@elora/ui`.
 
 ## 1. A ideia central: densidade calma
 

@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { AiConversationContext, Company, Contact, Deal, Tag, User } from "@crm/core";
-import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from "@crm/ui";
+import type { AiConversationContext, Company, Contact, Deal, Tag, User } from "@elora/core";
+import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from "@elora/ui";
 import { Bot, Sparkles, UserRound } from "lucide-react";
 
 import { AgentActivityPanel } from "./agent-activity-panel";

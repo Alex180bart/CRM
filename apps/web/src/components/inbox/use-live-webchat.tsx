@@ -8,8 +8,8 @@ import type {
   Conversation,
   InternalNote,
   Message,
-} from "@crm/core";
-import { ORG_ID, offsetIso } from "@crm/core";
+} from "@elora/core";
+import { ORG_ID, offsetIso } from "@elora/core";
 
 import type { LiveConversation } from "@/app/api/webchat/live/route";
 

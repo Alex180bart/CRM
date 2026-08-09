@@ -1,7 +1,12 @@
-# CRM CF — instruções do repositório
+# Elora — instruções do repositório
 
-CRM omnichannel interno da Contabilidade Facilitada: atendimento, CRM 360º, automação e
-inteligência artificial em uma plataforma só.
+**Elora** é a plataforma omnichannel da Contabilidade Facilitada: atendimento, CRM 360º, automação e
+inteligência artificial em uma plataforma só. O nome junta *elo* (o vínculo com o cliente) e *ágora*
+(a praça onde tudo acontece no mesmo lugar), e fecha em *agora*.
+
+**Elora é o produto; Contabilidade Facilitada é a empresa.** A distinção decide renomeações: onde o
+texto é o escritório falando com o cliente dele — cabeçalho do widget, rodapé de e-mail, papel do
+agente de IA —, o nome que aparece é o da Contabilidade Facilitada, nunca o da plataforma.
 
 **A fonte da verdade do produto é `docs/referencia/plano-completo-crm-v2.txt`** (35 seções, extraído
 do documento aprovado em 27/07/2026). Antes de decidir escopo, modelo de dados, regra de negócio ou
@@ -400,7 +405,7 @@ travou compilando o Inbox".
 ```
 apps/web/            Next.js 15 (App Router) + React 19 + Tailwind 3
 packages/core/       tipos canônicos, utilitários, base de demonstração e repositórios
-packages/ui/         design system (@crm/ui) — tokens, componentes, primitivas Radix
+packages/ui/         design system (@elora/ui) — tokens, componentes, primitivas Radix
 packages/config/     preset Tailwind compartilhado
 docs/referencia/     Plano Completo (fonte da verdade)
 .claude/agents/      equipe de agentes especializados
@@ -489,7 +494,7 @@ traço aparece, não a mais favorável.
 
 **A conversa tem plano próprio.** O Inbox não usa `surface-sunken`: usa `--chat-canvas`, um bege
 azulado texturizado (`.chat-canvas`), com `--chat-in` e `--chat-out` nas bolhas. A textura é a mesma
-sensação do WhatsApp, a cor é Arena CF, e o desenho entra como **máscara** — o SVG em
+sensação do WhatsApp, a cor é Arena Elora, e o desenho entra como **máscara** — o SVG em
 `--chat-doodle-mask` carrega só a forma, a tinta sai de `--chat-doodle`. É assim que a mesma textura
 serve aos dois temas sem duplicar arquivo e sem hexadecimal em componente. As bolhas se separam por
 matiz, não por peso: texto escuro nas duas.
@@ -535,7 +540,7 @@ Números de referência do Inbox, medidos em build de produção (script, median
 **Multiempresa desde o tipo.** Toda entidade de negócio carrega `organizationId` (`BaseEntity`).
 Quando o back-end entrar, a RLS valida a associação do usuário à organização.
 
-## Identidade visual — Arena CF
+## Identidade visual — Arena Elora
 
 | Papel            | Cor       | HSL           |
 | ---------------- | --------- | ------------- |
@@ -575,22 +580,22 @@ Duas armadilhas ao mexer nisso:
 
 ## Equipe de agentes
 
-`.claude/agents/` traz onze especialistas mapeados aos papéis da seção 24 do plano:
+`.claude/agents/` traz doze especialistas mapeados aos papéis da seção 24 do plano:
 
 | Agente           | Escopo                                                          |
 | ---------------- | --------------------------------------------------------------- |
-| `crm-produto`    | requisitos, backlog, critérios de aceite, priorização MVP/P1/P2 |
-| `crm-ux`         | design system, tokens, densidade, acessibilidade                |
-| `crm-frontend`   | telas Next.js/React, estado de cliente, formulários             |
-| `crm-backend`    | Supabase, modelo de dados, RLS, eventos, outbox, filas          |
-| `crm-canais`     | WhatsApp, e-mail, webhooks, entregabilidade, DLQ                |
-| `crm-builders`   | Chatbot Builder, Journey Builder e seus runtimes                |
-| `crm-ia`         | AI Gateway, RAG, prompts, avaliação, custo                      |
-| `crm-qa`         | testes, CI/CD, observabilidade, runbooks                        |
-| `crm-dados`      | catálogo de eventos, métricas, dashboards, reconciliação        |
-| `crm-seguranca`  | LGPD, consentimento, retenção, auditoria, segredos              |
-| `crm-salesforce` | coexistência, propriedade de campos, migração por domínio       |
-| `crm-revisor`    | revisão adversarial antes de fechar entrega                     |
+| `elora-produto`    | requisitos, backlog, critérios de aceite, priorização MVP/P1/P2 |
+| `elora-ux`         | design system, tokens, densidade, acessibilidade                |
+| `elora-frontend`   | telas Next.js/React, estado de cliente, formulários             |
+| `elora-backend`    | Supabase, modelo de dados, RLS, eventos, outbox, filas          |
+| `elora-canais`     | WhatsApp, e-mail, webhooks, entregabilidade, DLQ                |
+| `elora-builders`   | Chatbot Builder, Journey Builder e seus runtimes                |
+| `elora-ia`         | AI Gateway, RAG, prompts, avaliação, custo                      |
+| `elora-qa`         | testes, CI/CD, observabilidade, runbooks                        |
+| `elora-dados`      | catálogo de eventos, métricas, dashboards, reconciliação        |
+| `elora-seguranca`  | LGPD, consentimento, retenção, auditoria, segredos              |
+| `elora-salesforce` | coexistência, propriedade de campos, migração por domínio       |
+| `elora-revisor`    | revisão adversarial antes de fechar entrega                     |
 
 ## Próximos passos (roadmap, seção 28)
 

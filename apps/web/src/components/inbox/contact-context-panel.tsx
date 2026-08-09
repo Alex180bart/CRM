@@ -1,13 +1,13 @@
 ﻿import Link from "next/link";
-import type { Company, Contact, Deal, Tag, User } from "@crm/core";
+import type { Company, Contact, Deal, Tag, User } from "@elora/core";
 import {
   formatCurrencyCents,
   formatPhone,
   formatRelative,
   LIFECYCLE_LABEL,
   maskDocument,
-} from "@crm/core";
-import { Avatar, Badge, Button, KeyValue, Separator, TagChip, Tooltip, cn } from "@crm/ui";
+} from "@elora/core";
+import { Avatar, Badge, Button, KeyValue, Separator, TagChip, Tooltip, cn } from "@elora/ui";
 import {
   ArrowUpRight,
   Building2,

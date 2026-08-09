@@ -9,14 +9,14 @@ import type {
   Pipeline,
   TimePoint,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   CHANNEL_LABEL,
   formatCurrencyCents,
   formatDuration,
   formatNumber,
   formatPercent,
-} from "@crm/core";
+} from "@elora/core";
 import {
   AnimatedNumber,
   Badge,
@@ -28,7 +28,7 @@ import {
   Sparkline,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowUpRight,
   Bot,

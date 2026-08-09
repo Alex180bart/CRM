@@ -7,9 +7,9 @@ import type {
   AgentTurnResult,
   AiAgentVersion,
   Queue,
-} from "@crm/core";
-import { AGENT_ACTION_LABEL, agentTool, formatTime, offsetIso } from "@crm/core";
-import { Badge, Button, Callout, Input, Switch, Textarea, Tooltip, cn } from "@crm/ui";
+} from "@elora/core";
+import { AGENT_ACTION_LABEL, agentTool, formatTime, offsetIso } from "@elora/core";
+import { Badge, Button, Callout, Input, Switch, Textarea, Tooltip, cn } from "@elora/ui";
 import {
   ArrowRightLeft,
   Bug,

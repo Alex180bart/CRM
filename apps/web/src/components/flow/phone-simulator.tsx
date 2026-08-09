@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { FlowPort } from "@crm/core";
-import { Badge, Button, KeyValue, cn } from "@crm/ui";
+import type { FlowPort } from "@elora/core";
+import { Badge, Button, KeyValue, cn } from "@elora/ui";
 import {
   ArrowLeft,
   Battery,

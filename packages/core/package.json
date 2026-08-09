@@ -1,5 +1,5 @@
 {
-  "name": "@crm/core",
+  "name": "@elora/core",
   "version": "0.1.0",
   "private": true,
   "type": "module",

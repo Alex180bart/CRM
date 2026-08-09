@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { ChannelAccount } from "@crm/core";
-import { CHANNEL_CATALOG, CHANNEL_READINESS_LABEL } from "@crm/core";
-import { Badge, Button, Eyebrow, Tooltip, cn } from "@crm/ui";
+import type { ChannelAccount } from "@elora/core";
+import { CHANNEL_CATALOG, CHANNEL_READINESS_LABEL } from "@elora/core";
+import { Badge, Button, Eyebrow, Tooltip, cn } from "@elora/ui";
 import { ArrowUpRight, Ban, CircleAlert, Link2, Plus, TriangleAlert } from "lucide-react";
 
 import { ChannelIcon } from "@/lib/channel";

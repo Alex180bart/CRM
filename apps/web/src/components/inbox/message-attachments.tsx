@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { Attachment } from "@crm/core";
-import { ATTACHMENT_KIND_LABEL, formatBytes } from "@crm/core";
-import { Badge, Dialog, DialogContent, DialogTitle, Tooltip, cn } from "@crm/ui";
+import type { Attachment } from "@elora/core";
+import { ATTACHMENT_KIND_LABEL, formatBytes } from "@elora/core";
+import { Badge, Dialog, DialogContent, DialogTitle, Tooltip, cn } from "@elora/ui";
 import {
   Download,
   ExternalLink,

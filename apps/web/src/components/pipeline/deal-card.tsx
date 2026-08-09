@@ -1,9 +1,9 @@
 ﻿"use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import type { Contact, Deal, PipelineStage, Tag, User } from "@crm/core";
-import { daysSince, formatCountdown, formatCurrencyCents } from "@crm/core";
-import { Avatar, Badge, TagChip, Tooltip, cn } from "@crm/ui";
+import type { Contact, Deal, PipelineStage, Tag, User } from "@elora/core";
+import { daysSince, formatCountdown, formatCurrencyCents } from "@elora/core";
+import { Avatar, Badge, TagChip, Tooltip, cn } from "@elora/ui";
 import { AlertTriangle, CalendarDays, GripVertical } from "lucide-react";
 
 export function DealCardBody({

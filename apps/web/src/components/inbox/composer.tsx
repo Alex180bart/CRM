@@ -12,8 +12,8 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import type { Attachment, CannedResponse, ChannelKind, AiToneAdjustment } from "@crm/core";
-import { AI_TONE_LABEL, formatBytes, minutesSince } from "@crm/core";
+import type { Attachment, CannedResponse, ChannelKind, AiToneAdjustment } from "@elora/core";
+import { AI_TONE_LABEL, formatBytes, minutesSince } from "@elora/core";
 import {
   Badge,
   Button,
@@ -30,7 +30,7 @@ import {
   Separator,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   AlertTriangle,
   Check,

@@ -1,7 +1,7 @@
 /**
- * Preset Tailwind do CRM CF.
+ * Preset Tailwind da Elora.
  *
- * A paleta é a identidade Arena CF: azul #102850, branco #FFFFFF e laranja #FF9933.
+ * A paleta é a identidade Arena Elora: azul #102850, branco #FFFFFF e laranja #FF9933.
  * Todas as cores são lidas de variáveis CSS em HSL declaradas em
  * `packages/ui/src/styles/tokens.css`, para permitir tema claro/escuro e
  * white-label por organização sem recompilar.

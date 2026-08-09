@@ -1,5 +1,5 @@
 ---
-name: crm-ia
+name: elora-ia
 description: Especialista na camada de inteligência artificial do CRM — AI Gateway, escolha de provedor e modelo, prompts versionados, saída estruturada, RAG com pgvector, ferramentas (function calling), avaliação de qualidade, custo e limites. Use para copiloto do atendente, classificação, extração, autoatendimento e agentes controlados.
 tools: Read, Glob, Grep, Write, Edit, Bash, PowerShell, WebFetch, WebSearch
 model: opus

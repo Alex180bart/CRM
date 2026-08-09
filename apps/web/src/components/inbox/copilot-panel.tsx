@@ -7,9 +7,9 @@ import type {
   AiResolvedProposal,
   AiRunMeta,
   Contact,
-} from "@crm/core";
-import { AI_SENTIMENT_LABEL, AI_URGENCY_LABEL } from "@crm/core";
-import { Badge, Button, Callout, EmptyState, Reveal, Skeleton, Tooltip, cn } from "@crm/ui";
+} from "@elora/core";
+import { AI_SENTIMENT_LABEL, AI_URGENCY_LABEL } from "@elora/core";
+import { Badge, Button, Callout, EmptyState, Reveal, Skeleton, Tooltip, cn } from "@elora/ui";
 import {
   AlertTriangle,
   Check,

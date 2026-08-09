@@ -17,9 +17,9 @@ import type {
   Queue,
   Tag,
   User,
-} from "@crm/core";
-import { CONVERSATION_STATE_LABEL, formatDateTime, offsetIso, resolveSlaStatus } from "@crm/core";
-import { Button, EmptyState, SearchInput, Tooltip, cn } from "@crm/ui";
+} from "@elora/core";
+import { CONVERSATION_STATE_LABEL, formatDateTime, offsetIso, resolveSlaStatus } from "@elora/core";
+import { Button, EmptyState, SearchInput, Tooltip, cn } from "@elora/ui";
 import { MessagesSquare, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 

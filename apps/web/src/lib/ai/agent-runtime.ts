@@ -39,8 +39,8 @@ import type {
   AiAgentVersion,
   AiRunMeta,
   Queue,
-} from "@crm/core";
-import { AGENT_TOOLS, repositories } from "@crm/core";
+} from "@elora/core";
+import { AGENT_TOOLS, repositories } from "@elora/core";
 
 import { runAgentTool } from "./agent-tools";
 import { buildMeta, redactCredentials } from "./gateway";

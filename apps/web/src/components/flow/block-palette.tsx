@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
-import { Button, SearchInput, Tooltip, cn } from "@crm/ui";
+import { Button, SearchInput, Tooltip, cn } from "@elora/ui";
 import { Plus } from "lucide-react";
 
 import { GROUP_LABEL, type NodeMeta } from "./node-meta";

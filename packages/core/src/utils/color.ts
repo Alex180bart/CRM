@@ -10,7 +10,7 @@
  * Mesma disciplina dos tokens em `tokens.css`: piso declarado e verificado, não
  * ajustado a olho.
  *
- * Função pura, em `@crm/core`, porque a mesma verificação vale para a tela que
+ * Função pura, em `@elora/core`, porque a mesma verificação vale para a tela que
  * avisa e para o compilador do widget que decide a cor da tinta.
  */
 

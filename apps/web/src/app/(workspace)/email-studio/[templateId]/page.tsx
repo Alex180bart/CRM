@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { repositories } from "@crm/core";
+import { repositories } from "@elora/core";
 
 import { EmailEditor } from "@/components/email/email-editor";
 

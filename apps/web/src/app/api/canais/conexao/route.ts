@@ -19,8 +19,8 @@
  * cliente para classificar a própria credencial.
  */
 
-import type { ChannelConnection } from "@crm/core";
-import { CURRENT_USER_ID, offsetIso, providerSpec, repositories } from "@crm/core";
+import type { ChannelConnection } from "@elora/core";
+import { CURRENT_USER_ID, offsetIso, providerSpec, repositories } from "@elora/core";
 import type { NextRequest } from "next/server";
 
 import { describeSecrets, secretRefFor, storeSecrets } from "@/lib/canais/vault";

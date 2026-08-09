@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import type { FlowNode, FlowPort } from "@crm/core";
+import type { FlowNode, FlowPort } from "@elora/core";
 import {
   Badge,
   Button,
@@ -15,7 +15,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { Info, Plus, Trash2 } from "lucide-react";
 
 /**

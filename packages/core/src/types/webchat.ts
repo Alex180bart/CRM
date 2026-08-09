@@ -92,7 +92,7 @@ export interface WidgetAppearance {
    * cliente apontando para um `blob:` que morre ao fechar a aba.
    */
   logoUrl?: string;
-  /** Assinatura discreta "Atendimento por CRM CF" no pé da janela. */
+  /** Assinatura discreta "Atendimento por Elora" no pé da janela. */
   showBranding: boolean;
 }
 

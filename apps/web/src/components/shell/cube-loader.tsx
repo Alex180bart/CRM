@@ -1,4 +1,4 @@
-import { cn } from "@crm/ui";
+import { cn } from "@elora/ui";
 
 /**
  * Carregador de rota.

@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Queue, QueueDistribution, SkillDefinition, User } from "@crm/core";
+import type { Queue, QueueDistribution, SkillDefinition, User } from "@elora/core";
 import {
   DISTRIBUTION_MODEL_HINT,
   DISTRIBUTION_MODEL_LABEL,
   QUEUE_DELIVERY_LABEL,
   decideAssignment,
   warnOfferBudget,
-} from "@crm/core";
-import type { DistributionModel, DistributionTiebreak, QueueDelivery } from "@crm/core";
+} from "@elora/core";
+import type { DistributionModel, DistributionTiebreak, QueueDelivery } from "@elora/core";
 import {
   Badge,
   Callout,
@@ -23,7 +23,7 @@ import {
   SelectValue,
   Switch,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { ArrowRight, CircleAlert, Info, UserX } from "lucide-react";
 
 /**

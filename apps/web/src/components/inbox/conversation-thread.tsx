@@ -11,13 +11,13 @@ import type {
   Message,
   Queue,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   CONVERSATION_STATE_LABEL,
   differenceInCalendarDays,
   formatDayHeading,
   OPEN_CONVERSATION_STATES,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -31,7 +31,7 @@ import {
   DropdownMenuTrigger,
   PresenceDot,
   Tooltip,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowRightLeft,
   ArrowDown,

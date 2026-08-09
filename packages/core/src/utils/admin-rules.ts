@@ -6,7 +6,7 @@
  * possível excluir porque duas contas de canal entregam nesta fila" é uma
  * instrução — quem lê sabe o que fazer para desbloquear.
  *
- * Ficam em `@crm/core` porque a mesma pergunta é feita em dois momentos: a tela
+ * Ficam em `@elora/core` porque a mesma pergunta é feita em dois momentos: a tela
  * pergunta para desabilitar o botão antes do clique, e o repositório pergunta de
  * novo antes de gravar. Duplicar a lógica produziria a divergência clássica —
  * botão habilitado e escrita recusada, ou pior, botão desabilitado e escrita

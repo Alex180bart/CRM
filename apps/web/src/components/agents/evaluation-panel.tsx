@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { AgentEvalRun, AiAgentVersion } from "@crm/core";
-import { AGENT_CHECK_LABEL, formatPercent } from "@crm/core";
-import { Badge, Button, Callout, Eyebrow, ProgressBar, cn } from "@crm/ui";
+import type { AgentEvalRun, AiAgentVersion } from "@elora/core";
+import { AGENT_CHECK_LABEL, formatPercent } from "@elora/core";
+import { Badge, Button, Callout, Eyebrow, ProgressBar, cn } from "@elora/ui";
 import { CircleAlert, CircleCheck, FlaskConical, Loader2, PlayCircle } from "lucide-react";
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger, SearchInput, Tooltip, cn } from "@crm/ui";
+import { Popover, PopoverContent, PopoverTrigger, SearchInput, Tooltip, cn } from "@elora/ui";
 import { Clock, Smile } from "lucide-react";
 
 import {

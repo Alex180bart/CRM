@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { FlowPort } from "@crm/core";
-import { Badge, Button, Input, KeyValue, Separator, cn } from "@crm/ui";
+import type { FlowPort } from "@elora/core";
+import { Badge, Button, Input, KeyValue, Separator, cn } from "@elora/ui";
 import { Bot, Play, RotateCcw, Send, TerminalSquare, User } from "lucide-react";
 
 import type { SimulatorEntry, SimulatorStatus } from "./use-simulator";

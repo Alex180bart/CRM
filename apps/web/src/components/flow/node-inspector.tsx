@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import type { FlowNode, FlowPort, FlowValidationIssue } from "@crm/core";
-import { Badge, Button, EmptyState, Input, Label, Separator, Textarea, cn } from "@crm/ui";
+import type { FlowNode, FlowPort, FlowValidationIssue } from "@elora/core";
+import { Badge, Button, EmptyState, Input, Label, Separator, Textarea, cn } from "@elora/ui";
 import { AlertTriangle, CircleAlert, MousePointerSquareDashed, Trash2 } from "lucide-react";
 
 import { AiNodeConfig } from "./ai-node-config";

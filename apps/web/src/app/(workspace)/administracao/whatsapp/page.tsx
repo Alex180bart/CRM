@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { repositories } from "@crm/core";
-import { Button } from "@crm/ui";
+import { repositories } from "@elora/core";
+import { Button } from "@elora/ui";
 import { ArrowLeft } from "lucide-react";
 
 import { WhatsappSetup } from "@/components/admin/whatsapp-setup";

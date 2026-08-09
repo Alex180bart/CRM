@@ -15,8 +15,8 @@
  * que ele existe — ver o comportamento antes de publicar.
  */
 
-import type { AiAgentVersion } from "@crm/core";
-import { repositories } from "@crm/core";
+import type { AiAgentVersion } from "@elora/core";
+import { repositories } from "@elora/core";
 import type { NextRequest } from "next/server";
 
 import { runAgentTurn } from "@/lib/ai/agent-runtime";

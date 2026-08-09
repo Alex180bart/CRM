@@ -14,7 +14,7 @@
  * e extensão vindos do navegador são declaração do usuário, não fato.
  */
 
-import type { Attachment, AttachmentKind, MediaProvider } from "@crm/core";
+import type { Attachment, AttachmentKind, MediaProvider } from "@elora/core";
 
 /** Teto por arquivo. O WhatsApp aceita 16 MB em mídia e 100 MB em documento. */
 export const MAX_ATTACHMENT_BYTES = 16 * 1024 * 1024;

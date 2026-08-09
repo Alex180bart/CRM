@@ -336,7 +336,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
   },
 ];
 
-const RECENTS_KEY = "crm-cf:emoji-recentes";
+const RECENTS_KEY = "elora:emoji-recentes";
 const MAX_RECENTS = 24;
 
 /**

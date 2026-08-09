@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CURRENT_USER_ID, repositories } from "@crm/core";
+import { CURRENT_USER_ID, repositories } from "@elora/core";
 
 import { HomeDashboard } from "@/components/home/home-dashboard";
 

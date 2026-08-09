@@ -27,8 +27,8 @@
  * contaminar o resultado com falhas que não são do agente.
  */
 
-import type { AgentEvalCheck, AgentEvalCaseResult, AgentEvalRun, AiAgentVersion } from "@crm/core";
-import { normalizeTerm, offsetIso, repositories } from "@crm/core";
+import type { AgentEvalCheck, AgentEvalCaseResult, AgentEvalRun, AiAgentVersion } from "@elora/core";
+import { normalizeTerm, offsetIso, repositories } from "@elora/core";
 import type { NextRequest } from "next/server";
 
 import { runAgentTurn } from "@/lib/ai/agent-runtime";

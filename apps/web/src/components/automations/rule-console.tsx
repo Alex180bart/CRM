@@ -8,7 +8,7 @@ import type {
   RuleRun,
   RuleTriggerKind,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   formatDuration,
   formatNumber,
@@ -18,7 +18,7 @@ import {
   RULE_OPERATOR_LABEL,
   RULE_TRIGGER_EVENT,
   RULE_TRIGGER_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -36,7 +36,7 @@ import {
   TabsTrigger,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowRight,
   BellRing,

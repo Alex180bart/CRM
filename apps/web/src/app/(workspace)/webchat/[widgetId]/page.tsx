@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { repositories } from "@crm/core";
+import { repositories } from "@elora/core";
 
 import { WidgetEditor } from "@/components/webchat/widget-editor";
 

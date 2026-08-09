@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { AgentKnowledgeSource, AiAgent, AiAgentVersion, Queue } from "@crm/core";
+import type { AgentKnowledgeSource, AiAgent, AiAgentVersion, Queue } from "@elora/core";
 import {
   AGENT_EMOJI_LABEL,
   AGENT_KNOWLEDGE_MODE_LABEL,
@@ -23,7 +23,7 @@ import {
   type AgentObjective,
   type AgentRoutingMode,
   type AgentTone,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -45,7 +45,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   BookOpen,
   CircleAlert,

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { FlowValidationIssue } from "@crm/core";
-import { FLOW_VALIDATION_LABEL } from "@crm/core";
-import { Badge, Button, cn } from "@crm/ui";
+import type { FlowValidationIssue } from "@elora/core";
+import { FLOW_VALIDATION_LABEL } from "@elora/core";
+import { Badge, Button, cn } from "@elora/ui";
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, CircleAlert } from "lucide-react";
 
 /**

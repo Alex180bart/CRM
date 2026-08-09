@@ -9,7 +9,7 @@ import type {
   JourneyEnrollment,
   JourneyNode,
   JourneyVersion,
-} from "@crm/core";
+} from "@elora/core";
 import {
   FLOW_STATUS_LABEL,
   formatCountdown,
@@ -21,7 +21,7 @@ import {
   offsetIso,
   REENTRY_LABEL,
   validateFlow,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -48,7 +48,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { ArrowLeft, ChevronDown, Clock, History, Play, Rocket, Target, Users } from "lucide-react";
 import { toast } from "sonner";
 

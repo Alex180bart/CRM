@@ -16,7 +16,7 @@
  * metade, alcançabilidade pela internet, só a Meta prova, e a tela diz isso.
  */
 
-import type { WhatsappDiagnostics } from "@crm/core";
+import type { WhatsappDiagnostics } from "@elora/core";
 import type { NextRequest } from "next/server";
 
 import { recentEvents, whatsappEnv, webhookUrlFrom } from "@/lib/canais/whatsapp";

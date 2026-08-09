@@ -33,8 +33,8 @@ import type {
   ScheduleDay,
   ScheduleException,
   TimeRange,
-} from "@crm/core";
-import { CURRENT_USER_ID, DEFAULT_DISTRIBUTION, repositories } from "@crm/core";
+} from "@elora/core";
+import { CURRENT_USER_ID, DEFAULT_DISTRIBUTION, repositories } from "@elora/core";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { AttentionItem } from "@crm/core";
-import { formatCountdown, minutesUntil } from "@crm/core";
-import { Badge, Button, EmptyState, cn } from "@crm/ui";
+import type { AttentionItem } from "@elora/core";
+import { formatCountdown, minutesUntil } from "@elora/core";
+import { Badge, Button, EmptyState, cn } from "@elora/ui";
 import {
   AlarmClock,
   ArrowRight,

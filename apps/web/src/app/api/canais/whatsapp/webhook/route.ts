@@ -34,7 +34,7 @@ import {
   parseWhatsappWebhook,
   publishEvent,
   repositories,
-} from "@crm/core";
+} from "@elora/core";
 import type { NextRequest } from "next/server";
 
 import { resolveSecret, secretRefFor } from "@/lib/canais/vault";

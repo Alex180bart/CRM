@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { ChannelAccount, ChannelKind, Queue } from "@crm/core";
+import type { ChannelAccount, ChannelKind, Queue } from "@elora/core";
 import {
   CHANNEL_LABEL,
   CONNECTABLE_KINDS,
   connectionMissingFields,
   providerSpec,
   providersForKind,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -26,7 +26,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@crm/ui";
+} from "@elora/ui";
 import { CheckCircle2, CircleAlert, KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import type { Organization, User } from "@crm/core";
-import { PRESENCE_LABEL, ROLE_LABEL } from "@crm/core";
+import type { Organization, User } from "@elora/core";
+import { PRESENCE_LABEL, ROLE_LABEL } from "@elora/core";
 import {
   Avatar,
   Button,
@@ -17,7 +17,7 @@ import {
   PresenceDot,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { ChevronsLeft, ChevronsRight, LogOut, Settings, ShieldCheck } from "lucide-react";
 
 import { SidebarBrand } from "./logo";

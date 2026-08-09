@@ -1,5 +1,5 @@
 ---
-name: crm-salesforce
+name: elora-salesforce
 description: Especialista em Salesforce e na coexistência com o CRM interno — inventário de objetos, Flows, filas, casos, Marketing Cloud, Journey Builder, matriz de propriedade de campos, sincronização bidirecional, reconciliação e migração por domínio.
 tools: Read, Glob, Grep, Write, Edit, Bash, PowerShell, WebFetch, WebSearch
 model: opus

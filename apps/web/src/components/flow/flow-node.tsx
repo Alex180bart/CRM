@@ -1,8 +1,8 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import type { FlowPort } from "@crm/core";
-import { cn } from "@crm/ui";
+import type { FlowPort } from "@elora/core";
+import { cn } from "@elora/ui";
 import { AlertTriangle, CircleAlert, Trash2 } from "lucide-react";
 
 import type { NodeMeta } from "./node-meta";

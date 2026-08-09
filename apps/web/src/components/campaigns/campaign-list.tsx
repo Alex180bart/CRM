@@ -9,7 +9,7 @@ import type {
   Segment,
   TemplateStatus,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   CAMPAIGN_STATUS_LABEL,
   formatCountdown,
@@ -19,7 +19,7 @@ import {
   formatRelative,
   SEGMENT_OPERATOR_LABEL,
   TEMPLATE_STATUS_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -39,7 +39,7 @@ import {
   Tooltip,
   cn,
   seriesColor,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   AlertTriangle,
   ArrowUpRight,

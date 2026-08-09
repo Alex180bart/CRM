@@ -1,8 +1,8 @@
 {
-  "name": "crm-cf",
+  "name": "elora",
   "private": true,
   "version": "0.1.0",
-  "description": "CRM Omnichannel da Contabilidade Facilitada — atendimento, automação e inteligência artificial",
+  "description": "Elora — plataforma omnichannel da Contabilidade Facilitada: atendimento, CRM 360º, automação e inteligência artificial",
   "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=20.11.0",

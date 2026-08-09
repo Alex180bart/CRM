@@ -6,7 +6,7 @@
   FlowRunState,
   WebchatWidget,
   WebchatWidgetVersion,
-} from "@crm/core";
+} from "@elora/core";
 import {
   BOT_RUN_OPTIONS,
   activeAgentVersion,
@@ -18,7 +18,7 @@ import {
   publishEvent,
   repositories,
   startFlow,
-} from "@crm/core";
+} from "@elora/core";
 
 import { runAgentTurn } from "@/lib/ai/agent-runtime";
 

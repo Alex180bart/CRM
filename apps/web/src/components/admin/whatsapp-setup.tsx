@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { ChannelAccount, Queue, WhatsappDiagnostics } from "@crm/core";
-import { formatDateTime } from "@crm/core";
+import type { ChannelAccount, Queue, WhatsappDiagnostics } from "@elora/core";
+import { formatDateTime } from "@elora/core";
 import {
   Badge,
   Button,
@@ -14,7 +14,7 @@ import {
   StatusDot,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { toast } from "sonner";
 import {
   Building2,

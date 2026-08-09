@@ -29,8 +29,8 @@ import type {
   Queue,
   Tag,
   User,
-} from "@crm/core";
-import { CONVERSATION_STATE_LABEL, LIFECYCLE_LABEL, formatCurrencyCents } from "@crm/core";
+} from "@elora/core";
+import { CONVERSATION_STATE_LABEL, LIFECYCLE_LABEL, formatCurrencyCents } from "@elora/core";
 
 /**
  * Fatos do contato que mudam a resposta correta.

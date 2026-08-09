@@ -1,6 +1,6 @@
 "use client";
 
-import { TooltipProvider } from "@crm/ui";
+import { TooltipProvider } from "@elora/ui";
 import { Toaster } from "sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {

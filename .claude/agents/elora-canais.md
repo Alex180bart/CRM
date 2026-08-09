@@ -1,5 +1,5 @@
 ---
-name: crm-canais
+name: elora-canais
 description: Especialista em canais e integrações do CRM — WhatsApp Business Platform, e-mail transacional e de marketing, Instagram, Messenger, webchat, webhooks, filas, rate limit e entregabilidade. Use para conectar números, tratar templates e status, montar workers de envio, lidar com falhas/DLQ e cuidar de reputação de número e domínio.
 tools: Read, Glob, Grep, Write, Edit, Bash, PowerShell, WebFetch, WebSearch
 model: opus

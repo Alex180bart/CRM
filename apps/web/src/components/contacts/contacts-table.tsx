@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { Company, Contact, LifecycleStage, Tag, User } from "@crm/core";
-import { formatNumber, formatPhone, formatRelative, LIFECYCLE_LABEL } from "@crm/core";
+import type { Company, Contact, LifecycleStage, Tag, User } from "@elora/core";
+import { formatNumber, formatPhone, formatRelative, LIFECYCLE_LABEL } from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -20,7 +20,7 @@ import {
   TagChip,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   Building2,
   ChevronDown,

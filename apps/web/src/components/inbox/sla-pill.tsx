@@ -1,6 +1,6 @@
-import type { Conversation } from "@crm/core";
-import { formatCountdown, SLA_STATUS_LABEL } from "@crm/core";
-import { Badge, Tooltip, cn } from "@crm/ui";
+import type { Conversation } from "@elora/core";
+import { formatCountdown, SLA_STATUS_LABEL } from "@elora/core";
+import { Badge, Tooltip, cn } from "@elora/ui";
 import { AlarmClock, CheckCircle2, PauseCircle, TimerReset } from "lucide-react";
 
 const SLA_TONE = {

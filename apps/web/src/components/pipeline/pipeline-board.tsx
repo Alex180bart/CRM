@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import type { Company, Contact, Deal, Pipeline, PipelineStage, Tag, User } from "@crm/core";
+import type { Company, Contact, Deal, Pipeline, PipelineStage, Tag, User } from "@elora/core";
 import {
   daysSince,
   formatCurrencyCents,
@@ -19,7 +19,7 @@ import {
   formatNumber,
   formatPercent,
   offsetIso,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -47,7 +47,7 @@ import {
   SelectValue,
   TagChip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { AlertTriangle, Briefcase, ChevronDown, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 

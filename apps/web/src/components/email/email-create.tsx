@@ -11,14 +11,14 @@ import type {
   EmailDesignTemplate,
   EmailModule,
   EmailTemplateVersion,
-} from "@crm/core";
+} from "@elora/core";
 import {
   AI_EMAIL_OBJECTIVE_LABEL,
   AI_EMAIL_TONE_LABEL,
   CURRENT_USER_ID,
   ORG_ID,
   offsetIso,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -34,7 +34,7 @@ import {
   SelectValue,
   Textarea,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { ArrowLeft, FileCode2, LayoutTemplate, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 

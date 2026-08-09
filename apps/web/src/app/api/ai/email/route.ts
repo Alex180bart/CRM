@@ -8,7 +8,7 @@
  */
 
 import type { NextRequest } from "next/server";
-import type { AiEmailDraftInput, AiEmailObjective, AiEmailTone } from "@crm/core";
+import type { AiEmailDraftInput, AiEmailObjective, AiEmailTone } from "@elora/core";
 
 import { GatewayFailure, enforceRateLimit, runEmailDraft } from "@/lib/ai/gateway";
 

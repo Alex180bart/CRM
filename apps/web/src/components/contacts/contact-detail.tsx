@@ -11,7 +11,7 @@ import type {
   Task,
   TimelineEntry,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   CONVERSATION_STATE_LABEL,
   formatCountdown,
@@ -20,7 +20,7 @@ import {
   formatPhone,
   formatRelative,
   LIFECYCLE_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -40,7 +40,7 @@ import {
   TabsList,
   TabsTrigger,
   Tooltip,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowLeft,
   Briefcase,

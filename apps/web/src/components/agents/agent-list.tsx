@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { AiAgent, Queue, User } from "@crm/core";
+import type { AiAgent, Queue, User } from "@elora/core";
 import {
   AGENT_OBJECTIVE_LABEL,
   AGENT_TOOLS,
@@ -12,7 +12,7 @@ import {
   formatPercent,
   hasBlockingAgentIssue,
   validateAgentVersion,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -24,7 +24,7 @@ import {
   StatTile,
   StatusDot,
   Tooltip,
-} from "@crm/ui";
+} from "@elora/ui";
 import { ArrowUpRight, Bot, CircleAlert, Coins, Headset, ShieldCheck, Wrench } from "lucide-react";
 
 /**

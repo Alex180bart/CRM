@@ -1,6 +1,6 @@
 # Arquitetura — front das fases 2 a 4
 
-Este documento registra o que foi decidido para o front-end do CRM CF e o que muda quando a fundação
+Este documento registra o que foi decidido para o front-end da Elora e o que muda quando a fundação
 de back-end entrar. Referências entre parênteses apontam para as seções do Plano Completo em
 `docs/referencia/plano-completo-crm-v2.txt`.
 

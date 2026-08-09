@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { FlowEdge, FlowNode, FlowRunOptions, FlowRunState } from "@crm/core";
-import { EMPTY_FLOW_RUN, answerFlow, startFlow } from "@crm/core";
+import type { FlowEdge, FlowNode, FlowRunOptions, FlowRunState } from "@elora/core";
+import { EMPTY_FLOW_RUN, answerFlow, startFlow } from "@elora/core";
 
 /**
  * Simulador do fluxo — casca de React sobre o runtime.
  *
- * O percurso saiu daqui para `@crm/core/utils/flow-runtime` quando o webchat ao
+ * O percurso saiu daqui para `@elora/core/utils/flow-runtime` quando o webchat ao
  * vivo passou a precisar das mesmas regras. Manter duas implementações
  * produziria a divergência que mais custa caro num construtor visual: o fluxo
  * aprovado no simulador se comportando de outro jeito na frente do visitante.

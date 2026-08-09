@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { Campaign, ChannelAccount, MessageTemplate, Segment, User } from "@crm/core";
+import type { Campaign, ChannelAccount, MessageTemplate, Segment, User } from "@elora/core";
 import {
   formatCountdown,
   formatCurrencyCents,
@@ -11,7 +11,7 @@ import {
   formatPercent,
   formatRelative,
   TEMPLATE_STATUS_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -40,7 +40,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   AlertTriangle,
   ArrowLeft,

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AGENT_ACTION_LABEL, SATISFACTION_LABEL, agentTool } from "@crm/core";
-import { Badge, Button, Callout, Eyebrow, Tooltip, cn } from "@crm/ui";
+import { AGENT_ACTION_LABEL, SATISFACTION_LABEL, agentTool } from "@elora/core";
+import { Badge, Button, Callout, Eyebrow, Tooltip, cn } from "@elora/ui";
 import {
   CircleAlert,
   CircleCheck,

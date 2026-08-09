@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { BotFlow, BotFlowVersion, BotNode, FlowNode } from "@crm/core";
+import type { BotFlow, BotFlowVersion, BotNode, FlowNode } from "@elora/core";
 import {
   BOT_NODE_LABEL,
   FLOW_STATUS_LABEL,
@@ -12,7 +12,7 @@ import {
   hasBlockingIssue,
   offsetIso,
   validateFlow,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -31,7 +31,7 @@ import {
   KeyValue,
   Textarea,
   Tooltip,
-} from "@crm/ui";
+} from "@elora/ui";
 import { ArrowLeft, ChevronDown, History, Play, Rocket, Shield } from "lucide-react";
 import { toast } from "sonner";
 

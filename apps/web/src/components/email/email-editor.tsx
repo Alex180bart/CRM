@@ -9,7 +9,7 @@ import type {
   EmailDesignTemplate,
   EmailModule,
   EmailTemplateVersion,
-} from "@crm/core";
+} from "@elora/core";
 import {
   EMAIL_BLOCK_LABEL,
   EMAIL_VALIDATION_LABEL,
@@ -20,7 +20,7 @@ import {
   hasBlockingEmailIssue,
   offsetIso,
   validateEmailTemplate,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -41,7 +41,7 @@ import {
   KeyValue,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowLeft,
   CheckCircle2,

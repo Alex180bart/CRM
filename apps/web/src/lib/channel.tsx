@@ -1,5 +1,5 @@
-import type { ChannelKind } from "@crm/core";
-import { cn } from "@crm/ui";
+import type { ChannelKind } from "@elora/core";
+import { cn } from "@elora/ui";
 import { AtSign, FileText, Globe, Lock, Phone, type LucideIcon } from "lucide-react";
 
 import {

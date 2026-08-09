@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { CURRENT_USER_ID, repositories } from "@crm/core";
-import type { Deal, InternalNote, Message } from "@crm/core";
-import { Badge, Button } from "@crm/ui";
+import { CURRENT_USER_ID, repositories } from "@elora/core";
+import type { Deal, InternalNote, Message } from "@elora/core";
+import { Badge, Button } from "@elora/ui";
 import { BookOpen, Plus } from "lucide-react";
 
 import { InboxWorkspace } from "@/components/inbox/inbox-workspace";

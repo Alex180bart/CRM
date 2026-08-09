@@ -1,15 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { AgentKnowledgeSource } from "@crm/core";
+import type { AgentKnowledgeSource } from "@elora/core";
 import {
   AGENT_PENDING_EXTENSIONS,
   AGENT_SOURCE_KIND_LABEL,
   AGENT_SOURCE_STATUS_LABEL,
   AGENT_TEXT_EXTENSIONS,
   formatDate,
-} from "@crm/core";
-import { Badge, Button, Callout, Input, Label, Switch, Tooltip, cn } from "@crm/ui";
+} from "@elora/core";
+import { Badge, Button, Callout, Input, Label, Switch, Tooltip, cn } from "@elora/ui";
 import { CircleAlert, Clock, FileText, Link2, Loader2, Paperclip, Trash2 } from "lucide-react";
 
 /**

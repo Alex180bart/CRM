@@ -1,5 +1,5 @@
 ---
-name: crm-dados
+name: elora-dados
 description: Especialista em dados e analytics do CRM — catálogo de eventos, dicionário de métricas, dashboards de atendimento/vendas/campanhas, funis, SLA, custos, reconciliação entre sistemas e qualidade de cadastro (duplicidade, completude, divergência).
 tools: Read, Glob, Grep, Write, Edit, Bash, PowerShell
 model: opus

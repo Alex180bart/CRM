@@ -8,7 +8,7 @@ import {
   useReactFlow,
   type EdgeProps,
 } from "@xyflow/react";
-import { cn } from "@crm/ui";
+import { cn } from "@elora/ui";
 import { Plus } from "lucide-react";
 
 /**

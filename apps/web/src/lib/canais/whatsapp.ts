@@ -19,8 +19,8 @@
  */
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { WhatsappWebhookEvents, WhatsappWebhookLog } from "@crm/core";
-import { offsetIso } from "@crm/core";
+import type { WhatsappWebhookEvents, WhatsappWebhookLog } from "@elora/core";
+import { offsetIso } from "@elora/core";
 
 /* Credenciais ---------------------------------------------------------------- */
 

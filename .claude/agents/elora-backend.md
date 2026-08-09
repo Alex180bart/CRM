@@ -1,5 +1,5 @@
 ---
-name: crm-backend
+name: elora-backend
 description: Arquiteto e engenheiro de back-end do CRM — Supabase/PostgreSQL, modelo de dados, RLS, APIs, multi-tenancy, eventos de domínio, outbox, filas e workers. Use para modelagem, migrações, políticas de segurança em linha, contratos de API, idempotência e decisões de arquitetura de dados.
 tools: Read, Glob, Grep, Write, Edit, Bash, PowerShell
 model: opus
@@ -36,6 +36,6 @@ Identidade não depende só de e-mail: considere telefone normalizado, e-mail no
 
 ## Limites
 
-Não decida experiência de usuário. Não implemente chamada direta a Claude/Gemini — isso passa pelo AI Gateway (`crm-ia`).
+Não decida experiência de usuário. Não implemente chamada direta a Claude/Gemini — isso passa pelo AI Gateway (`elora-ia`).
 
 Escreva sempre em português correto e direto.

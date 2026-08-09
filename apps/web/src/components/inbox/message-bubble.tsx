@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { InternalNote, Message } from "@crm/core";
-import { DELIVERY_STATUS_LABEL, formatTime } from "@crm/core";
-import { Avatar, Badge, Tooltip, cn } from "@crm/ui";
+import type { InternalNote, Message } from "@elora/core";
+import { DELIVERY_STATUS_LABEL, formatTime } from "@elora/core";
+import { Avatar, Badge, Tooltip, cn } from "@elora/ui";
 import {
   AlertTriangle,
   Bot,
@@ -26,7 +26,7 @@ import type { ComposerQuote } from "./composer";
  * a hora dentro da bolha economiza uma linha por mensagem, e o agrupamento de
  * mensagens seguidas do mesmo autor tira o ruído de repetir nome e avatar.
  *
- * O que **não** vem do WhatsApp: as cores (identidade Arena CF, via token) e o
+ * O que **não** vem do WhatsApp: as cores (identidade Arena Elora, via token) e o
  * selo de template aprovado, que é exigência de canal oficial e precisa ser
  * visível para o atendente entender por que a mensagem saiu daquele jeito.
  */

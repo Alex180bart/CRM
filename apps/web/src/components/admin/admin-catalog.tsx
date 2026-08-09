@@ -12,13 +12,13 @@ import type {
   SkillDefinition,
   Tag,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   CHANNEL_LABEL,
   CUSTOM_FIELD_ENTITY_LABEL,
   CUSTOM_FIELD_TYPE_LABEL,
   canDeleteSkill,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -37,7 +37,7 @@ import {
   TabsTrigger,
   Textarea,
   Tooltip,
-} from "@crm/ui";
+} from "@elora/ui";
 import { Lock, Plus, Sigma } from "lucide-react";
 
 import { ConfirmDelete, EditorShell, Field, RowActions } from "./admin-editors";

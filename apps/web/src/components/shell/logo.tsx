@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { cn } from "@crm/ui";
+import { cn } from "@elora/ui";
 
 /**
  * Marca do produto.

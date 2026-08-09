@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { repositories } from "@crm/core";
+import { repositories } from "@elora/core";
 
 import { CampaignWizard } from "@/components/campaigns/campaign-wizard";
 

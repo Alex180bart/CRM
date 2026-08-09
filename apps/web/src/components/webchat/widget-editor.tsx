@@ -14,7 +14,7 @@ import type {
   WidgetIcon,
   WidgetLauncher,
   WidgetPosition,
-} from "@crm/core";
+} from "@elora/core";
 import {
   BOT_RUN_OPTIONS,
   buildEmbedSnippet,
@@ -36,7 +36,7 @@ import {
   WIDGET_POSITION_LABEL,
   weekdayLabel,
   type OutsideHoursBehavior,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -70,7 +70,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowLeft,
   Bot,
@@ -661,7 +661,7 @@ export function WidgetEditor({
               </div>
 
               <ToggleRow
-                label="Mostrar assinatura “Atendimento por CRM CF”"
+                label="Mostrar assinatura “Atendimento por Elora”"
                 hint="Discreta, no pé da janela."
                 checked={version.appearance.showBranding}
                 disabled={readOnly}

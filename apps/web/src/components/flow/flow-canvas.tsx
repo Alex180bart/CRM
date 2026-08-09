@@ -15,7 +15,7 @@ import {
   type Node,
   type NodeChange,
 } from "@xyflow/react";
-import type { FlowEdge, FlowNode, FlowValidationIssue } from "@crm/core";
+import type { FlowEdge, FlowNode, FlowValidationIssue } from "@elora/core";
 
 import { CrmFlowEdge, type CrmEdgeData } from "./flow-edge";
 import { CrmFlowNode, type CrmFlowNodeData } from "./flow-node";

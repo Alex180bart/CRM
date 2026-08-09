@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { repositories } from "@crm/core";
-import type { Deal } from "@crm/core";
-import { Button } from "@crm/ui";
+import { repositories } from "@elora/core";
+import type { Deal } from "@elora/core";
+import { Button } from "@elora/ui";
 import { Settings2 } from "lucide-react";
 
 import { PageHeader } from "@/components/shell/page-header";

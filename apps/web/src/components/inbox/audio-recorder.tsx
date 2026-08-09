@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Attachment } from "@crm/core";
-import { Button, Tooltip, cn } from "@crm/ui";
+import type { Attachment } from "@elora/core";
+import { Button, Tooltip, cn } from "@elora/ui";
 import { Check, Mic, Pause, Play, Square, Trash2 } from "lucide-react";
 
 /**

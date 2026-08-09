@@ -4,7 +4,7 @@
 @import "@fontsource/sora/600.css";
 @import "@fontsource/sora/700.css";
 
-@import "@crm/ui/styles.css";
+@import "@elora/ui/styles.css";
 
 :root {
   /* Inter carrega a interface; Sora carrega números e títulos de seção. */

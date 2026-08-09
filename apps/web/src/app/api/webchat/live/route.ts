@@ -14,7 +14,7 @@
  * da sessão.
  */
 
-import type { AgentPendingAction, AgentTraceStep } from "@crm/core";
+import type { AgentPendingAction, AgentTraceStep } from "@elora/core";
 import type { NextRequest } from "next/server";
 
 import { listLiveSessions, replyFromAgent } from "@/lib/webchat/server";

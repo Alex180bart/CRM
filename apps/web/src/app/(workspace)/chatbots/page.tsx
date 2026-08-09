@@ -1,8 +1,8 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
-import { repositories } from "@crm/core";
-import { FLOW_STATUS_LABEL, formatDate, formatNumber, formatPercent } from "@crm/core";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, ProgressBar } from "@crm/ui";
+import { repositories } from "@elora/core";
+import { FLOW_STATUS_LABEL, formatDate, formatNumber, formatPercent } from "@elora/core";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, ProgressBar } from "@elora/ui";
 import { ArrowUpRight, Bot, Plus } from "lucide-react";
 
 import { ChannelIcon } from "@/lib/channel";

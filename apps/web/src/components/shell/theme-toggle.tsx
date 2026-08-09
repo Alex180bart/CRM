@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@crm/ui";
+import { Button } from "@elora/ui";
 import { Moon, Sun } from "lucide-react";
 
-const STORAGE_KEY = "crm-cf-theme";
+const STORAGE_KEY = "elora-theme";
 
 /**
  * O tema é aplicado por um script no `<head>` antes da primeira pintura. Este

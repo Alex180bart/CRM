@@ -1,8 +1,8 @@
 "use client";
 
-import type { ChannelKind, ConversationState, Queue } from "@crm/core";
-import { CONVERSATION_STATE_LABEL, OPEN_CONVERSATION_STATES } from "@crm/core";
-import { Button, Separator, cn } from "@crm/ui";
+import type { ChannelKind, ConversationState, Queue } from "@elora/core";
+import { CONVERSATION_STATE_LABEL, OPEN_CONVERSATION_STATES } from "@elora/core";
+import { Button, Separator, cn } from "@elora/ui";
 import { AlarmClock, Inbox, UserCheck, UserX } from "lucide-react";
 
 import { ChannelIcon, channelStyle } from "@/lib/channel";

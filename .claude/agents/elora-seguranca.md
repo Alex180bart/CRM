@@ -1,5 +1,5 @@
 ---
-name: crm-seguranca
+name: elora-seguranca
 description: Segurança da informação, LGPD e governança do CRM. Use para revisar RLS e permissões, consentimento e supressão, retenção e anonimização, gestão de segredos, auditoria, controles de disparo em massa, resposta a incidente e qualquer mudança que toque dado pessoal.
 tools: Read, Glob, Grep, Write, Edit, Bash, PowerShell
 model: opus

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { repositories } from "@crm/core";
-import { Button } from "@crm/ui";
+import { repositories } from "@elora/core";
+import { Button } from "@elora/ui";
 import { Download } from "lucide-react";
 
 import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";

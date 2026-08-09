@@ -14,8 +14,8 @@
  * cada destino falha sozinho.
  */
 
-import type { DomainEvent, OutboxDestination } from "@crm/core";
-import { drainOutbox, listEvents, listOutbox, replayEntry } from "@crm/core";
+import type { DomainEvent, OutboxDestination } from "@elora/core";
+import { drainOutbox, listEvents, listOutbox, replayEntry } from "@elora/core";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";

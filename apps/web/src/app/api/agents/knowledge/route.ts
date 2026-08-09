@@ -23,7 +23,7 @@
  * deu certo.
  */
 
-import type { AgentKnowledgeSource } from "@crm/core";
+import type { AgentKnowledgeSource } from "@elora/core";
 import {
   csvToText,
   htmlToText,
@@ -31,7 +31,7 @@ import {
   planFile,
   readHtmlTitle,
   suggestTopics,
-} from "@crm/core";
+} from "@elora/core";
 import type { NextRequest } from "next/server";
 
 import { TargetError, assertAllowedTarget, inspect } from "@/lib/net/safe-fetch";

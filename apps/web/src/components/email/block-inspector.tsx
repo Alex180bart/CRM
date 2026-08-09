@@ -1,8 +1,8 @@
 "use client";
 
-import type { EmailAlign, EmailBlock, EmailValidationIssue } from "@crm/core";
-import { EMAIL_BLOCK_LABEL, EMAIL_MERGE_TAGS } from "@crm/core";
-import { Badge, Button, EmptyState, Eyebrow, Input, Label, Textarea, Tooltip, cn } from "@crm/ui";
+import type { EmailAlign, EmailBlock, EmailValidationIssue } from "@elora/core";
+import { EMAIL_BLOCK_LABEL, EMAIL_MERGE_TAGS } from "@elora/core";
+import { Badge, Button, EmptyState, Eyebrow, Input, Label, Textarea, Tooltip, cn } from "@elora/ui";
 import {
   CircleAlert,
   Lock,

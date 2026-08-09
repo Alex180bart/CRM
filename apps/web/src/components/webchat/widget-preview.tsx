@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { WebchatWidgetVersion } from "@crm/core";
-import { darken, lighten, readableInk } from "@crm/core";
-import { cn } from "@crm/ui";
+import type { WebchatWidgetVersion } from "@elora/core";
+import { darken, lighten, readableInk } from "@elora/core";
+import { cn } from "@elora/ui";
 import { ChevronDown, Minus, Paperclip, Send, Smile, X } from "lucide-react";
 
 import { LauncherIcon } from "./launcher-icon";
@@ -355,7 +355,7 @@ export function WidgetPreview({
 
           {appearance.showBranding ? (
             <p className="bg-white pb-2 text-center text-[9px] text-[#A6B0BF]">
-              Atendimento por <span className="font-semibold">CRM CF</span>
+              Atendimento por <span className="font-semibold">Elora</span>
             </p>
           ) : null}
         </div>

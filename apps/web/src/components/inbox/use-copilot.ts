@@ -6,8 +6,8 @@ import type {
   AiConversationContext,
   AiRunMeta,
   AiToneAdjustment,
-} from "@crm/core";
-import { AiGatewayError, repositories } from "@crm/core";
+} from "@elora/core";
+import { AiGatewayError, repositories } from "@elora/core";
 
 import { contextSignature } from "@/lib/ai/context";
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { repositories } from "@crm/core";
+import { repositories } from "@elora/core";
 
 import { LoginForm } from "@/components/auth/login-form";
 
@@ -21,7 +21,7 @@ export default async function LoginPage() {
               CF
             </span>
             <div>
-              <p className="text-sm font-semibold leading-tight">CRM CF</p>
+              <p className="text-sm font-semibold leading-tight">Elora</p>
               <p className="text-primary-foreground/60 text-[11px] leading-tight">
                 {organization.name}
               </p>

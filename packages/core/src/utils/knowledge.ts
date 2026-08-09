@@ -12,7 +12,7 @@
  * identificada. Trocar a implementação desta função não toca o prompt, o
  * executor nem a interface.
  *
- * É função pura e vive em `@crm/core` de propósito: o executor do servidor e o
+ * É função pura e vive em `@elora/core` de propósito: o executor do servidor e o
  * simulador do editor precisam recuperar igual. Duas implementações produziriam
  * o desencontro clássico — o artigo que aparece no teste e não aparece em
  * produção.

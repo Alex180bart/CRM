@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
-import type { ActivityKind, ChannelKind, TimelineEntry } from "@crm/core";
+import type { ActivityKind, ChannelKind, TimelineEntry } from "@elora/core";
 import {
   ACTIVITY_LABEL,
   daysSince,
@@ -9,8 +9,8 @@ import {
   formatDateTime,
   formatDayHeading,
   formatRelative,
-} from "@crm/core";
-import { Badge, Button, EmptyState, Tooltip, cn } from "@crm/ui";
+} from "@elora/core";
+import { Badge, Button, EmptyState, Tooltip, cn } from "@elora/ui";
 import {
   Activity,
   Bot,

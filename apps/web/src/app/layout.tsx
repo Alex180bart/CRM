@@ -6,8 +6,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "CRM CF",
-    template: "%s · CRM CF",
+    default: "Elora",
+    template: "%s · Elora",
   },
   description:
     "CRM omnichannel da Contabilidade Facilitada — atendimento, automação e inteligência artificial.",
@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 const themeScript = `
 (function () {
   try {
-    var stored = localStorage.getItem("crm-cf-theme");
+    var stored = localStorage.getItem("elora-theme");
     var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     if (stored === "dark" || (stored !== "light" && prefersDark)) {
       document.documentElement.classList.add("dark");

@@ -1,7 +1,7 @@
 "use client";
 
-import type { TimePoint } from "@crm/core";
-import { BarSeries, ChartFrame } from "@crm/ui";
+import type { TimePoint } from "@elora/core";
+import { BarSeries, ChartFrame } from "@elora/ui";
 
 /**
  * Pulso do dia.

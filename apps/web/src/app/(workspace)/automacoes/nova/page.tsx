@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { repositories } from "@crm/core";
+import { repositories } from "@elora/core";
 
 import { RuleComposer } from "@/components/automations/rule-composer";
 import { PageHeader } from "@/components/shell/page-header";

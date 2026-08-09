@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@crm/ui";
+import { cn } from "@elora/ui";
 import {
   ArrowLeft,
   Battery,

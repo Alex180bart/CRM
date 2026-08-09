@@ -1,4 +1,4 @@
-import { cn } from "@crm/ui";
+import { cn } from "@elora/ui";
 
 export type MetricTone = "neutral" | "warning" | "danger" | "success" | "accent";
 

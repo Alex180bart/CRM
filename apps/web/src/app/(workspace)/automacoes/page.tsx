@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { repositories } from "@crm/core";
-import { Button } from "@crm/ui";
+import { repositories } from "@elora/core";
+import { Button } from "@elora/ui";
 import { Plus } from "lucide-react";
 
 import { RuleConsole } from "@/components/automations/rule-console";

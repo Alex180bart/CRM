@@ -16,7 +16,7 @@ import type {
   AiConversationContext,
   AiEmailDraftInput,
   AiToneAdjustment,
-} from "@crm/core";
+} from "@elora/core";
 import {
   AGENT_EMOJI_LABEL,
   AGENT_LENGTH_LABEL,
@@ -30,7 +30,7 @@ import {
   AI_TONE_LABEL,
   formatDateTime,
   offsetIso,
-} from "@crm/core";
+} from "@elora/core";
 
 export const PROMPT_VERSIONS = {
   // v4 acrescentou a tabulação (`proposals`) e o estado do cadastro no contexto.

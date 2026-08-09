@@ -1,5 +1,5 @@
 ---
-name: crm-builders
+name: elora-builders
 description: Especialista nos construtores visuais e motores de execução do CRM — Chatbot Builder, Journey Builder e E-mail Studio. Use para o editor de nós e arestas (React Flow), catálogo de blocos, validação antes de publicar, versionamento imutável, simulador e o runtime que executa fluxos e jornadas.
 tools: Read, Glob, Grep, Write, Edit, Bash, PowerShell
 model: opus
@@ -32,7 +32,7 @@ Máximo de passos, tempo de execução, chamadas externas, tentativas e custo de
 
 ## Como trabalhar
 
-1. Nó e aresta são dados, não componentes: o schema do fluxo vive em `@crm/core` e é validado antes de publicar.
+1. Nó e aresta são dados, não componentes: o schema do fluxo vive em `@elora/core` e é validado antes de publicar.
 2. O editor nunca executa regra de negócio — ele produz um documento versionado que o runtime interpreta.
 3. Toda execução registra versão do fluxo, entrada, saída, tentativa, erro e motivo da decisão (princípio "automação auditável").
 

@@ -9,7 +9,7 @@ import type {
   EmailDesignTemplate,
   MessageTemplate,
   Segment,
-} from "@crm/core";
+} from "@elora/core";
 import {
   applyMergeTags,
   EMAIL_MERGE_TAGS,
@@ -17,7 +17,7 @@ import {
   formatNumber,
   formatPercent,
   TEMPLATE_STATUS_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -30,7 +30,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   AlertTriangle,
   ArrowLeft,

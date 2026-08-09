@@ -1,5 +1,5 @@
 ---
-name: crm-qa
+name: elora-qa
 description: QA, DevOps e observabilidade do CRM. Use para estratégia e escrita de testes (unitário, integração, contrato, ponta a ponta, carga, resiliência, segurança), CI/CD, ambientes, runbooks, logs estruturados, métricas, alertas e verificação de que uma entrega realmente funciona antes de ser declarada pronta.
 tools: Read, Glob, Grep, Write, Edit, Bash, PowerShell
 model: opus

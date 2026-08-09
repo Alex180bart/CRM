@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import type { Queue, User, WebchatWidget } from "@crm/core";
+import type { Queue, User, WebchatWidget } from "@elora/core";
 import {
   checkWidgetContrast,
   FLOW_STATUS_LABEL,
@@ -14,7 +14,7 @@ import {
   readableInk,
   summarizeSchedule,
   validateWidget,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -27,7 +27,7 @@ import {
   StatusDot,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowUpRight,
   CircleAlert,

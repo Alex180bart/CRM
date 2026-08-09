@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { repositories } from "@crm/core";
-import { Badge } from "@crm/ui";
+import { repositories } from "@elora/core";
+import { Badge } from "@elora/ui";
 
 import { AdminConsole } from "@/components/admin/admin-console";
 import { PageHeader } from "@/components/shell/page-header";

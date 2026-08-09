@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Attachment } from "@crm/core";
-import { classifyUrl, formatBytes } from "@crm/core";
+import type { Attachment } from "@elora/core";
+import { classifyUrl, formatBytes } from "@elora/core";
 import {
   Badge,
   Button,
@@ -12,7 +12,7 @@ import {
   PopoverTrigger,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { AlertTriangle, Check, Film, Image as ImageIcon, Link2, Loader2 } from "lucide-react";
 
 import { LinkError, resolveLink, toLinkAttachment } from "@/lib/attachments";

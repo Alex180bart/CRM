@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { BusinessSchedule, ScheduleException, ScheduleDay, TimeRange } from "@crm/core";
+import type { BusinessSchedule, ScheduleException, ScheduleDay, TimeRange } from "@elora/core";
 import {
   canDeleteSchedule,
   checkRanges,
@@ -13,8 +13,8 @@ import {
   warnScheduleCoverage,
   weekdayName,
   weeklyHours,
-} from "@crm/core";
-import type { Queue, User } from "@crm/core";
+} from "@elora/core";
+import type { Queue, User } from "@elora/core";
 import {
   Badge,
   Button,
@@ -32,7 +32,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { CalendarOff, CircleAlert, Clock, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 

@@ -1,9 +1,9 @@
 ﻿"use client";
 
 import { useState } from "react";
-import type { WebchatWidgetVersion } from "@crm/core";
-import { readableInk } from "@crm/core";
-import { Button, Callout, Input, Tooltip, cn } from "@crm/ui";
+import type { WebchatWidgetVersion } from "@elora/core";
+import { readableInk } from "@elora/core";
+import { Button, Callout, Input, Tooltip, cn } from "@elora/ui";
 import { Globe, Info, Loader2, Monitor, Smartphone, X } from "lucide-react";
 
 import type { SitePreviewResult } from "@/app/api/webchat/site-preview/route";

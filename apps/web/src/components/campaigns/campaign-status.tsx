@@ -1,6 +1,6 @@
-import type { CampaignStatus } from "@crm/core";
-import { CAMPAIGN_STATUS_LABEL } from "@crm/core";
-import { Badge, StatusDot } from "@crm/ui";
+import type { CampaignStatus } from "@elora/core";
+import { CAMPAIGN_STATUS_LABEL } from "@elora/core";
+import { Badge, StatusDot } from "@elora/ui";
 
 const TONE: Record<CampaignStatus, React.ComponentProps<typeof Badge>["variant"]> = {
   rascunho: "neutral",

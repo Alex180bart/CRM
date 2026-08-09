@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { User } from "@crm/core";
-import { ROLE_LABEL } from "@crm/core";
-import { Avatar, Button, Callout, Input, Label, Separator, cn } from "@crm/ui";
+import type { User } from "@elora/core";
+import { ROLE_LABEL } from "@elora/core";
+import { Avatar, Button, Callout, Input, Label, Separator, cn } from "@elora/ui";
 import { ArrowRight, Info, KeyRound, ShieldCheck } from "lucide-react";
 
 /**

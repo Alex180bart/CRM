@@ -13,13 +13,13 @@ import type {
   SkillDefinition,
   Team,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   CHANNEL_LABEL,
   DEFAULT_DISTRIBUTION,
   ROLE_LABEL,
   summarizeBusinessSchedule,
-} from "@crm/core";
+} from "@elora/core";
 
 import { DistributionEditor } from "./queue-distribution";
 import {
@@ -47,7 +47,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { CircleAlert, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 

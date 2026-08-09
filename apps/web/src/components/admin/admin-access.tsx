@@ -11,14 +11,14 @@ import type {
   RoleKey,
   Team,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   INVITATION_STATUS_LABEL,
   PERMISSION_LABEL,
   ROLE_LABEL,
   canDeleteCustomRole,
   formatRelative,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -38,7 +38,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
-} from "@crm/ui";
+} from "@elora/ui";
 import { Info, Plus, ShieldAlert } from "lucide-react";
 
 import { ConfirmDelete, EditorShell, Field, RowActions } from "./admin-editors";

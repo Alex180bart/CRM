@@ -21,7 +21,7 @@ import type {
   AiSuggestInput,
   AiTask,
   AiToneAdjustment,
-} from "@crm/core";
+} from "@elora/core";
 
 import {
   GatewayFailure,
@@ -266,7 +266,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 }
 
-/** Fluxo em NDJSON: uma linha por evento. O cliente em `@crm/core` lê o mesmo formato. */
+/** Fluxo em NDJSON: uma linha por evento. O cliente em `@elora/core` lê o mesmo formato. */
 function streamResponse(input: AiAskInput): Response {
   const encoder = new TextEncoder();
 

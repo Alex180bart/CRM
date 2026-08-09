@@ -1,7 +1,7 @@
 /**
  * Extração de texto para a base de conhecimento.
  *
- * Funções puras, em `@crm/core`, pelo mesmo motivo da classificação de URL em
+ * Funções puras, em `@elora/core`, pelo mesmo motivo da classificação de URL em
  * `media.ts`: a rota que ingere e a tela que mostra a prévia precisam concordar
  * sobre o que foi extraído. Duplicar a lógica no componente produziria a prévia
  * que mostra uma coisa e a fonte que guarda outra.

@@ -13,14 +13,14 @@ import type {
   Tag,
   Team,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   formatDuration,
   RULE_ACTION_LABEL,
   RULE_OPERATOR_LABEL,
   RULE_TRIGGER_EVENT,
   RULE_TRIGGER_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -36,7 +36,7 @@ import {
   Textarea,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowLeft,
   BellRing,

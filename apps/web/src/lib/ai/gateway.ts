@@ -15,7 +15,7 @@
  * de erro e a fila de reserva vivem em `providers.ts` — que junto com este
  * arquivo forma o único par do repositório que pode nomear um provedor. Acima
  * deles, a aplicação fala em tarefas. Quando o Gateway virar serviço próprio, o
- * que muda é o transporte; o contrato em `@crm/core` continua valendo.
+ * que muda é o transporte; o contrato em `@elora/core` continua valendo.
  *
  * O que ainda não existe e está previsto na seção 16: RAG sobre base de
  * conhecimento (16.2), ferramentas com function calling (16.3) e conjunto de
@@ -38,8 +38,8 @@ import type {
   AiSuggestInput,
   AiTask,
   AiUrgency,
-} from "@crm/core";
-import { offsetIso } from "@crm/core";
+} from "@elora/core";
+import { offsetIso } from "@elora/core";
 
 import {
   AGENT_SCHEMA,
@@ -337,7 +337,7 @@ const PROPOSAL_KINDS: AiProposalKind[] = [
  * Saneamento das propostas.
  *
  * A validação de negócio — dígito verificador, comparação com o cadastro — é da
- * camada de resolução em `@crm/core`. O que acontece aqui é anterior e mais
+ * camada de resolução em `@elora/core`. O que acontece aqui é anterior e mais
  * grosseiro: garantir que o que chegou tem a **forma** de proposta. Sem isto, um
  * `kind` fora do enum ou um `field` com caminho inventado desceria até a tela e
  * viraria botão que grava em lugar nenhum.

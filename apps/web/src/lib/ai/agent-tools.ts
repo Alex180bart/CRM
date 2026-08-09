@@ -32,8 +32,8 @@ import type {
   AgentStepStatus,
   AgentToolId,
   AiAgentVersion,
-} from "@crm/core";
-import { agentTool, formatDate, offsetIso, repositories, searchKnowledge } from "@crm/core";
+} from "@elora/core";
+import { agentTool, formatDate, offsetIso, repositories, searchKnowledge } from "@elora/core";
 
 export interface AgentToolRequest {
   toolId: AgentToolId;

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { Journey } from "@crm/core";
+import type { Journey } from "@elora/core";
 import {
   FLOW_STATUS_LABEL,
   formatDate,
   formatNumber,
   formatPercent,
   REENTRY_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -23,7 +23,7 @@ import {
   StatusDot,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import { ArrowUpRight, Clock, RefreshCcw, Target, TrendingUp, Users, Workflow } from "lucide-react";
 
 /**

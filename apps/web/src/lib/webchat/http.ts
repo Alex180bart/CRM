@@ -1,4 +1,4 @@
-import type { WebchatWidget } from "@crm/core";
+import type { WebchatWidget } from "@elora/core";
 
 import { isOriginAllowed } from "./server";
 

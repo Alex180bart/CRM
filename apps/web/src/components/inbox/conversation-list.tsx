@@ -1,9 +1,9 @@
 ﻿"use client";
 
 import { memo, useEffect, useRef, type CSSProperties } from "react";
-import type { Contact, Conversation, Queue, Tag, User } from "@crm/core";
-import { CONVERSATION_STATE_LABEL, formatRelative, truncate } from "@crm/core";
-import { Avatar, Badge, EmptyState, TagChip, Tooltip, cn } from "@crm/ui";
+import type { Contact, Conversation, Queue, Tag, User } from "@elora/core";
+import { CONVERSATION_STATE_LABEL, formatRelative, truncate } from "@elora/core";
+import { Avatar, Badge, EmptyState, TagChip, Tooltip, cn } from "@elora/ui";
 import { CheckCircle2, Inbox as InboxIcon, UserPlus } from "lucide-react";
 
 import { ChannelIcon } from "@/lib/channel";

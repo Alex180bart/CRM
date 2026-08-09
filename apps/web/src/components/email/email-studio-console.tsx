@@ -10,7 +10,7 @@ import type {
   EmailModule,
   SuppressionEntry,
   User,
-} from "@crm/core";
+} from "@elora/core";
 import {
   FLOW_STATUS_LABEL,
   formatDate,
@@ -18,7 +18,7 @@ import {
   formatPercent,
   formatRelative,
   SUPPRESSION_REASON_LABEL,
-} from "@crm/core";
+} from "@elora/core";
 import {
   Avatar,
   Badge,
@@ -38,7 +38,7 @@ import {
   TabsTrigger,
   Tooltip,
   cn,
-} from "@crm/ui";
+} from "@elora/ui";
 import {
   ArrowUpRight,
   Blocks,

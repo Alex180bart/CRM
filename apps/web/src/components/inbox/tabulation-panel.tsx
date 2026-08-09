@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { AiProposal, AiResolvedProposal, Contact } from "@crm/core";
-import { formatDateTime, resolveProposals } from "@crm/core";
-import { Badge, Button, Tooltip, cn } from "@crm/ui";
+import type { AiProposal, AiResolvedProposal, Contact } from "@elora/core";
+import { formatDateTime, resolveProposals } from "@elora/core";
+import { Badge, Button, Tooltip, cn } from "@elora/ui";
 import {
   ArrowRight,
   Building2,
