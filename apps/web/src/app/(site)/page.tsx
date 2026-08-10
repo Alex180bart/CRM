@@ -28,7 +28,6 @@ import {
 
 import { Faq } from "@/components/site/faq";
 import { PlanCards } from "@/components/site/plan-cards";
-import { PricingSimulator } from "@/components/site/pricing-simulator";
 import { ProductPreview } from "@/components/site/product-preview";
 import { ProductShowcase } from "@/components/site/product-showcase";
 
@@ -36,7 +35,7 @@ export const metadata: Metadata = {
   title: "Elora — atendimento, CRM e IA numa plataforma só",
   description:
     "Plataforma omnichannel brasileira: WhatsApp, e-mail, Instagram e webchat numa linha do tempo, " +
-    "com CRM 360º, automação auditável, agentes de IA sob controle humano e simulador de custo aberto.",
+    "com CRM 360º, automação auditável, agentes de IA sob controle humano e tabela de preço aberta.",
 };
 
 /* Conteúdo ------------------------------------------------------------------------ */
@@ -202,10 +201,10 @@ export default function LandingPage() {
                 <Link href="#produto">Ver o produto por dentro</Link>
               </Button>
               <Link
-                href="#simulador"
+                href="/precos"
                 className="text-primary-foreground/70 hover:text-primary-foreground text-sm underline underline-offset-4"
               >
-                ou simule o custo em 30 segundos
+                ou veja a tabela de preços inteira
               </Link>
             </div>
           </Reveal>
@@ -472,31 +471,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Simulador ---------------------------------------------------------------- */}
-      <section id="simulador" className="scroll-mt-20 py-20">
-        <div className="mx-auto w-full max-w-6xl px-5">
-          <Reveal index={0}>
-            <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
-              Simulador
-            </p>
-            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-              O preço inteiro, linha a linha, antes de falar com vendedor.
-            </h2>
-            <p className="text-muted-foreground mt-3 max-w-3xl text-base leading-relaxed">
-              Assinatura, assentos, contatos, conversas, e-mail, respostas de IA e o repasse da Meta
-              — cada item com a conta escrita ao lado. O que a Elora cobra e o que o provedor cobra
-              aparecem separados de propósito: é o que permite conferir a fatura depois.
-            </p>
-          </Reveal>
-
-          <Reveal index={1}>
-            <div className="mt-10">
-              <PricingSimulator />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
       {/* Planos --------------------------------------------------------------------- */}
       <section id="planos" className="bg-surface-sunken scroll-mt-20 py-20">
         <div className="mx-auto w-full max-w-6xl px-5">
@@ -508,6 +482,11 @@ export default function LandingPage() {
             <p className="text-muted-foreground mt-3 max-w-3xl text-base leading-relaxed">
               Quem cresce em time paga no assento. Quem cresce em volume paga no consumo. Ninguém
               paga pelo crescimento do outro — e, na edição de cima, o assento deixa de ser cobrado.
+            </p>
+            <p className="text-muted-foreground mt-3 max-w-3xl text-base leading-relaxed">
+              A tabela é pública e inteira: franquia, preço do excedente e o repasse da Meta em linha
+              própria, sem margem. O que a Elora cobra e o que o provedor cobra aparecem separados de
+              propósito — é o que permite conferir a fatura depois.
             </p>
           </Reveal>
 
@@ -580,9 +559,9 @@ export default function LandingPage() {
             Comece pelo número, não pela reunião.
           </h2>
           <p className="text-primary-foreground/75 mx-auto mt-4 max-w-2xl text-base leading-relaxed">
-            Dimensione a operação no simulador e, se fizer sentido, peça a proposta. O time
-            comercial responde em até um dia útil com o cenário que você montou em mãos — e leva a
-            demonstração do seu setor para a conversa.
+            Veja a tabela inteira e, se fizer sentido, peça a proposta. O time comercial responde em
+            até um dia útil, com a conta já dimensionada para o seu volume — e leva a demonstração do
+            seu setor para a conversa.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" variant="accent">

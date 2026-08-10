@@ -30,6 +30,8 @@ import {
 } from "@elora/ui";
 import { Info, Link2, Plus, ShieldAlert, Wallet } from "lucide-react";
 
+import { ProductArt } from "@/components/commerce/product-art";
+
 import { ConfirmDelete, EditorShell, Field, RowActions } from "./admin-editors";
 
 /**
@@ -111,7 +113,12 @@ export function ProductsTab({
               <Badge variant="neutral">
                 {active.length} ativo{active.length === 1 ? "" : "s"}
               </Badge>
-              <Button size="sm" className="press" disabled={busy} onClick={() => setEditing("novo")}>
+              <Button
+                size="sm"
+                className="press"
+                disabled={busy}
+                onClick={() => setEditing("novo")}
+              >
                 <Plus className="size-4" />
                 Novo
               </Button>
@@ -121,8 +128,8 @@ export function ProductsTab({
           <div className="mt-4 space-y-2">
             {products.length === 0 ? (
               <Callout icon={<Info className="size-4" />}>
-                Nenhum produto cadastrado. Enquanto o catálogo estiver vazio, o agente de IA não cita
-                valor nenhum — de propósito.
+                Nenhum produto cadastrado. Enquanto o catálogo estiver vazio, o agente de IA não
+                cita valor nenhum — de propósito.
               </Callout>
             ) : null}
 
@@ -176,7 +183,6 @@ export function ProductsTab({
           }}
         />
       ) : null}
-
     </div>
   );
 }
@@ -202,6 +208,13 @@ function ProductRow({
       )}
       style={{ "--stagger-index": Math.min(index, 8) } as React.CSSProperties}
     >
+      {/*
+        A mesma miniatura do catálogo na montagem de proposta. Repetir a arte
+        aqui é o que faz o vendedor reconhecer o item pela cor antes de ler o
+        nome — e é de graça, porque ela é derivada do produto, não armazenada.
+      */}
+      <ProductArt product={product} size="sm" />
+
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate text-sm font-medium">{product.name}</p>

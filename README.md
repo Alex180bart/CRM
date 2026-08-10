@@ -22,21 +22,21 @@ inteligência artificial em um só produto.
 
 ## Índice
 
-| Seção                                                                | Conteúdo                                             |
-| -------------------------------------------------------------------- | ---------------------------------------------------- |
-| [O que é a Elora](#o-que-é-a-elora)                                  | posicionamento, origem do nome, fonte da verdade     |
-| [Início rápido](#início-rápido)                                      | instalar, subir, variáveis de ambiente, scripts      |
-| [Estado atual](#estado-atual)                                        | o que funciona, o que é fronteira, o que é protótipo |
-| [Mapa do produto](#mapa-do-produto)                                  | site público e área de trabalho, rota por rota       |
-| [O que funciona de verdade](#o-que-funciona-de-verdade)              | webchat, IA, administração, eventos, WhatsApp        |
-| [Preço, simulador e demonstrações](#preço-simulador-e-demonstrações) | dois eixos de cobrança, verticais                    |
-| [Arquitetura](#arquitetura)                                          | estrutura de pastas, camada de dados, AI Gateway     |
-| [Regras que não se negociam](#regras-que-não-se-negociam)            | as sete invariantes do repositório                   |
-| [Identidade visual](#identidade-visual)                              | Arena Elora, tokens, movimento, aparência            |
-| [Desempenho](#desempenho)                                            | números de referência e como medir                   |
-| [Testes](#testes)                                                    | o que está coberto e por quê                         |
-| [Roadmap](#roadmap)                                                  | o que falta, em ordem de dependência                 |
-| [Documentação e agentes](#documentação-e-agentes)                    | onde está o resto                                    |
+| Seção                                                     | Conteúdo                                             |
+| --------------------------------------------------------- | ---------------------------------------------------- |
+| [O que é a Elora](#o-que-é-a-elora)                       | posicionamento, origem do nome, fonte da verdade     |
+| [Início rápido](#início-rápido)                           | instalar, subir, variáveis de ambiente, scripts      |
+| [Estado atual](#estado-atual)                             | o que funciona, o que é fronteira, o que é protótipo |
+| [Mapa do produto](#mapa-do-produto)                       | site público e área de trabalho, rota por rota       |
+| [O que funciona de verdade](#o-que-funciona-de-verdade)   | webchat, IA, administração, eventos, WhatsApp        |
+| [Preço e demonstrações](#preço-e-demonstrações)           | dois eixos de cobrança, verticais                    |
+| [Arquitetura](#arquitetura)                               | estrutura de pastas, camada de dados, AI Gateway     |
+| [Regras que não se negociam](#regras-que-não-se-negociam) | as sete invariantes do repositório                   |
+| [Identidade visual](#identidade-visual)                   | Arena Elora, tokens, movimento, aparência            |
+| [Desempenho](#desempenho)                                 | números de referência e como medir                   |
+| [Testes](#testes)                                         | o que está coberto e por quê                         |
+| [Roadmap](#roadmap)                                       | o que falta, em ordem de dependência                 |
+| [Documentação e agentes](#documentação-e-agentes)         | onde está o resto                                    |
 
 ---
 
@@ -84,12 +84,12 @@ A aplicação sobe em <http://localhost:3200>.
 
 **Duas entradas convivem, e não são a mesma coisa:**
 
-| Rota      | O que é                                                                                                                       |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `/`       | landing page do site público                                                                                                  |
-| `/entrar` | área do cliente do site — conta com senha, orçamentos salvos e, para a equipe comercial, as bases de demonstração em `/admin` |
-| `/login`  | tela de entrada do protótipo do produto — seleção de perfil, sem validação de credencial                                      |
-| `/inicio` | onde o produto começa                                                                                                         |
+| Rota      | O que é                                                                                                                                       |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`       | landing page do site público                                                                                                                  |
+| `/entrar` | área do cliente do site — conta com senha, pedidos de proposta e, para a equipe comercial, o simulador e as bases de demonstração em `/admin` |
+| `/login`  | tela de entrada do protótipo do produto — seleção de perfil, sem validação de credencial                                                      |
+| `/inicio` | onde o produto começa                                                                                                                         |
 
 ### Variáveis de ambiente
 
@@ -109,7 +109,7 @@ Cada variável está comentada em [`.env.example`](.env.example) com o motivo de
 
 | Comando          | O que faz                                                   |
 | ---------------- | ----------------------------------------------------------- |
-| `pnpm dev`       | servidor de desenvolvimento na porta 3200                   |
+| `pnpm dev`       | servidor de desenvolvimento na porta 3200, em Turbopack     |
 | `pnpm typecheck` | `tsc --noEmit` nos três pacotes                             |
 | `pnpm lint`      | ESLint, zero avisos tolerados                               |
 | `pnpm test`      | Vitest — barramento de eventos, outbox, idempotência, preço |
@@ -134,11 +134,11 @@ Cada variável está comentada em [`.env.example`](.env.example) com o motivo de
 
 A regra deste repositório é não fingir que algo funciona. O que existe se divide em três camadas.
 
-|     | Camada                                   | O que está aqui                                                                                                                                                                                                                                                                                   |
-| :-: | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🟢  | **Funciona de ponta a ponta**            | Webchat (widget no site do cliente → Inbox → resposta do atendente), copiloto do atendente, redação de e-mail por IA, agente de atendimento com ferramentas e avaliação, escrita real na Administração, barramento de eventos com outbox, site público com simulador de preço e conta autenticada |
-| 🟡  | **Fronteira pronta, sem persistência**   | Webhook do WhatsApp — verificação e assinatura HMAC validadas de verdade; a mensagem ainda não vira conversa                                                                                                                                                                                      |
-| ⚪  | **Front-end sobre base de demonstração** | Todo o resto: Inbox, Contatos, Pipeline, Campanhas, Jornadas, E-mail Studio, Analytics                                                                                                                                                                                                            |
+|     | Camada                                   | O que está aqui                                                                                                                                                                                                                                                                                       |
+| :-: | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🟢  | **Funciona de ponta a ponta**            | Webchat (widget no site do cliente → Inbox → resposta do atendente), copiloto do atendente, redação de e-mail por IA, agente de atendimento com ferramentas e avaliação, escrita real na Administração, barramento de eventos com outbox, site público com tabela de preço aberta e conta autenticada |
+| 🟡  | **Fronteira pronta, sem persistência**   | Webhook do WhatsApp — verificação e assinatura HMAC validadas de verdade; a mensagem ainda não vira conversa                                                                                                                                                                                          |
+| ⚪  | **Front-end sobre base de demonstração** | Todo o resto: Inbox, Contatos, Pipeline, Campanhas, Jornadas, E-mail Studio, Analytics                                                                                                                                                                                                                |
 
 > [!IMPORTANT]
 > **Não há back-end, Supabase nem autenticação real do produto.** A camada de escrita de conversas,
@@ -158,10 +158,10 @@ que aparece meses depois, quando o botão da landing page deixa de ser o botão 
 | Rota                                | O que faz                                                                            |
 | ----------------------------------- | ------------------------------------------------------------------------------------ |
 | `/`                                 | landing page, com sete prévias de tela **desenhadas em JSX** — não capturadas        |
-| `/precos`                           | tabela por edição e simulador de preço com os dois eixos                             |
-| `/orcamento`                        | pedido de proposta, com o cálculo refeito no servidor                                |
+| `/precos`                           | tabela por edição, excedente e repasse da Meta — aberta, sem calculadora             |
+| `/orcamento`                        | pedido de proposta: contato qualificado, sem cenário nem total                       |
 | `/entrar` · `/cadastrar` · `/conta` | conta do site: `scrypt` com sal, cookie assinado com vencimento dentro da assinatura |
-| `/admin`                            | restrita — bases de demonstração e simulador, em abas                                |
+| `/admin`                            | restrita — bases de demonstração e o simulador de preço, em abas                     |
 
 ### Área de trabalho — grupo de rotas `(workspace)`
 
@@ -384,7 +384,7 @@ venda que o comercial fechou por WhatsApp passa a ser atribuída a anúncio de t
 
 ---
 
-## Preço, simulador e demonstrações
+## Preço e demonstrações
 
 ### Dois eixos, e isso é a decisão central
 
@@ -416,10 +416,30 @@ A tabela inteira mora em `packages/core/src/pricing/catalog.ts`, e **não há um
    teste de monotonicidade.
 3. **Colaborador ilimitado existe só na edição de cima.** "Ilimitado" numa edição barata é preço por
    assento escondido num número redondo.
-4. **O cálculo roda no navegador e é refeito no servidor.** Os dois lados chamam a **mesma função
-   pura** — não existe uma conta "de exibição" e outra "de verdade".
+4. **O cálculo roda no navegador, e é a única cópia que existe.** Arrastar o volume vinte vezes
+   procurando o ponto em que a edição vira precisa ser instantâneo. Havia um segundo cálculo no
+   servidor, refazendo a conta que o formulário de orçamento trazia em campos ocultos — hoje o
+   pedido não carrega total nenhum, então não há total a forjar.
 
 </details>
+
+### O simulador vive na área comercial
+
+A tabela é pública e completa em `/precos`; a **calculadora** não. Ela saiu da landing page e da
+página de preços e vive só na aba de `/admin`, atrás da conta da equipe comercial.
+
+A distinção é o ponto: saiu a calculadora, não a informação. Franquia por edição, preço de excedente
+e o repasse da Meta continuam abertos — o oposto de um "consulte-nos". O que passa pela conversa é o
+**dimensionamento**, porque é nela que se descobre que a operação precisa de menos do que imaginava.
+
+Duas consequências no código:
+
+- `/orcamento` é um **pedido de contato qualificado**. `QuoteRequest` perdeu `QuoteSnapshot`: guardar
+  a fotografia do cálculo exigiria o simulador público para preenchê-la, ou nasceria sempre zerada —
+  e um número ao lado da palavra "orçamento" é lido como preço mesmo quando é só o valor padrão de um
+  campo que ninguém preencheu. Restaram edição de interesse e tamanho do time, ambos opcionais.
+- O simulador **não tem botão de "solicitar orçamento"**. Quem o opera é quem emite a proposta: o
+  botão faria o vendedor pedir orçamento a si mesmo, na fila que ele próprio atende.
 
 ### Verticais de demonstração
 
@@ -450,7 +470,7 @@ demonstração, sem erro no console.
 elora/
 ├─ apps/web/                    aplicação Next.js 15 (App Router) + React 19
 │  └─ src/
-│     ├─ app/(site)/            site público: landing, preços, orçamento, conta, admin
+│     ├─ app/(site)/            site público: landing, preços, proposta, conta, admin
 │     ├─ app/(workspace)/       o produto
 │     ├─ app/api/               rotas de API
 │     ├─ components/            inbox, contacts, pipeline, chatbots, journeys, agents,
@@ -462,7 +482,7 @@ elora/
 ├─ packages/
 │  ├─ core/                     tipos canônicos, utilitários, repositórios
 │  │  ├─ demo/                  verticais de demonstração (overlay sobre a base contábil)
-│  │  └─ pricing/               tabela de preços e motor do simulador
+│  │  └─ pricing/               tabela de preços e motor de cálculo
 │  ├─ ui/                       design system @elora/ui
 │  └─ config/                   preset Tailwind compartilhado
 ├─ supabase/migrations/         fundação de eventos (ainda não executada)
@@ -669,6 +689,56 @@ nas duas superfícies — não invente uma sétima cor: dobre em "Outros" ou fac
 ---
 
 ## Desempenho
+
+> [!IMPORTANT]
+> **"Está lento" tem duas causas com soluções opostas, e a primeira pergunta é em qual servidor o
+> número foi medido.** O `next dev` compila rota sob demanda; produção não compila nada. Confundir os
+> dois leva a otimizar o que já é rápido.
+
+### Servidor
+
+| Rota             | dev, primeira visita | dev, quente | produção |
+| ---------------- | -------------------: | ----------: | -------: |
+| `/inicio`        |            18 887 ms |      236 ms |   9,9 ms |
+| `/contatos`      |             1 754 ms |      398 ms |  14,7 ms |
+| `/administracao` |             3 878 ms |      483 ms |  14,9 ms |
+| `/agentes`       |             2 861 ms |     ~700 ms |   8,4 ms |
+
+O HTML de produção sai em **8 a 25 ms**, e a navegação entre telas no navegador leva **39 a 68 ms**.
+Não há cache de servidor a acrescentar: uma camada de cache diante de uma resposta de 10 ms é
+trabalho perdido. O que doía era compilação, e a resposta foi trocar o compilador do `dev`.
+
+### O que mudou, e quanto rendeu
+
+**Turbopack no `pnpm dev`** — abrir oito telas num servidor recém-iniciado caiu de **40,9 s para
+12,6 s**. A primeira rota paga o shell compartilhado sozinha (root layout, tokens, fontes) e caiu de
+18,9 s para 6,4 s; qualquer rota depois dela fica abaixo de 1,7 s. Vale para a **primeira** rota,
+seja ela qual for — trocar a ordem de visita move o custo, não o elimina.
+
+**`optimizePackageImports` para `@elora/core` e `@elora/ui`** — `@elora/core` é um `export *` de cinco
+subárvores, e uma delas é `demo/`: as quatro verticais inteiras, 1,3 MB de fonte. Como 138 arquivos
+importam daquele barril, uma tela que só queria `formatDateTime` arrastava a base de e-commerce
+junto. Reescrever para importação direta cortou o JavaScript de primeiro carregamento em cerca de
+40%:
+
+| Rota                 |  Antes |     Depois |
+| -------------------- | -----: | ---------: |
+| `/inicio`            | 299 kB | **171 kB** |
+| `/administracao`     | 337 kB | **232 kB** |
+| `/analytics`         | 292 kB | **165 kB** |
+| `/pipeline`          | 316 kB | **187 kB** |
+| `/chatbots/[flowId]` | 380 kB | **254 kB** |
+| `/webchat/frame`     | 231 kB | **109 kB** |
+
+A última linha é a que mais importa: o quadro do webchat roda no site do cliente, onde cada quilobyte
+é de outra pessoa. De quebra, o `next build` caiu de 63 s para 30 s.
+
+> A condição para isso ser seguro é que os módulos do core **não tenham efeito colateral de
+> importação**. O armazém é preenchido por chamada (`dataset()`, `reseedStore()`), não por
+> importação. Se algum módulo passar a semear ao ser carregado, a reescrita pode pular o efeito — e o
+> sintoma seria dado ausente numa tela só, sem erro no console.
+
+### Interação no Inbox
 
 Medido em build de produção com **Event Timing** (`processingEnd - processingStart`, isto é, o
 trabalho de script — sem a latência de quadro do navegador de teste).

@@ -28,6 +28,7 @@ import {
   AI_EMAIL_OBJECTIVE_LABEL,
   AI_EMAIL_TONE_LABEL,
   AI_TONE_LABEL,
+  type AiProposalMessageInput,
   formatDateTime,
   offsetIso,
 } from "@elora/core";
@@ -39,6 +40,7 @@ export const PROMPT_VERSIONS = {
   reescrever: "copiloto.reescrita.v2",
   perguntar: "copiloto.pergunta.v2",
   redigir_email: "studio.email.v1",
+  redigir_proposta: "comercio.proposta.v1",
   // v2 acrescentou o bloco de estilo e o roteamento por necessidade.
   // v3 acrescentou o catálogo comercial: consulta de preço executa, proposta
   // espera confirmação, e desconto não é assunto do modelo (seção 26.1).
@@ -463,6 +465,78 @@ Produza o rascunho.`,
   };
 }
 
+/* Mensagem de proposta ---------------------------------------------------------- */
+
+/**
+ * Um campo só, e obrigatório.
+ *
+ * A tentação era devolver saudação, corpo e fechamento separados, para a
+ * interface montar. Mas quem monta precisa de uma regra de junção que nem o
+ * modelo nem o produto declaram — e o primeiro texto com dois parágrafos colados
+ * sem linha em branco denunciaria a falta dela. O modelo devolve a mensagem
+ * pronta; a aplicação confere os números.
+ *
+ * Campo obrigatório porque `toStrictSchema` não tem opcional: a armadilha que
+ * este arquivo já anotava.
+ */
+export const PROPOSAL_MESSAGE_SCHEMA = {
+  type: "object",
+  properties: {
+    message: {
+      type: "string",
+      description:
+        "A mensagem completa para o cliente, pronta para enviar no canal da conversa. Inclui a lista de itens com os valores exatamente como fornecidos, o total, a validade e uma pergunta curta no fim.",
+    },
+  },
+  required: ["message"],
+  propertyOrdering: ["message"],
+} as const;
+
+/**
+ * O prompt entrega **os números prontos** e proíbe recalcular.
+ *
+ * É a regra mais importante daqui. Um modelo que soma três linhas erra de vez em
+ * quando, e o erro é o pior tipo: plausível. O cliente lê um total que a
+ * cobrança não vai bater, e a conversa seguinte é sobre confiança, não sobre
+ * preço.
+ */
+export function proposalMessagePrompt(input: AiProposalMessageInput): {
+  system: string;
+  user: string;
+} {
+  return {
+    system: `${SYSTEM_BASE}
+
+Tarefa: escrever a mensagem que leva um orçamento ao cliente, no mesmo canal em que a conversa está acontecendo. Responda apenas com o JSON do schema.
+
+Regras deste formato:
+- **Nunca calcule, converta ou arredonde valor.** Todos os preços, o total e a validade chegam prontos abaixo; copie-os exatamente como estão, inclusive a pontuação.
+- Liste **todos** os itens recebidos, um por linha, começando com "• ". Não agrupe, não resuma e não omita nenhum.
+- Retome em uma frase o que o cliente pediu na conversa, usando as palavras dele. É isso que diferencia um orçamento de um catálogo colado.
+- Não prometa prazo de entrega, condição de pagamento, parcelamento ou desconto que não esteja nos dados. Se o cliente pediu algo que não está na lista, não mencione.
+- Tom de quem já está conversando: primeira pessoa, frases curtas, sem "prezado", sem "venho por meio desta", sem emoji.
+- Termine com uma pergunta curta e direta.`,
+    user: `Canal: ${input.channel}
+Cliente: ${input.contactFirstName || "não identificado"}
+Quem envia: ${input.sellerName}
+
+Trecho da conversa, do mais antigo ao mais recente:
+"""
+${input.conversationExcerpt.trim() || "(sem histórico disponível)"}
+"""
+
+Itens do orçamento — copie os valores exatamente:
+${input.itemsSummary}
+
+Total a informar: ${input.totalLabel}
+Validade: ${input.validUntil}
+${input.sellerNote.trim() ? `Observação escrita pelo vendedor, para incluir: "${input.sellerNote.trim()}"` : "Sem observação do vendedor."}
+${input.needsApproval ? "Atenção: este orçamento ainda passa por aprovação interna. Não afirme que está confirmado; diga que está enviando para confirmação." : ""}
+
+Escreva a mensagem.`,
+  };
+}
+
 export function askPrompt(
   context: AiConversationContext,
   question: string,
@@ -622,7 +696,7 @@ Sobre preço e proposta (seção 26.1):
 - Valor só sai do catálogo, e só depois de você consultá-lo com \`consultar_catalogo\`. Nunca cite de memória, nunca estime, nunca some por conta própria dois itens sem consultar os dois.
 - Você informa e explica o que está incluso. Você **não negocia**: desconto, condição especial, parcelamento e prazo de pagamento não são seus. Se o contato pedir qualquer um deles, diga que vai encaminhar ao time comercial e transfira ou monte a proposta para revisão.
 - \`montar_proposta\` não envia nada ao cliente. Ela cria um rascunho que uma pessoa do time revisa e envia. Ao usá-la, diga ao contato que vai preparar a proposta — nunca que já enviou.
-- Serviço recorrente e cobrança avulsa são valores diferentes e não se somam num número só. Fale os dois separados: "R$ X por mês, mais R$ Y de abertura".`
+- Serviço recorrente e cobrança avulsa são valores diferentes e não se somam num número só. Fale os dois separados: "R$ X por mês, mais R$ Y de abertura".`;
 
 /**
  * Instruções do laço.

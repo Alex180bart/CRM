@@ -50,6 +50,8 @@ export function InboxRightPanel({
   survey,
   products,
   proposals,
+  conversationContext,
+  onSendProposalMessage,
   conversationId,
   currentUserId,
   className,
@@ -74,6 +76,10 @@ export function InboxRightPanel({
   /** Catálogo comercial, para montar proposta na conversa (seção 26.1). */
   products: Product[];
   proposals: Proposal[];
+  /** Assunto, tags e últimas mensagens — a busca do catálogo sugere a partir daí. */
+  conversationContext?: string;
+  /** Publica a mensagem do orçamento na conversa. */
+  onSendProposalMessage?: (body: string) => void;
   conversationId: string | null;
   currentUserId: string;
   className?: string;
@@ -197,6 +203,8 @@ export function InboxRightPanel({
               products={products}
               proposals={proposals}
               currentUserId={currentUserId}
+              conversationContext={conversationContext}
+              onSendMessage={onSendProposalMessage}
             />
           ) : (
             <p className="text-muted-foreground p-4 text-center text-xs">

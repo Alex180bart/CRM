@@ -18,12 +18,18 @@ import { VerticalGallery } from "./vertical-gallery";
  * para retornar do produto para o console, passaria a desfazer trocas de aba em
  * vez de voltar de página.
  *
- * ## O simulador é o mesmo da página pública
+ * ## O simulador vive aqui, e só aqui
  *
- * Mesmo componente, mesma função de cálculo. Uma cópia "de vendedor" divergiria
- * do preço que o cliente vê em `/precos` no primeiro reajuste, e a divergência
- * apareceria na pior hora possível: com os dois olhando telas diferentes na
- * mesma chamada.
+ * Ele já esteve na landing page e em `/precos`. Saiu do site por decisão
+ * comercial: a tabela continua pública e completa, mas o **dimensionamento**
+ * passa pela conversa, porque é nela que se descobre que metade das operações
+ * precisa de menos do que imaginava — e uma calculadora pública devolve o número
+ * cheio sem essa conversa acontecer.
+ *
+ * O que **não** mudou: é o mesmo componente e a mesma função pura de cálculo que
+ * alimentam a tabela de `/precos`. Uma cópia "de vendedor" divergiria do que o
+ * cliente vê no primeiro reajuste, e a divergência apareceria na pior hora
+ * possível — com os dois olhando telas diferentes na mesma chamada.
  */
 export function AdminConsole({
   activeCompany,
@@ -59,11 +65,11 @@ export function AdminConsole({
 
       <TabsContent value="simulador" className="mt-6 focus-visible:outline-none">
         <Callout variant="neutral" icon={<Calculator />} className="mb-6">
-          <p className="font-medium">Mesmo simulador que o cliente vê em /precos.</p>
+          <p className="font-medium">O simulador existe só aqui.</p>
           <p className="mt-1 text-sm leading-relaxed">
-            Monte o cenário com os números da operação dele. O endereço da página pública carrega o
-            cenário — se quiser deixar o cliente conferir depois, use o botão do fim do resumo para
-            gerar o pedido de orçamento com tudo preenchido.
+            O site publica a tabela inteira, mas não a calculadora: quem dimensiona é você, com os
+            números que o cliente disse na conversa. O cenário vive nesta aba enquanto a página
+            estiver aberta — para levá-lo à reunião seguinte, anote os números, não o endereço.
           </p>
         </Callout>
 
@@ -71,17 +77,14 @@ export function AdminConsole({
 
         <div className="border-border mt-8 flex flex-wrap items-center gap-3 border-t pt-6">
           <Button asChild variant="outline">
-            <Link href="/precos#simulador">
+            <Link href="/precos" target="_blank" rel="noreferrer">
               <Send />
-              Abrir a versão pública para compartilhar
+              Abrir a tabela pública numa aba
             </Link>
           </Button>
           <p className="text-muted-foreground text-xs">
-            A tabela completa, com preço de excedente e repasse da Meta, fica em{" "}
-            <Link href="/precos" className="text-primary underline underline-offset-4">
-              /precos
-            </Link>
-            .
+            É o que o cliente enxerga: franquia por edição, preço de excedente e o repasse da Meta —
+            sem total calculado.
           </p>
         </div>
       </TabsContent>

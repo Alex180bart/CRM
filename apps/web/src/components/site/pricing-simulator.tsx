@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import * as React from "react";
 import {
   ADDONS,
   DEFAULT_QUOTE_INPUT,
+  DEFAULT_SETUP_INPUT,
   MAX_SELF_SERVICE_DISCOUNT_PCT,
   MONTHLY_PREMIUM_PCT,
   PLANS,
@@ -19,10 +19,8 @@ import {
   type QuoteLine,
   type WhatsappCategory,
 } from "@elora/core";
-import { Badge, Button, Callout, Card, CardContent, Switch, cn } from "@elora/ui";
-import { AlertTriangle, ArrowRight, Info, Lightbulb, Users } from "lucide-react";
-
-import { serializeQuoteInput } from "@/lib/site/quote-params";
+import { Badge, Callout, Card, CardContent, Switch, cn } from "@elora/ui";
+import { AlertTriangle, Info, Lightbulb, Users } from "lucide-react";
 
 /**
  * Simulador de custo.
@@ -99,6 +97,54 @@ function NumberField({ label, hint, value, min, max, step, suffix, onChange }: F
   );
 }
 
+/**
+ * Campo compacto da implantação.
+ *
+ * Sem faixa deslizante, ao contrário dos campos de volume acima. A diferença não
+ * é estética: volume é exploração — a pessoa arrasta procurando o ponto em que a
+ * edição vira. Quantidade de integração é um número que ela **já sabe**, e
+ * oferecer uma faixa para escolher entre 0 e 10 transforma um dado conhecido num
+ * gesto de mira.
+ */
+function SetupField({
+  label,
+  value,
+  min,
+  max,
+  hint,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  hint?: string;
+  onChange: (value: number) => void;
+}) {
+  const id = React.useId();
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <label htmlFor={id} className="min-w-0 text-xs">
+        {label}
+        {hint ? <span className="text-muted-foreground block text-[11px]">{hint}</span> : null}
+      </label>
+      <input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(event) =>
+          onChange(Math.min(max, Math.max(min, Number(event.target.value) || 0)))
+        }
+        className="border-input bg-surface focus-visible:ring-ring figure h-8 w-20 shrink-0 rounded-md border px-2 text-right text-sm focus-visible:outline-none focus-visible:ring-2"
+      />
+    </div>
+  );
+}
+
 function LineRow({ line, maxCents }: { line: QuoteLine; maxCents: number }) {
   const share = maxCents > 0 ? Math.max(0.02, line.totalCents / maxCents) : 0;
 
@@ -162,10 +208,25 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
     }));
   }, []);
 
+  /**
+   * Dimensionamento da implantação, com o padrão quando ausente.
+   *
+   * `QuoteInput.setup` é opcional para não quebrar quem monta a entrada sem ele
+   * — a URL do orçamento, por exemplo, que é montada em outro lugar. Resolver o
+   * padrão aqui, e não em cada campo, evita o `?? DEFAULT` repetido cinco vezes
+   * e a divergência que aparece quando alguém esquece um.
+   */
+  const setup = input.setup ?? DEFAULT_SETUP_INPUT;
+
+  const patchSetup = React.useCallback((value: Partial<typeof DEFAULT_SETUP_INPUT>) => {
+    setInput((current) => ({
+      ...current,
+      setup: { ...(current.setup ?? DEFAULT_SETUP_INPUT), ...value },
+    }));
+  }, []);
+
   const result = React.useMemo(() => calculateQuote(input), [input]);
   const suggestion = React.useMemo(() => recommendPlan(input), [input]);
-  const quoteHref = `/orcamento?${serializeQuoteInput(input)}`;
-
   const maxLineCents = Math.max(...result.lines.map((line) => line.totalCents), 1);
   const recurringLines = result.lines.filter((line) => line.kind !== "unico");
   const oneTimeLines = result.lines.filter((line) => line.kind === "unico");
@@ -375,23 +436,106 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
               );
             })}
 
-            <div className="border-border bg-surface flex items-start gap-3 rounded-xl border p-3">
-              <Switch
-                checked={input.includeSetup}
-                onCheckedChange={(checked) => patch({ includeSetup: checked })}
-                aria-label="Implantação assistida"
-                className="mt-0.5"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">Implantação assistida</p>
-                <p className="text-muted-foreground text-xs leading-snug">
-                  Filas, canais, catálogo e a primeira automação configurados com o time, até o
-                  primeiro mês em produção.
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {CURRENCY(PLAN_BY_KEY[input.planKey].setupCents)} — cobrança única
-                </p>
+            {/**
+             * Implantação deixou de ser um número fixo por edição.
+             *
+             * Enquanto era, este bloco mostrava `plan.setupCents` — e passou a
+             * mentir no instante em que o valor virou composição. O texto agora
+             * sai de `result.setup`, que é o mesmo objeto que compõe a fatura:
+             * não há como a explicação divergir do total.
+             *
+             * Os controles só aparecem com a implantação ligada. Cinco campos
+             * permanentemente visíveis num painel que já tem doze afundariam o
+             * que importa — e quem não vai contratar implantação não precisa
+             * responder quantas integrações tem.
+             */}
+            <div className="border-border bg-surface rounded-xl border p-3">
+              <div className="flex items-start gap-3">
+                <Switch
+                  checked={input.includeSetup}
+                  onCheckedChange={(checked) => patch({ includeSetup: checked })}
+                  aria-label="Implantação assistida"
+                  className="mt-0.5"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">Implantação assistida</p>
+                  <p className="text-muted-foreground text-xs leading-snug">
+                    Configuração com o time, treinamento e migração da base, até o primeiro mês em
+                    produção.
+                  </p>
+                  {result.setup ? (
+                    <p className="text-accent-ink mt-1 text-xs font-medium">
+                      {CURRENCY(result.setup.totalCents)} — cobrança única, em{" "}
+                      {result.setup.lines.length} parcela(s)
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      A partir de {CURRENCY(PLAN_BY_KEY[input.planKey].setupCents)}
+                    </p>
+                  )}
+                </div>
               </div>
+
+              {input.includeSetup ? (
+                <div className="border-border mt-3 space-y-3 border-t pt-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <SetupField
+                      label="Números de WhatsApp"
+                      value={setup.whatsappNumbers}
+                      min={1}
+                      max={20}
+                      onChange={(value) => patchSetup({ whatsappNumbers: value })}
+                    />
+                    <SetupField
+                      label="Sistemas a integrar"
+                      value={setup.integrations}
+                      min={0}
+                      max={10}
+                      onChange={(value) => patchSetup({ integrations: value })}
+                    />
+                    <SetupField
+                      label="Pessoas a treinar"
+                      value={setup.peopleToTrain}
+                      min={0}
+                      max={300}
+                      onChange={(value) => patchSetup({ peopleToTrain: value })}
+                      hint={
+                        result.setup && result.setup.trainingGroups > 0
+                          ? `${result.setup.trainingGroups} turma(s) de até 12`
+                          : undefined
+                      }
+                    />
+                    <SetupField
+                      label="Fluxos desenhados junto"
+                      value={setup.flows}
+                      min={0}
+                      max={20}
+                      onChange={(value) => patchSetup({ flows: value })}
+                    />
+                  </div>
+
+                  {result.setup ? (
+                    <ul className="divide-border divide-y text-xs">
+                      {result.setup.lines.map((line) => (
+                        <li
+                          key={line.key}
+                          className="flex items-baseline justify-between gap-3 py-1.5"
+                        >
+                          <span className="min-w-0 truncate">
+                            {line.label}
+                            {line.quantity > 1 ? (
+                              <span className="text-muted-foreground"> × {line.quantity}</span>
+                            ) : null}
+                          </span>
+                          <span className="figure shrink-0 tabular-nums">
+                            {CURRENCY(line.totalCents)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -534,17 +678,19 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
               </p>
             </div>
 
-            <Button asChild size="lg" className="mt-5 w-full">
-              <Link href={quoteHref}>
-                Solicitar orçamento com este cenário
-                <ArrowRight />
-              </Link>
-            </Button>
+            {/*
+              Não há botão de "solicitar orçamento" aqui, e a ausência é
+              consequência de onde esta tela passou a viver.
 
-            <p className="text-muted-foreground mt-3 flex items-start gap-1.5 text-xs leading-snug">
+              O simulador é da área comercial: quem o opera é quem emite a
+              proposta. Um botão que leva ao formulário público faria o vendedor
+              pedir orçamento a si mesmo — e, pior, criaria um pedido com o nome
+              dele na fila que ele próprio atende.
+            */}
+            <p className="text-muted-foreground mt-5 flex items-start gap-1.5 text-xs leading-snug">
               <Users className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              Valores de referência para dimensionamento. A proposta final é emitida pelo time
-              comercial e considera prazo de contrato, migração e integrações.
+              Valores de referência para dimensionamento. A proposta final considera prazo de
+              contrato, migração e integrações.
             </p>
           </CardContent>
         </Card>

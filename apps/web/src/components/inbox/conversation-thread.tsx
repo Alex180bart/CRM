@@ -80,6 +80,7 @@ export function ConversationThread({
   onChangeState,
   onTransferQueue,
   onSend,
+  composerQuickActions,
 }: {
   conversation: Conversation;
   contact?: Contact;
@@ -100,6 +101,8 @@ export function ConversationThread({
   onChangeState: (state: ConversationState) => void;
   onTransferQueue: (queueId: string) => void;
   onSend: (input: ComposerSubmission) => void;
+  /** Ações extras da barra do compositor — montar proposta, hoje. */
+  composerQuickActions?: React.ReactNode;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const previousCount = useRef(0);
@@ -465,6 +468,7 @@ export function ConversationThread({
         quote={quote}
         onClearQuote={() => setQuote(undefined)}
         copilot={{ available: copilotAvailable, suggest: onSuggest, rewrite: onRewrite }}
+        quickActions={composerQuickActions}
         onSend={onSend}
       />
     </section>

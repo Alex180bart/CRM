@@ -5,35 +5,18 @@ import type { Product, Proposal, ProposalStatus } from "@elora/core";
 import {
   PROPOSAL_STATUS_LABEL,
   RECURRENCE_SUFFIX,
-  buildProposalItem,
-  checkDiscount,
   computeTotals,
   formatCurrencyCents,
   formatRelative,
   statusAfterSubmit,
 } from "@elora/core";
-import {
-  Badge,
-  Button,
-  Callout,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  Input,
-  Label,
-  Textarea,
-  Tooltip,
-  cn,
-} from "@elora/ui";
+import { Badge, Button, Callout, Tooltip, cn } from "@elora/ui";
 import {
   BadgeCheck,
   Check,
   Copy,
   ExternalLink,
   Info,
-  Minus,
   Plus,
   Send,
   ShieldAlert,
@@ -42,6 +25,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { ProductArt } from "@/components/commerce/product-art";
+import { ProposalComposerDialog } from "./proposal-composer";
+import { ProposalMessageDialog } from "./proposal-message-dialog";
 
 /**
  * Propostas da conversa — seção 26.1 (P1).
@@ -68,7 +55,9 @@ import { toast } from "sonner";
  * não confunde as duas.
  */
 
-type Submit = (body: Record<string, unknown>) => Promise<{ ok: boolean; reason?: string }>;
+type Submit = (
+  body: Record<string, unknown>,
+) => Promise<{ ok: boolean; reason?: string; data?: Proposal }>;
 
 const TONE: Record<ProposalStatus, "neutral" | "info" | "warning" | "success" | "danger"> = {
   rascunho: "neutral",
@@ -89,6 +78,8 @@ export function ProposalPanel({
   products,
   proposals,
   currentUserId,
+  conversationContext,
+  onSendMessage,
 }: {
   conversationId: string;
   contactId: string;
@@ -96,11 +87,24 @@ export function ProposalPanel({
   products: Product[];
   proposals: Proposal[];
   currentUserId: string;
+  /** Assunto e últimas mensagens — a busca do catálogo usa como sugestão. */
+  conversationContext?: string;
+  /** Publica a mensagem na conversa. Vem do Inbox, que é dono do histórico. */
+  onSendMessage?: (body: string) => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const [composing, setComposing] = useState(false);
+  /**
+   * Proposta cujo estado mudou e cuja mensagem ainda não foi ao cliente.
+   *
+   * Mudar o estado e mandar a mensagem são dois atos, e a ordem é essa. No pior
+   * caso sobra uma proposta marcada como enviada sem mensagem — visível aqui e
+   * corrigível. O inverso deixaria o preço na mão do cliente sem registro no
+   * funil.
+   */
+  const [delivering, setDelivering] = useState<{ id: string; needsApproval: boolean } | null>(null);
 
   const mine = useMemo(
     () =>
@@ -118,7 +122,11 @@ export function ProposalPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const result = (await response.json()) as { ok: boolean; reason?: string };
+      const result = (await response.json()) as {
+        ok: boolean;
+        reason?: string;
+        data?: Proposal;
+      };
       if (result.ok) startTransition(() => router.refresh());
       return result;
     } catch {
@@ -135,6 +143,17 @@ export function ProposalPanel({
     } else {
       toast.error("Não foi possível", { description: result.reason });
     }
+    return result;
+  }
+
+  /** Abre a revisão da mensagem depois de a proposta mudar de estado. */
+  async function actAndDeliver(
+    body: Record<string, unknown>,
+    success: string,
+    input: { id: string; needsApproval: boolean },
+  ) {
+    const result = await act(body, success);
+    if (result.ok) setDelivering(input);
   }
 
   const working = busy || pending;
@@ -181,28 +200,68 @@ export function ProposalPanel({
             currentUserId={currentUserId}
             busy={working}
             onAct={act}
+            onActAndDeliver={actAndDeliver}
           />
         ))}
       </div>
 
       {composing ? (
-        <ComposeDialog
+        <ProposalComposerDialog
           open
           onOpenChange={setComposing}
-          products={products.filter((product) => product.active)}
+          products={products}
           contactName={contactName}
-          onCreate={async (items, message, validForDays) => {
-            const result = await submit({
+          conversationContext={conversationContext}
+          onCreate={async (items, message, validForDays, wantsSubmit) => {
+            const created = await submit({
               action: "criar",
               data: { conversationId, contactId, items, message, validForDays },
             });
-            if (result.ok) {
-              setComposing(false);
-              toast.success("Rascunho criado", {
-                description: "Revise e envie — nada saiu para o cliente ainda.",
+
+            if (!created.ok) return created;
+            setComposing(false);
+
+            if (!wantsSubmit) {
+              toast.success("Rascunho salvo", {
+                description: "Está aqui na lista. Nada saiu para o cliente.",
               });
+              return created;
             }
-            return result;
+
+            const id = created.data?.id;
+            if (!id) return created;
+
+            const sent = await submit({ action: "enviar", id });
+            if (!sent.ok) {
+              toast.error("Orçamento criado, mas não enviado", {
+                description: `${sent.reason ?? "O envio foi recusado."} O rascunho ficou na lista.`,
+              });
+              return created;
+            }
+
+            setDelivering({ id, needsApproval: sent.data?.status === "aguardando_aprovacao" });
+            return created;
+          }}
+        />
+      ) : null}
+
+      {delivering ? (
+        <ProposalMessageDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) setDelivering(null);
+          }}
+          proposalId={delivering.id}
+          needsApproval={delivering.needsApproval}
+          onConfirm={(message) => {
+            onSendMessage?.(message);
+            toast.success(
+              delivering.needsApproval
+                ? "Cliente avisado — o orçamento está com o gestor"
+                : "Orçamento enviado na conversa",
+            );
+            setDelivering(null);
+            return true;
           }}
         />
       ) : null}
@@ -218,12 +277,18 @@ function ProposalCard({
   currentUserId,
   busy,
   onAct,
+  onActAndDeliver,
 }: {
   proposal: Proposal;
   index: number;
   currentUserId: string;
   busy: boolean;
-  onAct: (body: Record<string, unknown>, success: string) => Promise<void>;
+  onAct: (body: Record<string, unknown>, success: string) => Promise<{ ok: boolean }>;
+  onActAndDeliver: (
+    body: Record<string, unknown>,
+    success: string,
+    input: { id: string; needsApproval: boolean },
+  ) => Promise<void>;
 }) {
   const totals = computeTotals(proposal.items);
   const willAsk = statusAfterSubmit(proposal.items) === "aguardando_aprovacao";
@@ -259,10 +324,35 @@ function ProposalCard({
         </div>
       </header>
 
-      <ul className="space-y-1">
+      <ul className="space-y-1.5">
         {proposal.items.map((item) => (
-          <li key={item.productId} className="flex items-baseline justify-between gap-2 text-xs">
-            <span className="min-w-0 truncate">
+          <li key={item.productId} className="flex items-center gap-2 text-xs">
+            {/*
+              A miniatura repete a do catálogo de propósito: é ela que permite
+              conferir o item de relance, sem ler o nome inteiro numa coluna de
+              280 px. A arte é derivada da própria linha da proposta — que é uma
+              fotografia do produto, não um ponteiro para ele — então continua
+              existindo mesmo depois de o produto ser desativado.
+            */}
+            <ProductArt
+              product={{
+                key: item.productKey,
+                name: item.name,
+                kind: item.kind,
+                recurrence: item.recurrence,
+                /*
+                 * A linha da proposta não guarda o resumo, e não deveria: ela é
+                 * a fotografia do que foi vendido, e resumo é texto de vitrine,
+                 * não de contrato. A arte usa chave, nome e tipo; o campo entra
+                 * vazio em vez de repetir o nome, que é o que produziria uma
+                 * legenda duplicada na miniatura.
+                 */
+                summary: "",
+              }}
+              size="sm"
+              className="size-7 rounded-md"
+            />
+            <span className="min-w-0 flex-1 truncate">
               {item.quantity > 1 ? `${item.quantity}× ` : ""}
               {item.name}
               {item.discountPct > 0 ? (
@@ -278,7 +368,7 @@ function ProposalCard({
                 </span>
               ) : null}
             </span>
-            <span className="text-muted-foreground shrink-0 tabular-nums">
+            <span className="text-muted-foreground figure shrink-0">
               {formatCurrencyCents(item.totalCents)}
               {RECURRENCE_SUFFIX[item.recurrence]}
             </span>
@@ -310,9 +400,12 @@ function ProposalCard({
               className="press h-7 text-xs"
               disabled={busy}
               onClick={() =>
-                onAct(
+                onActAndDeliver(
                   { action: "enviar", id: proposal.id },
-                  willAsk ? "Enviada para aprovação do gestor" : "Proposta enviada ao cliente",
+                  willAsk
+                    ? "Enviada para aprovação do gestor"
+                    : "Orçamento registrado como enviado",
+                  { id: proposal.id, needsApproval: willAsk },
                 )
               }
             >
@@ -345,7 +438,11 @@ function ProposalCard({
                 className="press h-7 text-xs"
                 disabled={busy || isRequester}
                 onClick={() =>
-                  onAct({ action: "aprovar", id: proposal.id }, "Aprovada e enviada ao cliente")
+                  onActAndDeliver(
+                    { action: "aprovar", id: proposal.id },
+                    "Aprovada — agora é só mandar a mensagem",
+                    { id: proposal.id, needsApproval: false },
+                  )
                 }
               >
                 <BadgeCheck className="size-3.5" />
@@ -453,233 +550,5 @@ function CheckoutLink({ url }: { url: string }) {
         </Button>
       </div>
     </div>
-  );
-}
-
-/* Montagem --------------------------------------------------------------------- */
-
-function ComposeDialog({
-  open,
-  onOpenChange,
-  products,
-  contactName,
-  onCreate,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  products: Product[];
-  contactName: string;
-  onCreate: (
-    items: Array<{ productId: string; quantity: number; discountPct: number }>,
-    message: string,
-    validForDays: number,
-  ) => Promise<{ ok: boolean; reason?: string }>;
-}) {
-  const [lines, setLines] = useState<Record<string, { quantity: number; discountPct: number }>>({});
-  const [message, setMessage] = useState("");
-  const [validForDays, setValidForDays] = useState("7");
-  const [refusal, setRefusal] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const selected = products.filter((product) => lines[product.id]);
-
-  /**
-   * A prévia usa as funções puras do núcleo, não uma soma escrita aqui.
-   *
-   * É o que garante que o total mostrado antes de gravar seja o mesmo que o
-   * repositório vai calcular — inclusive no arredondamento, que é onde a
-   * divergência de um centavo nasce.
-   */
-  const items = selected.map((product) =>
-    buildProposalItem(product, lines[product.id]!.quantity, lines[product.id]!.discountPct),
-  );
-  const totals = computeTotals(items);
-  const discount = checkDiscount(items);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(94vw,34rem)]">
-        <DialogHeader>
-          <DialogTitle>Montar proposta para {contactName}</DialogTitle>
-          <DialogDescription>
-            Nada sai para o cliente agora: a proposta nasce como rascunho e você revisa antes de
-            enviar.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="max-h-[46vh] space-y-1.5 overflow-y-auto">
-          {products.map((product) => {
-            const line = lines[product.id];
-            return (
-              <div
-                key={product.id}
-                className={cn(
-                  "rounded-lg p-2.5 transition-colors",
-                  line ? "bg-primary-soft" : "hover:bg-muted/60",
-                )}
-              >
-                <div className="flex items-start gap-2">
-                  <button
-                    type="button"
-                    className="min-w-0 flex-1 text-left"
-                    onClick={() =>
-                      setLines((current) => {
-                        const next = { ...current };
-                        if (next[product.id]) delete next[product.id];
-                        else next[product.id] = { quantity: 1, discountPct: 0 };
-                        return next;
-                      })
-                    }
-                  >
-                    <p className="truncate text-sm font-medium">{product.name}</p>
-                    <p className="text-muted-foreground truncate text-xs">{product.summary}</p>
-                  </button>
-                  <p className="figure shrink-0 text-sm">
-                    {formatCurrencyCents(product.priceCents)}
-                    <span className="text-muted-foreground text-[10px]">
-                      {RECURRENCE_SUFFIX[product.recurrence]}
-                    </span>
-                  </p>
-                </div>
-
-                {line ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon-sm"
-                        variant="outline"
-                        className="size-6"
-                        onClick={() =>
-                          setLines((c) => ({
-                            ...c,
-                            [product.id]: { ...line, quantity: Math.max(1, line.quantity - 1) },
-                          }))
-                        }
-                      >
-                        <Minus className="size-3" />
-                      </Button>
-                      <span className="w-6 text-center text-xs tabular-nums">{line.quantity}</span>
-                      <Button
-                        size="icon-sm"
-                        variant="outline"
-                        className="size-6"
-                        onClick={() =>
-                          setLines((c) => ({
-                            ...c,
-                            [product.id]: { ...line, quantity: line.quantity + 1 },
-                          }))
-                        }
-                      >
-                        <Plus className="size-3" />
-                      </Button>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <Label className="text-[11px]">Desconto</Label>
-                      <Input
-                        className="h-6 w-14 text-xs"
-                        inputMode="numeric"
-                        value={String(line.discountPct)}
-                        onChange={(event) =>
-                          setLines((c) => ({
-                            ...c,
-                            [product.id]: {
-                              ...line,
-                              discountPct: Math.min(
-                                100,
-                                Number(event.target.value.replace(/\D/g, "")) || 0,
-                              ),
-                            },
-                          }))
-                        }
-                      />
-                      <span className="text-muted-foreground text-[11px]">
-                        % · teto {product.maxDiscountPct}%
-                      </span>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="space-y-2">
-          <Textarea
-            rows={2}
-            placeholder="Uma linha para o cliente (opcional)."
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-          />
-          <div className="flex items-center gap-2">
-            <Label className="text-xs">Validade</Label>
-            <Input
-              className="h-7 w-16 text-xs"
-              inputMode="numeric"
-              value={validForDays}
-              onChange={(event) => setValidForDays(event.target.value.replace(/\D/g, ""))}
-            />
-            <span className="text-muted-foreground text-xs">dias</span>
-          </div>
-        </div>
-
-        {items.length > 0 ? (
-          <div className="border-border space-y-2 border-t pt-3">
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-medium">Total</span>
-              <span className="figure text-base font-semibold">
-                {formatCurrencyCents(totals.totalCents)}
-              </span>
-            </div>
-            {totals.recurringCents > 0 && totals.oneOffCents > 0 ? (
-              <p className="text-muted-foreground text-xs">
-                {formatCurrencyCents(totals.recurringCents)} por mês, mais{" "}
-                {formatCurrencyCents(totals.oneOffCents)} de entrada — os dois não se somam num
-                número só.
-              </p>
-            ) : null}
-            {discount.requiresApproval ? (
-              <Callout variant="warning" icon={<ShieldAlert className="size-4" />}>
-                {discount.reason} Ao enviar, esta proposta vai para o gestor antes de chegar ao
-                cliente.
-              </Callout>
-            ) : null}
-          </div>
-        ) : null}
-
-        {refusal ? (
-          <Callout variant="danger" icon={<ShieldAlert className="size-4" />}>
-            {refusal}
-          </Callout>
-        ) : null}
-
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button
-            disabled={items.length === 0 || busy}
-            className="press"
-            onClick={async () => {
-              setBusy(true);
-              setRefusal(null);
-              const result = await onCreate(
-                selected.map((product) => ({
-                  productId: product.id,
-                  quantity: lines[product.id]!.quantity,
-                  discountPct: lines[product.id]!.discountPct,
-                })),
-                message,
-                Number(validForDays) || 7,
-              );
-              setBusy(false);
-              if (!result.ok) setRefusal(result.reason ?? "Não foi possível criar.");
-            }}
-          >
-            Criar rascunho
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }

@@ -13,13 +13,7 @@
  */
 
 import type { Id } from "../types/common";
-import type {
-  QuoteRequest,
-  QuoteSnapshot,
-  SiteAccount,
-  SiteAccountPublic,
-  SiteWriteResult,
-} from "../types/site";
+import type { QuoteRequest, SiteAccount, SiteAccountPublic, SiteWriteResult } from "../types/site";
 import { offsetIso } from "../utils/datetime";
 import { store } from "./store";
 
@@ -57,8 +51,9 @@ export interface CreateQuoteInput {
   company: string;
   phone?: string;
   segment?: string;
+  planKey?: string;
+  teamSize?: number;
   message?: string;
-  snapshot: QuoteSnapshot;
 }
 
 export interface SiteRepository {
@@ -137,8 +132,16 @@ export const siteMemoryRepository: SiteRepository = {
       company: input.company.trim(),
       phone: input.phone?.trim() || undefined,
       segment: input.segment,
+      planKey: input.planKey,
+      /**
+       * Time de tamanho zero é ausência, não um time vazio.
+       *
+       * O campo é opcional no formulário, e um `Number("")` vira `0`. Gravado
+       * assim, o comercial leria "zero colaboradores" — que parece resposta e é
+       * campo em branco.
+       */
+      teamSize: input.teamSize && input.teamSize > 0 ? input.teamSize : undefined,
       message: input.message?.trim() || undefined,
-      snapshot: input.snapshot,
       status: "novo",
       reference,
       createdAt: offsetIso({}),

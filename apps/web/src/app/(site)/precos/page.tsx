@@ -7,18 +7,17 @@ import {
   formatCurrencyCents,
   formatNumber,
 } from "@elora/core";
-import { Card, CardContent, Reveal } from "@elora/ui";
+import { Button, Card, CardContent, Reveal } from "@elora/ui";
+import { ArrowRight } from "lucide-react";
 
 import { Faq } from "@/components/site/faq";
 import { PlanCards } from "@/components/site/plan-cards";
-import { PricingSimulator } from "@/components/site/pricing-simulator";
-import { parseQuoteInput } from "@/lib/site/quote-params";
 
 export const metadata: Metadata = {
-  title: "Preços e simulador",
+  title: "Preços",
   description:
-    "Edições, franquias, preço por excedente e o repasse da Meta — a tabela inteira, com simulador " +
-    "que mostra a conta linha a linha antes de falar com vendedor.",
+    "Edições, franquias, preço por excedente e o repasse da Meta — a tabela inteira, aberta, " +
+    "antes de falar com vendedor.",
 };
 
 /**
@@ -27,15 +26,15 @@ export const metadata: Metadata = {
  * A tabela de excedente vem depois dos cartões, e não escondida atrás de um
  * "consulte-nos". O preço do excedente é o que decide a conta de quem cresce, e
  * é exatamente o número que costuma aparecer só na terceira fatura.
+ *
+ * ## Por que não há simulador aqui
+ *
+ * Havia, e ele passou a viver só na área comercial (`/admin`). A tabela continua
+ * pública e completa — o que saiu foi a **calculadora**, não a informação. A
+ * diferença importa: uma tabela aberta com o dimensionamento feito junto com o
+ * cliente é o oposto de um "consulte-nos", que esconde os números.
  */
-export default async function PrecosPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const params = await searchParams;
-  const initial = parseQuoteInput(params);
-
+export default async function PrecosPage() {
   return (
     <>
       <section className="bg-primary text-primary-foreground aurora">
@@ -109,8 +108,8 @@ export default async function PrecosPage({
           </div>
 
           <p className="text-muted-foreground mt-3 text-xs">
-            A seta indica a progressão entre faixas — a primeira faixa vale até o teto declarado no
-            simulador, e o excedente cai na faixa seguinte.
+            A seta indica a progressão entre faixas — a franquia da edição vale até o teto declarado,
+            e o excedente cai na faixa seguinte, pelo preço dela.
           </p>
 
           {/* WhatsApp */}
@@ -217,23 +216,42 @@ export default async function PrecosPage({
         </div>
       </section>
 
-      {/* Simulador ------------------------------------------------------------ */}
-      <section id="simulador" className="mx-auto w-full max-w-6xl scroll-mt-20 px-5 py-16">
+      {/* Conta do seu caso ----------------------------------------------------- */}
+      <section className="mx-auto w-full max-w-6xl px-5 py-16">
         <Reveal index={0}>
-          <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
-            Simule o seu caso
-          </h2>
-          <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-            O endereço desta página carrega o cenário: ajuste, copie o link e mande para quem decide.
-          </p>
-        </Reveal>
+          <Card>
+            <CardContent className="p-8 md:p-10">
+              <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+                A conta do seu caso, feita com você
+              </h2>
+              <p className="text-muted-foreground mt-3 max-w-2xl text-sm leading-relaxed">
+                Tudo o que entra no preço está nesta página: assinatura, assento, franquia, preço do
+                excedente e o repasse da Meta linha a linha. O que falta é o seu volume — e aí a
+                conversa vale mais que um formulário, porque metade das operações descobre no meio
+                dela que precisa de menos do que imaginava.
+              </p>
+              <p className="text-muted-foreground mt-3 max-w-2xl text-sm leading-relaxed">
+                O time comercial monta o cenário com os seus números na primeira ligação e manda a
+                planilha aberta, com cada linha separada. Resposta em até um dia útil.
+              </p>
 
-        <div className="mt-8">
-          <PricingSimulator initial={initial} />
-        </div>
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Button asChild size="lg" variant="accent">
+                  <Link href="/orcamento">
+                    Solicitar proposta
+                    <ArrowRight />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/cadastrar">Criar conta e acompanhar</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </Reveal>
       </section>
 
-      <section className="bg-surface-sunken py-16">
+      <section id="faq" className="bg-surface-sunken scroll-mt-20 py-16">
         <div className="mx-auto w-full max-w-4xl px-5">
           <h2 className="font-display text-2xl font-semibold tracking-tight">Dúvidas de preço</h2>
           <div className="mt-6">

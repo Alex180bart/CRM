@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  PLAN_BY_KEY,
   QUOTE_STATUS_LABEL,
-  formatCurrencyCents,
   formatDateTime,
   formatNumber,
   repositories,
+  type PlanKey,
 } from "@elora/core";
 import { Badge, Button, Callout, Card, CardContent, EmptyState } from "@elora/ui";
 import { ArrowRight, Boxes, Calculator, FileText, Info, LogOut } from "lucide-react";
@@ -20,7 +21,7 @@ export const metadata: Metadata = { title: "Minha conta" };
 /**
  * Área do cliente.
  *
- * Mostra o que existe de verdade — a conta e os orçamentos pedidos — e não
+ * Mostra o que existe de verdade — a conta e as propostas pedidas — e não
  * inventa painel de uso, fatura ou contrato. Um painel de consumo com números
  * fabricados seria a única coisa desta página que o cliente levaria a sério, e
  * seria a única falsa.
@@ -56,7 +57,7 @@ export default async function ContaPage() {
         A área comercial vem primeiro, e só para quem tem o papel.
         
         Quem entra com a conta de administrador veio abrir uma demonstração —
-        empurrar isso para baixo dos atalhos de orçamento obrigaria a rolar a
+        empurrar isso para baixo dos atalhos de proposta obrigaria a rolar a
         página no meio de uma reunião com o cliente na chamada.
       */}
       {account.isAdmin ? (
@@ -85,12 +86,12 @@ export default async function ContaPage() {
         <Card className="lift">
           <CardContent className="p-5">
             <Calculator className="text-accent size-5" aria-hidden />
-            <h3 className="font-display mt-3 text-sm font-semibold">Simular um cenário</h3>
+            <h3 className="font-display mt-3 text-sm font-semibold">Conferir a tabela</h3>
             <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-              Ajuste volume, time e canais e veja a conta linha a linha.
+              Franquia por edição, preço do excedente e o repasse da Meta, linha a linha.
             </p>
             <Button asChild variant="outline" size="sm" className="mt-3 w-full">
-              <Link href="/precos#simulador">Abrir simulador</Link>
+              <Link href="/precos">Ver preços</Link>
             </Button>
           </CardContent>
         </Card>
@@ -119,7 +120,7 @@ export default async function ContaPage() {
             <FileText className="text-accent size-5" aria-hidden />
             <h3 className="font-display mt-3 text-sm font-semibold">Pedir proposta</h3>
             <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-              Envie o cenário para o comercial com os seus dados já preenchidos.
+              Conte o tamanho da operação. Os seus dados já vão preenchidos.
             </p>
             <Button asChild size="sm" className="mt-3 w-full">
               <Link href="/orcamento">
@@ -131,18 +132,18 @@ export default async function ContaPage() {
         </Card>
       </div>
 
-      <h2 className="font-display mt-12 text-xl font-semibold tracking-tight">Meus orçamentos</h2>
+      <h2 className="font-display mt-12 text-xl font-semibold tracking-tight">Meus pedidos de proposta</h2>
 
       {quotes.length === 0 ? (
         <Card className="mt-4">
           <CardContent className="p-8">
             <EmptyState
               icon={<FileText />}
-              title="Nenhum orçamento pedido ainda"
-              description="Dimensione a operação no simulador e envie o cenário. Ele aparece aqui com a referência para citar com o comercial."
+              title="Nenhuma proposta pedida ainda"
+              description="Conte o tamanho da operação e o que precisa resolver. O pedido aparece aqui com a referência para citar com o comercial."
               action={
                 <Button asChild>
-                  <Link href="/precos#simulador">Abrir o simulador</Link>
+                  <Link href="/orcamento">Solicitar proposta</Link>
                 </Button>
               }
             />
@@ -158,43 +159,51 @@ export default async function ContaPage() {
                     <div>
                       <p className="flex items-center gap-2">
                         <span className="figure text-sm font-semibold">
-                          Orçamento {quote.reference}
+                          Pedido {quote.reference}
                         </span>
                         <Badge variant={quote.status === "novo" ? "info" : "neutral"}>
                           {QUOTE_STATUS_LABEL[quote.status]}
                         </Badge>
                       </p>
                       <p className="text-muted-foreground mt-0.5 text-xs">
-                        Edição {quote.snapshot.planName} ·{" "}
-                        {quote.snapshot.billing === "anual" ? "anual" : "mensal"} · enviado em{" "}
-                        {formatDateTime(quote.createdAt)}
+                        Enviado em {formatDateTime(quote.createdAt)}
+                        {quote.segment ? ` · ${quote.segment}` : ""}
                       </p>
                     </div>
 
-                    <div className="text-right">
-                      <p className="figure text-xl font-semibold">
-                        {formatCurrencyCents(quote.snapshot.monthlyTotalCents)}
-                        <span className="text-muted-foreground text-xs font-normal"> / mês</span>
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {formatCurrencyCents(quote.snapshot.firstInvoiceCents)} na primeira fatura
-                      </p>
-                    </div>
+                    {/*
+                      Nenhum valor aparece aqui, e a ausência é o ponto.
+
+                      O pedido é uma intenção: quem faz o preço é o comercial,
+                      depois da conversa. Mostrar um total nesta lista exigiria
+                      calculá-lo a partir de um dimensionamento que ninguém fez —
+                      e o cliente leria o padrão da tabela como a proposta dele.
+                    */}
+                    <p className="text-muted-foreground text-xs">
+                      O comercial responde em até um dia útil
+                    </p>
                   </div>
 
-                  <dl className="border-border mt-4 grid grid-cols-2 gap-3 border-t pt-4 sm:grid-cols-4">
-                    {[
-                      ["Colaboradores", formatNumber(quote.snapshot.seats)],
-                      ["Contatos", formatNumber(quote.snapshot.contacts)],
-                      ["Conversas / mês", formatNumber(quote.snapshot.conversations)],
-                      ["Respostas de IA", formatNumber(quote.snapshot.aiReplies)],
-                    ].map(([label, value]) => (
-                      <div key={label}>
-                        <dt className="text-muted-foreground text-[11px]">{label}</dt>
-                        <dd className="figure text-sm font-medium">{value}</dd>
-                      </div>
-                    ))}
-                  </dl>
+                  {quote.planKey || quote.teamSize ? (
+                    <dl className="border-border mt-4 grid grid-cols-2 gap-3 border-t pt-4">
+                      {quote.planKey ? (
+                        <div>
+                          <dt className="text-muted-foreground text-[11px]">Edição de interesse</dt>
+                          <dd className="text-sm font-medium">
+                            {PLAN_BY_KEY[quote.planKey as PlanKey]?.name ?? quote.planKey}
+                          </dd>
+                        </div>
+                      ) : null}
+                      {quote.teamSize ? (
+                        <div>
+                          <dt className="text-muted-foreground text-[11px]">Colaboradores</dt>
+                          <dd className="figure text-sm font-medium">
+                            {formatNumber(quote.teamSize)}
+                          </dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                  ) : null}
 
                   {quote.message ? (
                     <p className="text-muted-foreground border-border mt-4 border-t pt-4 text-sm leading-relaxed">
@@ -209,7 +218,7 @@ export default async function ContaPage() {
       )}
 
       <p className="text-muted-foreground mt-8 text-xs leading-relaxed">
-        Esta conta vive na memória do servidor: um reinício apaga o cadastro e os orçamentos. A
+        Esta conta vive na memória do servidor: um reinício apaga o cadastro e os pedidos. A
         persistência entra junto com a fundação de back-end.
       </p>
     </div>

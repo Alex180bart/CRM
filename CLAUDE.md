@@ -379,7 +379,7 @@ compartilhada entre rota e interface — não duplique a lógica em componente.
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:3200
+pnpm dev          # http://localhost:3200 (Turbopack)
 pnpm typecheck    # tsc --noEmit nos 3 pacotes
 pnpm lint         # eslint com --max-warnings=0
 pnpm build        # next build
@@ -387,6 +387,18 @@ pnpm format
 ```
 
 Node ≥ 20.11, pnpm 9.
+
+**O `pnpm dev` roda em Turbopack, e a lentidão que ele resolve é a de compilação, não a de
+renderização.** A medida que motivou a troca: abrir oito telas num servidor recém-iniciado custava
+40,9 s no webpack e custa 12,6 s hoje; a primeira rota, que paga o shell compartilhado sozinha, caiu
+de 18,9 s para 6,4 s. **Nada disso é problema de produção** — o mesmo HTML sai em 8 a 25 ms no
+servidor de produção, e a navegação entre telas no navegador leva 39 a 68 ms. Antes de "otimizar o
+carregamento", confira em qual dos dois servidores o número foi medido: cache de servidor para uma
+resposta de 10 ms é trabalho perdido, e foi essa a conclusão de medir antes de mexer.
+
+`pnpm dev:webpack` continua existindo para quando o Turbopack for suspeito de um defeito — o `next
+build` de produção continua no webpack, então divergência entre os dois é possível e o jeito de
+provar é rodar o mesmo caso nos dois compiladores.
 
 **Não rode `pnpm build` com o `pnpm dev` no ar.** Os dois escrevem em `apps/web/.next`, e o build
 substitui os artefatos que o servidor de desenvolvimento mantém abertos. O sintoma não parece
@@ -404,18 +416,18 @@ travou compilando o Inbox".
 
 ```
 apps/web/            Next.js 15 (App Router) + React 19 + Tailwind 3
-  src/app/(site)/    site público: landing page, preços, simulador, orçamento e área do cliente
+  src/app/(site)/    site público: landing page, preços, pedido de proposta e área do cliente
   src/app/(workspace)/  o produto
 packages/core/       tipos canônicos, utilitários, base de demonstração e repositórios
   src/demo/          verticais de demonstração (overlay sobre a base contábil)
-  src/pricing/       tabela de preços e motor do simulador
+  src/pricing/       tabela de preços e motor de cálculo (simulador em /admin)
 packages/ui/         design system (@elora/ui) — tokens, componentes, primitivas Radix
 packages/config/     preset Tailwind compartilhado
 docs/referencia/     Plano Completo (fonte da verdade)
 .claude/agents/      equipe de agentes especializados
 ```
 
-## Site público, simulador de preço e verticais de demonstração
+## Site público, preço e verticais de demonstração
 
 **A raiz `/` deixou de redirecionar: agora é a landing page.** O grupo `(site)` em
 `apps/web/src/app/(site)` traz `/`, `/precos`, `/orcamento`, `/entrar`, `/cadastrar`, `/conta` e
@@ -466,10 +478,34 @@ Quatro consequências que valem enunciar:
 3. **Colaborador ilimitado existe só na edição de cima.** "Ilimitado" numa edição barata é preço
    por assento escondido num número redondo, e quebra no dia em que o cliente cadastra a operação
    inteira.
-4. **O cálculo roda no navegador e é refeito no servidor.** No simulador, porque arrastar o volume
-   vinte vezes precisa ser instantâneo; no pedido de orçamento, porque aceitar o total que o
-   navegador enviou permitiria pedir proposta de R$ 1. Os dois lados chamam a **mesma função pura** —
-   não existe uma conta "de exibição" e outra "de verdade".
+4. **O cálculo roda no navegador, e é a única cópia que existe.** O simulador precisa ser
+   instantâneo — arrastar o volume vinte vezes procurando o ponto em que a edição vira é o gesto
+   central da ferramenta. Antes havia um segundo cálculo, no servidor, refazendo a conta que o
+   formulário de orçamento trazia em campos ocultos: aceitar o total enviado pelo navegador
+   permitiria pedir proposta de R$ 1. Esse caminho deixou de existir junto com o cenário no
+   formulário — hoje o pedido não carrega total nenhum, então não há total a forjar.
+
+**O simulador é da área comercial, e o site publica a tabela sem a calculadora.** Ele já esteve na
+landing page e em `/precos`; hoje vive só na aba de `/admin`. A distinção que sustenta a decisão:
+saiu a **calculadora**, não a **informação** — franquia por edição, preço de excedente e o repasse
+da Meta continuam abertos em `/precos`, que é o oposto de um "consulte-nos". O dimensionamento passa
+pela conversa porque é nela que se descobre que a operação precisa de menos do que imaginava, e uma
+calculadora pública devolve o número cheio sem essa conversa acontecer.
+
+Três consequências que valem enunciar, porque cada uma já foi um defeito na primeira tentativa:
+
+1. **`/orcamento` virou pedido de contato qualificado**, e `QuoteRequest` perdeu `QuoteSnapshot`.
+   Guardar a fotografia do cálculo exigiria o simulador público para preenchê-la, ou nasceria
+   sempre zerada — e um número ao lado da palavra "orçamento" é lido como preço mesmo quando é só o
+   padrão de um campo que ninguém preencheu. O que restou pergunta o que o interessado responde sem
+   calculadora: edição de interesse e tamanho do time, **ambos opcionais**.
+2. **O simulador não tem mais botão de "solicitar orçamento".** Quem o opera é quem emite a
+   proposta: o botão faria o vendedor pedir orçamento a si mesmo, e criaria um pedido com o nome
+   dele na fila que ele próprio atende.
+3. **`lib/site/quote-params.ts` deixou de existir.** O cenário viajava na URL para ser colado num
+   grupo — não há mais para onde colar, porque nenhuma página pública lê aquele parâmetro. Manter o
+   módulo deixaria uma serialização sem leitor, que é o tipo de código que alguém reativa por
+   engano meses depois.
 
 **A conta do site é autenticação de verdade no que faz e de demonstração no que guarda.** `scrypt`
 com sal por conta, comparação em tempo constante, cookie com HMAC e vencimento **dentro** da
@@ -522,10 +558,10 @@ para quem tem o papel.
 
 **`/admin` junta demonstração e simulador em abas**, e a razão é o uso: as duas ferramentas são
 alternadas na mesma reunião — mostra a tela, o cliente pergunta o preço, calcula com os números
-dele, volta para a tela. Em páginas separadas, cada pergunta custa duas navegações, e a segunda cai
-numa página pública com chamada de marketing que não serve a quem está do lado de cá. O simulador é
-o **mesmo componente** de `/precos`: uma cópia "de vendedor" divergiria no primeiro reajuste, com os
-dois lados olhando telas diferentes na mesma chamada.
+dele, volta para a tela. Em páginas separadas, cada pergunta custa duas navegações. É também o
+**único** lugar onde o simulador existe, desde que ele saiu do site público. O componente e a função
+de cálculo continuam sendo os mesmos que alimentam a tabela de `/precos`: uma cópia "de vendedor"
+divergiria no primeiro reajuste, com os dois lados olhando telas diferentes na mesma chamada.
 
 A checagem existe em **dois lugares, e nenhum é redundante**: a tela não desenha o botão, e
 `openVerticalAction` recusa a chamada. Server Action tem endereço próprio — um `POST` montado à mão
@@ -550,6 +586,108 @@ de **configuração**, não de credencial: se as variáveis existem, nunca o que
 transformaria o formulário em redirecionador aberto — mandar a vítima para
 `/entrar?proximo=https://site-falso` e devolvê-la autenticada em outro domínio. Duas barras no
 início também são recusadas: `//site-falso` é URL absoluta com o protocolo herdado.
+
+## Montagem de proposta na conversa
+
+**A ação rápida fica na barra do compositor, ao lado do gravador de voz.** O
+instante em que a proposta é montada é sempre o mesmo — logo depois de o cliente
+perguntar o preço, com o cursor já dentro do compositor. Obrigar a viagem até a
+aba do painel da direita nesse momento é o que faz o vendedor sair da conversa,
+abrir a planilha e mandar o valor à mão, que é o caminho que este módulo existe
+para substituir. No celular o painel nem está na tela.
+
+**O compositor continua sem saber o que é uma proposta.** Ele recebe
+`quickActions` como nó pronto e só desenha. É a mesma disciplina de ele receber
+funções de IA em vez do gateway — e é o que permite reusá-lo fora do Inbox.
+
+**O produto tem arte, e ela é derivada, não armazenada.** `utils/product-art.ts`
+escolhe um motivo pelo que o produto é (texto tem precedência sobre tipo) e uma
+matiz estável pela chave, via FNV-1a. Foto real depende do caminho de mídia da
+seção 11 — e, quando existir, esta função vira o **fallback**, como as iniciais
+não deixaram de existir quando a foto de perfil passou a existir. O desenho vive
+em `components/commerce/product-art.tsx`, com `currentColor` e a matiz composta
+com `--hue-bg-l` / `--hue-fg-l`: é a exceção documentada de cor derivada de dado,
+a mesma de tag e avatar, e é o que faz o tema escuro funcionar sem segundo
+arquivo.
+
+Nada sorteia. Um `Math.random()` na cor mudaria o produto entre servidor e
+navegador e quebraria a hidratação — o mesmo defeito que `datetime.ts` evita do
+lado do tempo.
+
+**A busca do catálogo é léxica, determinística e explica o resultado.**
+`utils/product-search.ts` pontua por **onde** o termo casou (nome vale 10,
+notas de venda valem 1) e por **como** casou (palavra inteira > começo > meio), e
+exige que **todos** os termos casem — sem isso, o segundo termo amplia em vez de
+refinar. Cada resultado carrega o motivo, porque uma lista ordenada por
+relevância sem dizer por quê é caixa-preta que o vendedor aprende a ignorar.
+
+**O contexto da conversa sugere, mas passa por frequência inversa.** A primeira
+versão contava qualquer termo do assunto e das últimas mensagens, e o resultado
+foi visto na tela: **todo** item ganhou o selo de "sugerido", porque palavras
+como "produto" e "entrega" casam com quase tudo. Hoje o termo precisa ter ao
+menos quatro letras e aparecer em no máximo 30% do catálogo — o que sobra é
+vocabulário que aponta para poucos itens. Selo que aparece em tudo não sugere
+nada. Coberto por teste.
+
+Contexto **nunca** cria resultado quando há consulta: quem digitou "trilho" não
+quer clareamento porque a conversa fala de estética. Ele entra como desempate,
+ou sozinho quando a busca está vazia.
+
+**O que já está no carrinho não some da lista.** Digitar um termo novo depois de
+escolher três itens escondia os três, e conferir exigia limpar a busca. O
+selecionado sobe para o topo e permanece; a busca filtra o que **falta**
+escolher.
+
+**O total interpola do valor anterior, não do zero.** `AnimatedNumber` do design
+system conta sempre a partir de zero — certo numa entrada de página, errado
+aqui: a cada item somado, o número piscaria de zero até o novo total.
+
+## Envio do orçamento
+
+**O montador cria e envia num passo.** O rascunho deixou de ser o caminho
+principal: quem monta na frente do cliente quer que o orçamento saia, e parar num
+rascunho obriga a achar o painel da direita, localizar o cartão e clicar de novo
+— três passos entre a decisão e o envio, cada um um lugar para esquecer. O
+rascunho continua como saída secundária, para quem monta antes da reunião.
+
+**O rótulo do botão diz para onde vai antes do clique**, por `statusAfterSubmit`
+— a mesma função que o repositório usa para decidir. Desconto dentro do teto:
+"Enviar orçamento". Acima: "Enviar para aprovação do gestor". Descobrir depois de
+gravar é o que produz "achei que tinha enviado".
+
+**"Enviado" não era enviado, e esse era o defeito.** `submitProposal` mudava o
+estado, publicava evento e gravava auditoria — e **nenhuma mensagem chegava à
+conversa**. Do lugar de quem vende, clicar em "enviar ao cliente" não fazia nada
+visível. Agora o estado muda e, em seguida, uma mensagem entra no histórico.
+
+A ordem é deliberada: **estado primeiro, mensagem depois**. No pior caso sobra
+uma proposta marcada como enviada sem mensagem — visível no painel e corrigível.
+O inverso deixaria o preço na mão do cliente sem registro nenhum no funil.
+
+**Os três passos são três chamadas porque falham por motivos diferentes.** Criar
+recusa produto inativo; submeter recusa desconto acima do teto; a mensagem
+depende da IA. Numa chamada só, a falha da terceira desfaria as duas primeiras e
+o vendedor perderia o orçamento montado porque o modelo estava fora.
+
+**A mensagem é escrita pela IA e conferida pela aplicação.**
+`/api/ai/proposta` monta o texto determinístico de `utils/proposal-message.ts` e
+pede ao Gateway uma versão que retome a conversa. O prompt entrega os **valores
+prontos** e proíbe recalcular; `runProposalMessage` confere que o total e cada
+linha aparecem no texto, normalizando o espaço inquebrável do `Intl`. Saída que
+alterou um valor é recusada, e o que vai à tela é o texto determinístico.
+
+Um modelo somando três linhas erra de vez em quando, e o erro é o pior tipo:
+plausível. O cliente lê um total que a cobrança não vai bater, e a conversa
+seguinte é sobre confiança, não sobre preço.
+
+**Falha de IA não vira erro para quem está vendendo.** Esta rota responde 200 com
+o texto padrão e o motivo no corpo — inversão consciente em relação à rota de
+e-mail, que falha quando o modelo falha. Lá o produto é o texto; aqui o produto é
+o **orçamento**, e existe embalagem padrão que sempre serve.
+
+**A pessoa envia, não a IA.** O texto abre num diálogo editável antes de ir para
+a conversa. Aqui a regra pesa mais que no copiloto: o texto carrega preço, e
+preço enviado não se desdiz.
 
 ## Regras que não se negociam
 

@@ -45,9 +45,9 @@ import { LogoWordmark } from "@/components/shell/logo";
 const LINKS = [
   { href: "/#produto", label: "Produto" },
   { href: "/precos", label: "Preços" },
-  { href: "/#simulador", label: "Simulador" },
   { href: "/#ia", label: "Inteligência artificial" },
   { href: "/#seguranca", label: "Segurança" },
+  { href: "/orcamento", label: "Falar com o comercial" },
 ];
 
 export function SiteHeader({ accountName }: { accountName?: string }) {

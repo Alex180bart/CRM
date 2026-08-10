@@ -17,7 +17,7 @@ export default async function CadastrarPage() {
         <CardContent className="p-7">
           <h1 className="font-display text-2xl font-semibold tracking-tight">Criar conta</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Para salvar cenários do simulador e acompanhar os orçamentos pedidos.
+            Para pedir proposta com os seus dados prontos e acompanhar o andamento de cada pedido.
           </p>
 
           <Callout variant="neutral" icon={<Info />} className="mt-5">

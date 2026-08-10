@@ -3,13 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import {
-  DEMO_VERTICALS,
-  calculateQuote,
-  formatCurrencyCents,
-  formatNumber,
-  type QuoteInput,
-} from "@elora/core";
+import { DEMO_VERTICALS, PLANS } from "@elora/core";
 import {
   Button,
   Callout,
@@ -27,19 +21,29 @@ import {
 import { AlertTriangle, CheckCircle2, Send } from "lucide-react";
 
 import { requestQuoteAction, type FormState } from "@/app/(site)/actions";
-import { quoteInputFields } from "@/lib/site/quote-params";
 
 /**
- * Pedido de orçamento.
+ * Pedido de proposta.
  *
- * O cenário do simulador viaja em campos ocultos, e o servidor **recalcula**
- * antes de gravar — ver `snapshotOf` em `actions.ts`. O resumo ao lado é só
- * espelho: se ele divergisse do que o servidor calcula, o cliente veria um valor
- * e o comercial receberia outro, que é o defeito mais caro possível numa página
- * de proposta.
+ * ## Por que não há preço nesta tela
  *
- * Por isso os dois lados chamam a **mesma função pura**. Não há uma conta "de
- * exibição" e outra "de verdade".
+ * Houve uma versão em que o formulário exibia, ao lado, o cenário montado no
+ * simulador público — com total mensal e primeira fatura. O simulador passou a
+ * viver só na área comercial, e o resumo saiu junto: um painel de preço aqui
+ * teria de mostrar o cálculo de um dimensionamento que ninguém fez, ou seja, o
+ * padrão da tabela apresentado como se fosse a conta do visitante.
+ *
+ * O que restou é um formulário de contato qualificado. Ele pergunta as duas
+ * coisas que o interessado responde sem calculadora — a edição que chamou a
+ * atenção e o tamanho do time —, e ambas são **opcionais**: quem chega aqui
+ * frequentemente quer justamente que alguém diga qual edição serve.
+ *
+ * ## E por que o campo de mensagem é o maior da tela
+ *
+ * Sem o cenário, ele passou a ser a única coisa que qualifica o pedido de
+ * verdade. "Temos dois números de WhatsApp e migramos de outra ferramenta" vale
+ * mais para a primeira ligação do que qualquer número que um formulário
+ * conseguisse coletar.
  */
 
 const EMPTY: FormState = { ok: false };
@@ -49,21 +53,18 @@ function SubmitButton() {
 
   return (
     <Button type="submit" size="lg" className="mt-5 w-full" loading={pending}>
-      {pending ? "Enviando…" : "Enviar pedido de orçamento"}
+      {pending ? "Enviando…" : "Enviar pedido de proposta"}
       {pending ? null : <Send />}
     </Button>
   );
 }
 
 export function QuoteForm({
-  input,
   account,
 }: {
-  input: QuoteInput;
   account?: { name: string; email: string; company: string; phone?: string } | null;
 }) {
   const [state, action] = useActionState(requestQuoteAction, EMPTY);
-  const result = calculateQuote(input);
 
   if (state.ok) {
     return (
@@ -74,15 +75,15 @@ export function QuoteForm({
           <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm leading-relaxed">
             {state.message} Guarde a referência{" "}
             <strong className="text-foreground">{state.reference}</strong> — é por ela que o time
-            comercial vai localizar o seu cenário.
+            comercial vai localizar o seu pedido.
           </p>
 
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild variant="outline">
-              <Link href="/conta">Ver meus orçamentos</Link>
+              <Link href="/conta">Ver meus pedidos</Link>
             </Button>
             <Button asChild>
-              <Link href="/precos#simulador">Ajustar outro cenário</Link>
+              <Link href="/precos">Rever as edições</Link>
             </Button>
           </div>
 
@@ -96,12 +97,13 @@ export function QuoteForm({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+    <div className="mx-auto w-full max-w-2xl">
       <Card className="min-w-0">
         <CardContent className="p-6">
           <h2 className="font-display text-lg font-semibold">Seus dados</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            O time comercial responde em até um dia útil, com o cenário que você montou em mãos.
+            O time comercial responde em até um dia útil, já com a conta dimensionada para o seu
+            caso.
           </p>
 
           <form action={action} className="mt-5">
@@ -110,10 +112,6 @@ export function QuoteForm({
                 {state.message}
               </Callout>
             ) : null}
-
-            {quoteInputFields(input).map((field) => (
-              <input key={field.name} type="hidden" name={field.name} value={field.value} />
-            ))}
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -191,15 +189,55 @@ export function QuoteForm({
                 </Select>
               </div>
 
+              <div>
+                <Label htmlFor="teamSize">Colaboradores</Label>
+                <Input
+                  id="teamSize"
+                  name="teamSize"
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  placeholder="Quantas pessoas usariam"
+                  className="mt-1.5"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <Label htmlFor="planKey">Edição de interesse</Label>
+                <Select name="planKey" defaultValue="">
+                  <SelectTrigger id="planKey" className="mt-1.5">
+                    <SelectValue placeholder="Ainda não sei — me ajudem a escolher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLANS.map((plan) => (
+                      <SelectItem key={plan.key} value={plan.key}>
+                        {plan.name} — {plan.tagline}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                  Opcional. O que cada edição inclui está em{" "}
+                  <Link href="/precos" className="text-primary underline underline-offset-4">
+                    preços
+                  </Link>
+                  .
+                </p>
+              </div>
+
               <div className="sm:col-span-2">
                 <Label htmlFor="message">O que é mais importante no seu caso?</Label>
                 <Textarea
                   id="message"
                   name="message"
-                  rows={4}
-                  placeholder="Ex.: precisamos migrar de outra ferramenta sem perder histórico, e temos dois números de WhatsApp."
+                  rows={5}
+                  placeholder="Ex.: precisamos migrar de outra ferramenta sem perder histórico, temos dois números de WhatsApp e uns 8 mil contatos na base."
                   className="mt-1.5"
                 />
+                <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                  Volume de contatos, conversas e disparos entra aqui, com as suas palavras — é o
+                  que o comercial usa para montar a conta antes de ligar.
+                </p>
               </div>
             </div>
 
@@ -210,69 +248,6 @@ export function QuoteForm({
               dados para outra finalidade sem consentimento separado.
             </p>
           </form>
-        </CardContent>
-      </Card>
-
-      {/* Resumo do cenário ------------------------------------------------- */}
-      <Card className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <CardContent className="p-6">
-          <h2 className="font-display text-lg font-semibold">Cenário simulado</h2>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Edição {result.plan.name} ·{" "}
-            {result.billing === "anual" ? "compromisso anual" : "mensal, sem fidelidade"}
-          </p>
-
-          <dl className="border-border mt-4 grid grid-cols-2 gap-3 border-y py-4 text-sm">
-            {[
-              ["Colaboradores", formatNumber(input.seats)],
-              ["Contatos", formatNumber(input.contacts)],
-              ["Conversas / mês", formatNumber(input.conversations)],
-              ["E-mails / mês", formatNumber(input.emails)],
-              ["Respostas de IA / mês", formatNumber(input.aiReplies)],
-              [
-                "Mensagens WhatsApp / mês",
-                formatNumber(
-                  input.whatsapp.marketing +
-                    input.whatsapp.utilidade +
-                    input.whatsapp.autenticacao +
-                    input.whatsapp.servico,
-                ),
-              ],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <dt className="text-muted-foreground text-xs">{label}</dt>
-                <dd className="figure font-medium">{value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <ul className="mt-4 space-y-2">
-            {result.lines
-              .filter((line) => line.totalCents > 0)
-              .map((line) => (
-                <li key={line.key} className="flex items-baseline justify-between gap-3 text-sm">
-                  <span className="text-muted-foreground">{line.label}</span>
-                  <span className="figure shrink-0">{formatCurrencyCents(line.totalCents)}</span>
-                </li>
-              ))}
-          </ul>
-
-          <div className="border-border mt-4 border-t pt-4">
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-medium">Recorrente mensal</span>
-              <span className="figure text-xl font-semibold">
-                {formatCurrencyCents(result.monthlyTotalCents)}
-              </span>
-            </div>
-            <div className="text-muted-foreground mt-1 flex items-baseline justify-between text-sm">
-              <span>Primeira fatura</span>
-              <span className="figure">{formatCurrencyCents(result.firstInvoiceCents)}</span>
-            </div>
-          </div>
-
-          <Button asChild variant="ghost" size="sm" className="mt-4 w-full">
-            <Link href="/precos#simulador">Ajustar o dimensionamento</Link>
-          </Button>
         </CardContent>
       </Card>
     </div>

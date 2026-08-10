@@ -3,15 +3,11 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
-  calculateQuote,
-  isAddonKey,
   isDemoVerticalId,
   isPlanKey,
   PLAN_BY_KEY,
   repositories,
   switchVertical,
-  type QuoteInput,
-  type QuoteSnapshot,
 } from "@elora/core";
 
 import {
@@ -159,77 +155,21 @@ export async function signOutAction(): Promise<void> {
 /* Orçamento ------------------------------------------------------------------------ */
 
 /**
- * Reconstrói a entrada do simulador a partir do formulário.
+ * Pedido de proposta.
  *
- * O cálculo é refeito **no servidor**, e não aceito pronto do cliente. Confiar
- * no total que o navegador enviou permitiria a alguém pedir orçamento de R$ 1 —
- * e o pedido chegaria ao comercial com aparência legítima.
+ * ## Por que não chega mais cálculo nenhum aqui
+ *
+ * O simulador saiu do site público e vive só na área comercial. Antes, o
+ * formulário trazia o cenário em campos ocultos e esta função **refazia** a conta
+ * no servidor — aceitar o total que o navegador enviou permitiria a alguém pedir
+ * orçamento de R$ 1, e o pedido chegaria ao comercial com aparência legítima.
+ *
+ * A defesa continua valendo, agora por construção: não há total a forjar porque
+ * não há total. O que o formulário envia é declaração — quem é, de que tamanho é
+ * a operação, o que importa no caso dele —, e declaração não precisa ser
+ * recalculada, precisa ser conferida contra o catálogo, que é o que
+ * `isPlanKey` faz logo abaixo.
  */
-function parseQuoteInput(data: FormData): QuoteInput {
-  const planKeyRaw = text(data, "planKey");
-  const planKey = isPlanKey(planKeyRaw) ? planKeyRaw : "profissional";
-  const billing = text(data, "billing") === "mensal" ? "mensal" : "anual";
-
-  /**
-   * Add-ons viajam como `chave:quantidade`, separados por vírgula.
-   *
-   * Um campo por add-on seria mais idiomático em HTML e obrigaria o formulário
-   * a conhecer o catálogo — que muda em `pricing/catalog.ts`. Assim o simulador
-   * serializa o que o cliente escolheu, e a validação acontece aqui, contra o
-   * catálogo, que é o único lugar que sabe o que existe.
-   */
-  const addons: QuoteInput["addons"] = [];
-  for (const entry of text(data, "addons").split(",")) {
-    const [key, quantity] = entry.trim().split(":");
-    if (isAddonKey(key)) addons.push({ key, quantity: Number(quantity) || 1 });
-  }
-
-  return {
-    planKey,
-    billing,
-    seats: Math.max(1, integer(data, "seats", 5)),
-    contacts: integer(data, "contacts"),
-    conversations: integer(data, "conversations"),
-    whatsapp: {
-      marketing: integer(data, "whatsappMarketing"),
-      utilidade: integer(data, "whatsappUtilidade"),
-      autenticacao: integer(data, "whatsappAutenticacao"),
-      servico: integer(data, "whatsappServico"),
-    },
-    emails: integer(data, "emails"),
-    aiReplies: integer(data, "aiReplies"),
-    addons,
-    includeSetup: data.get("includeSetup") === "on" || data.get("includeSetup") === "true",
-    discountPct: integer(data, "discountPct"),
-  };
-}
-
-function snapshotOf(input: QuoteInput): QuoteSnapshot {
-  const result = calculateQuote(input);
-
-  return {
-    planKey: result.plan.key,
-    planName: result.plan.name,
-    billing: result.billing,
-    seats: input.seats,
-    contacts: input.contacts,
-    conversations: input.conversations,
-    emails: input.emails,
-    aiReplies: input.aiReplies,
-    monthlyTotalCents: result.monthlyTotalCents,
-    annualTotalCents: result.annualTotalCents,
-    oneTimeCents: result.oneTimeCents,
-    firstInvoiceCents: result.firstInvoiceCents,
-    passthroughCents: result.passthroughCents,
-    discountPct: result.discountPct,
-    lines: result.lines.map((line) => ({
-      label: line.label,
-      detail: line.detail,
-      totalCents: line.totalCents,
-    })),
-  };
-}
-
 export async function requestQuoteAction(
   _prev: FormState = EMPTY,
   data: FormData,
@@ -244,7 +184,17 @@ export async function requestQuoteAction(
     return { ok: false, field: "company", message: "Informe o nome da empresa." };
 
   const account = await currentAccount();
-  const input = parseQuoteInput(data);
+
+  /**
+   * Edição inexistente vira ausência, não erro de formulário.
+   *
+   * O campo é um `select` com as quatro edições, então só chega lixo aqui se
+   * alguém montou o corpo à mão. Devolver "edição inválida" a esse alguém não
+   * protege nada e custaria o pedido de quem usou um navegador que traduziu a
+   * página. Gravar sem a edição é o desfecho certo: o comercial pergunta.
+   */
+  const planKeyRaw = text(data, "planKey");
+  const seats = integer(data, "teamSize");
 
   const result = await repositories.site.createQuote({
     accountId: account?.id,
@@ -253,8 +203,9 @@ export async function requestQuoteAction(
     company,
     phone: text(data, "phone") || undefined,
     segment: text(data, "segment") || undefined,
+    planKey: isPlanKey(planKeyRaw) ? planKeyRaw : undefined,
+    teamSize: seats,
     message: text(data, "message") || undefined,
-    snapshot: snapshotOf(input),
   });
 
   if (!result.ok) return { ok: false, field: result.field, message: result.reason };

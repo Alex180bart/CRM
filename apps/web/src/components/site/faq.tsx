@@ -26,7 +26,7 @@ const ITEMS: Array<{ question: string; answer: React.ReactNode }> = [
         </p>
         <p className="mt-2">
           A Elora cobra por <strong>conversa tratada</strong>, com uma franquia mensal por edição.
-          As duas linhas ficam separadas no simulador e na fatura de propósito: quando a Meta
+          As duas linhas ficam separadas na proposta e na fatura de propósito: quando a Meta
           reajusta, você consegue ver exatamente o que mudou.
         </p>
       </>
@@ -49,8 +49,8 @@ const ITEMS: Array<{ question: string; answer: React.ReactNode }> = [
       <p>
         Nada para. O excedente é cobrado na fatura seguinte, com preço unitário declarado por edição
         — e, no caso de contatos, em faixas progressivas: cada fatia paga o preço da própria faixa,
-        nunca o preço da faixa final aplicado a tudo. O simulador mostra a conta antes de você
-        assinar.
+        nunca o preço da faixa final aplicado a tudo. Todos esses números estão na tabela acima,
+        antes de você assinar.
       </p>
     ),
   },

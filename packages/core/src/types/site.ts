@@ -24,12 +24,20 @@
  * dentro de um pacote que também é empacotado para o navegador — e um `scrypt`
  * no cliente é, na melhor hipótese, inútil.
  *
- * ## A proposta é fotografia, como em `commerce.ts`
+ * ## O pedido não carrega mais cálculo, e isso foi uma decisão
  *
- * `QuoteRequest` copia o resultado do cálculo. Guardar só a entrada e recalcular
- * na hora de exibir faria o orçamento que o cliente recebeu por R$ 4.180 aparecer
- * por R$ 4.610 depois de um reajuste de tabela — e o print que ele tem passaria a
- * contradizer a tela.
+ * Houve uma versão em que `QuoteRequest` guardava a fotografia do cálculo, feita
+ * pelo visitante no simulador público. O simulador saiu do site e passou a viver
+ * só na área comercial (`/admin`): quem dimensiona é quem vende, com os números
+ * que o cliente disse na conversa.
+ *
+ * A consequência é que **o pedido é uma intenção, não uma proposta**. Ele carrega
+ * o que o interessado sabe responder sem calculadora — edição de interesse,
+ * tamanho do time, segmento e o texto livre — e o preço nasce depois, do outro
+ * lado. Guardar um total aqui voltaria a exigir o simulador público para
+ * preenchê-lo, ou nasceria sempre zerado, que é pior: um número exibido ao lado
+ * da palavra "orçamento" é lido como preço mesmo quando é só o valor padrão de um
+ * campo que ninguém preencheu.
  */
 
 import type { Id, IsoDateTime } from "./common";
@@ -75,25 +83,6 @@ export const QUOTE_STATUS_LABEL: Record<QuoteRequestStatus, string> = {
   fechado: "Fechado",
 };
 
-/** Fotografia do cálculo, no instante do pedido. */
-export interface QuoteSnapshot {
-  planKey: string;
-  planName: string;
-  billing: string;
-  seats: number;
-  contacts: number;
-  conversations: number;
-  emails: number;
-  aiReplies: number;
-  monthlyTotalCents: number;
-  annualTotalCents: number;
-  oneTimeCents: number;
-  firstInvoiceCents: number;
-  passthroughCents: number;
-  discountPct: number;
-  lines: Array<{ label: string; detail: string; totalCents: number }>;
-}
-
 export interface QuoteRequest {
   id: Id;
   /** Ausente quando o pedido veio de alguém que não criou conta. */
@@ -104,8 +93,25 @@ export interface QuoteRequest {
   phone?: string;
   /** Segmento declarado — casa com as verticais de demonstração quando possível. */
   segment?: string;
+  /**
+   * Edição que despertou o interesse, conferida contra o catálogo antes de gravar.
+   *
+   * Opcional porque é legítimo pedir proposta sem ter escolhido: metade de quem
+   * chega ao formulário quer justamente que alguém diga qual edição serve.
+   * Obrigar a escolher aqui produziria o pior dos dois mundos — o campo preenchido
+   * no chute, e o comercial partindo de uma edição que ninguém decidiu.
+   */
+  planKey?: string;
+  /**
+   * Quantas pessoas usariam a plataforma.
+   *
+   * É o único número que o interessado responde de cabeça, e é o que separa a
+   * conversa de cinco assentos da de cinquenta. Volume de contato, conversa e
+   * e-mail ficou de fora de propósito: quem sabe esses números já está em outra
+   * ferramenta, e quem não sabe abandonaria o formulário no meio.
+   */
+  teamSize?: number;
   message?: string;
-  snapshot: QuoteSnapshot;
   status: QuoteRequestStatus;
   /** Número curto para citar por telefone: "orçamento 2026-0007". */
   reference: string;

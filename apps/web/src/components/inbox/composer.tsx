@@ -140,6 +140,15 @@ export const Composer = forwardRef<
     quote?: ComposerQuote;
     onClearQuote?: () => void;
     copilot: ComposerCopilot;
+    /**
+     * Ações extras na barra, ao lado do gravador de voz.
+     *
+     * Chega pronta, como nó, e o compositor só a desenha. É o que mantém este
+     * arquivo ignorante de comércio — do mesmo jeito que ele recebe funções de
+     * IA em vez do gateway. Sem isso, montar proposta obrigaria o compositor a
+     * conhecer produto, catálogo e a rota de escrita.
+     */
+    quickActions?: React.ReactNode;
     onSend: (input: ComposerSubmission) => void;
   }
 >(function Composer(
@@ -153,6 +162,7 @@ export const Composer = forwardRef<
     quote,
     onClearQuote,
     copilot,
+    quickActions,
     onSend,
   },
   ref,
@@ -703,6 +713,8 @@ export const Composer = forwardRef<
             disabled={trayFull}
             onReady={(attachment) => setRecordedAudio(attachment)}
           />
+
+          {quickActions}
 
           {copilot.available && mode === "resposta" ? (
             <>

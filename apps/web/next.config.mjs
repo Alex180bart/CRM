@@ -67,6 +67,32 @@ const nextConfig = {
    */
   devIndicators: false,
   reactStrictMode: true,
+  /**
+   * Barris de importação reescritos para importação direta.
+   *
+   * `@elora/core` é um `export *` de cinco subárvores, e uma delas é `demo/` —
+   * as quatro verticais inteiras, 1,3 MB de fonte. Como 138 arquivos importam
+   * daquele barril, uma tela que só queria `formatDateTime` arrastava a base de
+   * demonstração de e-commerce junto, no servidor e no pacote do navegador. O
+   * mesmo vale para `@elora/ui`, importado por 114 arquivos.
+   *
+   * Esta opção faz o Next reescrever `import { x } from "@elora/core"` para o
+   * arquivo que define `x`. O efeito é medido, não presumido: o primeiro
+   * carregamento caiu de 299 kB para 171 kB em `/inicio`, de 337 para 232 em
+   * `/administracao` e de 231 para 109 no quadro do webchat — que é o que roda
+   * no site do cliente, onde cada quilobyte é de outra pessoa.
+   *
+   * `lucide-react` não está na lista porque o Next já a otimiza por padrão.
+   *
+   * **A condição para isto ser seguro é que os módulos do core não tenham efeito
+   * colateral de importação.** Se algum passar a semear armazém ao ser carregado,
+   * a reescrita pode pular o efeito — e o sintoma seria dado ausente numa tela
+   * só, sem erro. O armazém atual é preenchido por chamada (`dataset()`,
+   * `reseedStore()`), não por importação, e é isso que sustenta a otimização.
+   */
+  experimental: {
+    optimizePackageImports: ["@elora/core", "@elora/ui", "@xyflow/react"],
+  },
   // Os pacotes internos são publicados como TypeScript puro; o Next transpila.
   transpilePackages: ["@elora/ui", "@elora/core"],
   eslint: {

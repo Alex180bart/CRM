@@ -48,6 +48,8 @@
 
 /* Edições ---------------------------------------------------------------------- */
 
+import { CURRENT_META_RATES } from "./meta-rates";
+
 export type PlanKey = "essencial" | "profissional" | "performance" | "corporativo";
 
 /**
@@ -276,30 +278,41 @@ export interface WhatsappPrice {
   metaCostCents: number;
 }
 
+/**
+ * Preço por categoria, tirado da **tabela vigente** em `meta-rates.ts`.
+ *
+ * Os valores deixaram de morar aqui quando a tabela ganhou vigência e histórico.
+ * Mantê-los nos dois lugares criaria a divergência clássica: alguém atualiza a
+ * tabela versionada, o simulador continua cotando pelo número antigo deste
+ * arquivo, e nada acusa — os dois são plausíveis.
+ *
+ * O rótulo e a descrição continuam aqui porque são texto de produto, não dado
+ * financeiro: mudam quando a explicação melhora, não quando a Meta reajusta.
+ */
 export const WHATSAPP_PRICES: WhatsappPrice[] = [
   {
     category: "marketing",
     label: "Marketing",
     description: "Promoção, oferta, recuperação de carrinho e reativação.",
-    metaCostCents: 31,
+    metaCostCents: CURRENT_META_RATES.ratesCents.marketing,
   },
   {
     category: "utilidade",
     label: "Utilidade",
     description: "Confirmação, rastreio, lembrete e aviso de cobrança.",
-    metaCostCents: 4,
+    metaCostCents: CURRENT_META_RATES.ratesCents.utilidade,
   },
   {
     category: "autenticacao",
     label: "Autenticação",
     description: "Código de verificação e login.",
-    metaCostCents: 20,
+    metaCostCents: CURRENT_META_RATES.ratesCents.autenticacao,
   },
   {
     category: "servico",
     label: "Serviço",
     description: "Resposta dentro da janela de 24 h aberta pelo cliente. Gratuita.",
-    metaCostCents: 0,
+    metaCostCents: CURRENT_META_RATES.ratesCents.servico,
   },
 ];
 

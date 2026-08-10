@@ -14,6 +14,10 @@
  */
 
 import type { AddonKey, BillingCycle, PlanDefinition, PlanKey, WhatsappCategory } from "./catalog";
+import type { CostBreakdown, MarginAnalysis } from "./costs";
+import { MARGIN_BY_PLAN, analyzeMargin, estimateMonthlyCost } from "./costs";
+import type { SetupInput, SetupResult } from "./setup";
+import { DEFAULT_SETUP_INPUT, calculateSetup } from "./setup";
 import {
   ADDON_BY_KEY,
   MAX_SELF_SERVICE_DISCOUNT_PCT,
@@ -49,6 +53,14 @@ export interface QuoteInput {
   addons: AddonSelection[];
   /** Implantação assistida entra na primeira fatura. */
   includeSetup: boolean;
+  /**
+   * Dimensionamento da implantação.
+   *
+   * Opcional para não quebrar quem já montava `QuoteInput` sem ele: ausente,
+   * vale `DEFAULT_SETUP_INPUT` e a implantação sai no mínimo da edição — que é
+   * exatamente o comportamento antigo mais as parcelas padrão.
+   */
+  setup?: Omit<SetupInput, "planKey">;
   /** Desconto comercial, em porcentagem. Limitado por `MAX_SELF_SERVICE_DISCOUNT_PCT`. */
   discountPct: number;
 }
@@ -64,6 +76,7 @@ export const DEFAULT_QUOTE_INPUT: QuoteInput = {
   aiReplies: 4_000,
   addons: [],
   includeSetup: true,
+  setup: DEFAULT_SETUP_INPUT,
   discountPct: 0,
 };
 
@@ -118,6 +131,23 @@ export interface QuoteResult {
   costPerConversationCents: number;
   /** Quanto do total é repasse de provedor. */
   passthroughCents: number;
+  /**
+   * Composição da implantação, quando pedida.
+   *
+   * Sai separada das `lines` porque tem outra pergunta por trás: `lines`
+   * responde "o que compõe a fatura"; isto responde "por que a implantação
+   * custa isso", que é a pergunta que aparece na reunião.
+   */
+  setup?: SetupResult;
+  /**
+   * Custo de servir e margem realizada.
+   *
+   * **Nunca exiba isto em página pública.** É a estrutura de custo da empresa, e
+   * `/precos` e `/orcamento` são abertos. A visão de margem vive na
+   * Administração; o cálculo é o mesmo para não divergirem.
+   */
+  cost: CostBreakdown;
+  margin: MarginAnalysis;
   /** O que impede o orçamento de valer como está. */
   warnings: QuoteWarning[];
 }
@@ -423,17 +453,20 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
 
   /* Implantação ------------------------------------------------------------------- */
 
+  let setup: SetupResult | undefined;
+
   if (input.includeSetup) {
-    oneTimeCents += plan.setupCents;
+    setup = calculateSetup({ planKey: plan.key, ...(input.setup ?? DEFAULT_SETUP_INPUT) });
+    oneTimeCents += setup.totalCents;
+
     lines.push({
       key: "implantacao",
       label: "Implantação assistida",
-      detail:
-        "Configuração de filas, canais, catálogo e primeira automação, com acompanhamento até o primeiro mês em produção",
+      detail: `${setup.lines.length} parcela(s): base da edição, números, integrações, treinamento e migração`,
       kind: "unico",
       quantity: 1,
       unitLabel: "projeto",
-      totalCents: plan.setupCents,
+      totalCents: setup.totalCents,
     });
   }
 
@@ -482,6 +515,57 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
     });
   }
 
+  /* Custo e margem ----------------------------------------------------------------- */
+
+  /**
+   * O repasse sai dos dois lados da conta.
+   *
+   * Ele é custo e receita pelo mesmo valor, então somá-lo não muda o lucro em
+   * reais e **derruba a margem percentual** por inflar o denominador. Uma
+   * operação com muito WhatsApp pareceria menos rentável que uma idêntica sem —
+   * e a decisão comercial sairia errada. Ver `costs.ts`.
+   */
+  /**
+   * Números conectados = os inclusos na edição mais os contratados como add-on.
+   *
+   * Conta os inclusos, e não só os adicionais, porque o custo de infra e BSP
+   * existe para todo número que sobe — inclusive o que veio de graça no plano.
+   * Custo que não se cobra continua sendo custo.
+   */
+  const extraNumbers = input.addons
+    .filter((selection) => selection.key === "numero_whatsapp")
+    .reduce((sum, selection) => sum + Math.max(1, Math.floor(selection.quantity)), 0);
+  const whatsappNumbers = plan.includedWhatsappNumbers + extraNumbers;
+
+  const cost = estimateMonthlyCost({
+    seats: billedSeats,
+    contacts: input.contacts,
+    conversations,
+    emails: input.emails,
+    aiReplies: input.aiReplies,
+    whatsappNumbers,
+  });
+
+  const margin = analyzeMargin({
+    costCents: cost.totalCents,
+    revenueCents: monthlyTotalCents - passthroughCents,
+    discountPct,
+    policy: MARGIN_BY_PLAN[plan.key],
+  });
+
+  if (margin.status === "prejuizo") {
+    warnings.push({
+      severity: "erro",
+      message:
+        "Neste desconto a assinatura não cobre o custo de servir. Reduza o desconto ou troque a edição.",
+    });
+  } else if (margin.status === "atencao") {
+    warnings.push({
+      severity: "alerta",
+      message: `Margem de ${margin.marginPct.toFixed(0)}%, abaixo do piso de ${margin.floorMarginPct}% desta edição. Precisa de aprovação.`,
+    });
+  }
+
   return {
     plan,
     billing: input.billing,
@@ -498,6 +582,9 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
     costPerSeatCents: requestedSeats > 0 ? Math.round(monthlyTotalCents / requestedSeats) : 0,
     costPerConversationCents: conversations > 0 ? Math.round(monthlyTotalCents / conversations) : 0,
     passthroughCents,
+    setup,
+    cost,
+    margin,
     warnings,
   };
 }

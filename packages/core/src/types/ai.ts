@@ -24,6 +24,7 @@ export type AiTask =
   | "reescrever"
   | "perguntar"
   | "redigir_email"
+  | "redigir_proposta"
   | "atender";
 
 /**
@@ -336,6 +337,53 @@ export interface AiEmailDraft {
   ctaLabel: string;
   ctaHref: string;
   closing: string;
+  meta: AiRunMeta;
+}
+
+/* Mensagem de proposta -------------------------------------------------------- */
+
+/**
+ * O que o modelo recebe para escrever a mensagem que leva a proposta.
+ *
+ * Os **valores chegam prontos**, em texto já formatado. Nenhuma aritmética é
+ * pedida ao modelo: um total somado errado produz uma mensagem plausível com um
+ * preço que a cobrança não vai bater, e o cliente descobre isso na fatura. Quem
+ * soma é `computeTotals`; quem formata é `buildProposalMessage`.
+ *
+ * O trecho da conversa entra para a mensagem retomar o que foi combinado — "o
+ * trilho que você perguntou ontem" — que é a diferença entre uma proposta que
+ * parece resposta e uma que parece catálogo colado.
+ */
+export interface AiProposalMessageInput {
+  /** Primeiro nome de quem vai receber. */
+  contactFirstName: string;
+  /** Quem assina — o vendedor, não a plataforma. */
+  sellerName: string;
+  channel: string;
+  /** Assunto e últimas falas, na ordem em que aconteceram. */
+  conversationExcerpt: string;
+  /** Itens já formatados: "2× Trilho = R$ 329,00". */
+  itemsSummary: string;
+  /** Total já formatado, com a composição quando há recorrente e avulso. */
+  totalLabel: string;
+  /** Data legível do fim da validade. */
+  validUntil: string;
+  /** Linha que o vendedor escreveu à mão, quando escreveu. */
+  sellerNote: string;
+  /** `true` quando a proposta vai ao gestor antes do cliente. */
+  needsApproval: boolean;
+}
+
+/**
+ * A mensagem devolvida.
+ *
+ * Um campo só, e de propósito: o que vai para a conversa é um texto, e devolver
+ * saudação, corpo e despedida separados obrigaria a interface a recompor — com
+ * uma regra de junção que nem o modelo nem o produto declaram. O que a aplicação
+ * confere é o que importa: que os valores não foram inventados.
+ */
+export interface AiProposalMessage {
+  message: string;
   meta: AiRunMeta;
 }
 

@@ -2,22 +2,22 @@ import type { Metadata } from "next";
 
 import { QuoteForm } from "@/components/site/quote-form";
 import { currentAccountPublic } from "@/lib/site/auth";
-import { parseQuoteInput } from "@/lib/site/quote-params";
 
 export const metadata: Metadata = {
-  title: "Solicitar orçamento",
+  title: "Solicitar proposta",
   description:
-    "Envie o cenário que você dimensionou no simulador e receba a proposta do time comercial em " +
-    "até um dia útil.",
+    "Conte o tamanho da operação e o que precisa resolver. O time comercial monta a conta com os " +
+    "seus números e responde em até um dia útil.",
 };
 
-export default async function OrcamentoPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const params = await searchParams;
-  const input = parseQuoteInput(params);
+/**
+ * Pedido de proposta.
+ *
+ * A página não recebe mais cenário pela URL. O dimensionamento passou a ser
+ * trabalho do comercial, na área restrita — ver `components/site/quote-form.tsx`
+ * para o porquê de não haver preço nesta tela.
+ */
+export default async function OrcamentoPage() {
   const account = await currentAccountPublic();
 
   return (
@@ -25,18 +25,18 @@ export default async function OrcamentoPage({
       <section className="bg-primary text-primary-foreground aurora">
         <div className="mx-auto w-full max-w-6xl px-5 py-14">
           <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-            Solicitar orçamento
+            Solicitar proposta
           </h1>
           <p className="text-primary-foreground/75 mt-3 max-w-2xl text-base leading-relaxed">
-            O cenário abaixo veio do simulador e é recalculado no servidor antes de ser gravado —
-            então o número que você vê é o mesmo que o comercial recebe.
+            A tabela é pública e está em preços. O que muda de operação para operação é o volume — e
+            é isso que o time comercial dimensiona com você, sem cobrança por faixa que você não
+            usa.
           </p>
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-5 py-12">
         <QuoteForm
-          input={input}
           account={
             account
               ? {

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AI Gateway.
  *
  * Seção 16.1 do plano: "A aplicação não deve chamar Claude ou Gemini
@@ -36,6 +36,8 @@ import type {
   AiRunMeta,
   AiSentiment,
   AiSuggestInput,
+  AiProposalMessage,
+  AiProposalMessageInput,
   AiTask,
   AiUrgency,
 } from "@elora/core";
@@ -45,10 +47,12 @@ import {
   AGENT_SCHEMA,
   ANALYSIS_SCHEMA,
   EMAIL_SCHEMA,
+  PROPOSAL_MESSAGE_SCHEMA,
   PROMPT_VERSIONS,
   analysisPrompt,
   askPrompt,
   emailPrompt,
+  proposalMessagePrompt,
   rewritePrompt,
   suggestPrompt,
 } from "./prompts";
@@ -87,6 +91,19 @@ const TASK_POLICY: Record<AiTask, CompletionPolicy> = {
     temperature: 0.75,
     maxOutputTokens: 1600,
     schema: EMAIL_SCHEMA,
+  },
+  /**
+   * Redação com dado fixo: o modelo escolhe as palavras, nunca os números.
+   *
+   * Temperatura no meio — precisa soar como a conversa em andamento, e não como
+   * carta modelo — mas o teto de saída é curto de propósito: mensagem de
+   * orçamento que passa de uma tela vira documento, e documento ninguém lê no
+   * WhatsApp.
+   */
+  redigir_proposta: {
+    temperature: 0.55,
+    maxOutputTokens: 900,
+    schema: PROPOSAL_MESSAGE_SCHEMA,
   },
   /**
    * Temperatura baixa: o agente decide caminho, não redige peça criativa.
@@ -573,6 +590,106 @@ export async function runEmailDraft(input: AiEmailDraftInput): Promise<AiEmailDr
     ...parsed,
     meta: buildMeta({
       task: "redigir_email",
+      provider: servedBy.provider,
+      model: servedBy.model,
+      usage,
+      latencyMs: performance.now() - started,
+      repaired,
+    }),
+  };
+}
+
+/* Mensagem de proposta --------------------------------------------------------- */
+
+/**
+ * A conferência que impede o pior erro possível aqui.
+ *
+ * O prompt manda copiar os valores; isto verifica que ele copiou. Se o total ou
+ * algum item não aparece na mensagem, a saída é **recusada** — e quem chama cai
+ * no texto determinístico de `buildProposalMessage`, que nunca erra o número.
+ *
+ * A comparação normaliza o espaço inquebrável que o `Intl` insere entre "R$" e o
+ * número: o modelo costuma reescrever com espaço comum, e sem a normalização a
+ * verificação reprovaria uma mensagem correta por um caractere invisível.
+ */
+function containsAmounts(message: string, required: string[]): boolean {
+  const plain = message.replace(/\u00a0/g, " ");
+  return required.every((amount) => plain.includes(amount.replace(/\u00a0/g, " ")));
+}
+
+function parseProposalMessage(raw: string): string | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof value !== "object" || value === null) return null;
+
+  const message = asString((value as Record<string, unknown>).message);
+  return message.length >= 30 ? message : null;
+}
+
+/**
+ * Escreve a mensagem que leva o orçamento ao cliente.
+ *
+ * `requiredAmounts` são os valores que **precisam** aparecer no texto — o total
+ * e cada linha. Sem essa trava, a personalização vira risco: o modelo reescreve
+ * "R$ 808,00" como "cerca de oitocentos reais" e o cliente recebe um preço que
+ * não existe. Recusar e cair no texto determinístico é sempre preferível.
+ */
+export async function runProposalMessage(
+  input: AiProposalMessageInput,
+  requiredAmounts: string[],
+): Promise<AiProposalMessage> {
+  const policy = TASK_POLICY.redigir_proposta;
+  const { system, user } = proposalMessagePrompt(input);
+  const started = performance.now();
+
+  let usage: ProviderUsage = { inputTokens: 0, outputTokens: 0 };
+  let message: string | null = null;
+  let repaired = false;
+  let servedBy: { provider: ProviderId; model: string } | null = null;
+
+  const safeUser = redactCredentials(user);
+
+  for (const attempt of [0, 1]) {
+    const result = await complete({
+      system,
+      user:
+        attempt === 1
+          ? `${safeUser}
+
+A resposta anterior alterou ou omitiu algum valor. Reescreva copiando os valores exatamente como foram informados.`
+          : safeUser,
+      policy,
+    });
+    servedBy = { provider: result.provider, model: result.model };
+    usage = {
+      inputTokens: usage.inputTokens + result.usage.inputTokens,
+      outputTokens: usage.outputTokens + result.usage.outputTokens,
+    };
+
+    const candidate = parseProposalMessage(result.text);
+    if (candidate && containsAmounts(candidate, requiredAmounts)) {
+      message = candidate;
+      break;
+    }
+    repaired = true;
+  }
+
+  if (!message || !servedBy) {
+    throw new ProviderFailure(
+      "falha",
+      "O modelo não devolveu uma mensagem com os valores da proposta preservados.",
+      502,
+    );
+  }
+
+  return {
+    message,
+    meta: buildMeta({
+      task: "redigir_proposta",
       provider: servedBy.provider,
       model: servedBy.model,
       usage,

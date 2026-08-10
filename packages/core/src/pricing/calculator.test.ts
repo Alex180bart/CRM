@@ -161,9 +161,78 @@ describe("cobrança única", () => {
     const comSetup = calculateQuote(input({ ...EMPTY_USAGE, includeSetup: true }));
 
     expect(comSetup.monthlyTotalCents).toBe(semSetup.monthlyTotalCents);
-    expect(comSetup.oneTimeCents).toBe(PLAN_BY_KEY[DEFAULT_QUOTE_INPUT.planKey].setupCents);
+    expect(comSetup.oneTimeCents).toBe(comSetup.setup?.totalCents);
     expect(comSetup.firstInvoiceCents).toBe(comSetup.monthlyTotalCents + comSetup.oneTimeCents);
     expect(comSetup.annualTotalCents).toBe(comSetup.monthlyTotalCents * 12);
+  });
+
+  /**
+   * A implantação deixou de ser um valor fixo por edição e passou a ser composta
+   * por porte. A base da edição continua sendo o piso — sem ela, uma implantação
+   * mínima sairia por um valor que não paga a hora de quem a executa.
+   */
+  it("compõe a implantação a partir da base da edição", () => {
+    const base = PLAN_BY_KEY[DEFAULT_QUOTE_INPUT.planKey].setupCents;
+    const result = calculateQuote(input({ ...EMPTY_USAGE, includeSetup: true }));
+
+    expect(result.setup).toBeDefined();
+    expect(result.setup!.totalCents).toBeGreaterThanOrEqual(base);
+    expect(result.setup!.lines[0]?.key).toBe("base");
+    expect(result.setup!.lines[0]?.totalCents).toBe(base);
+  });
+
+  it("cresce com o porte, e a composição explica o porquê", () => {
+    const pequena = calculateQuote(
+      input({
+        ...EMPTY_USAGE,
+        includeSetup: true,
+        setup: {
+          whatsappNumbers: 1,
+          integrations: 0,
+          peopleToTrain: 5,
+          contactsToMigrate: 0,
+          flows: 0,
+        },
+      }),
+    );
+
+    const grande = calculateQuote(
+      input({
+        ...EMPTY_USAGE,
+        includeSetup: true,
+        setup: {
+          whatsappNumbers: 4,
+          integrations: 2,
+          peopleToTrain: 40,
+          contactsToMigrate: 80_000,
+          flows: 6,
+        },
+      }),
+    );
+
+    expect(grande.setup!.totalCents).toBeGreaterThan(pequena.setup!.totalCents);
+    expect(grande.setup!.lines.length).toBeGreaterThan(pequena.setup!.lines.length);
+    // 40 pessoas em turmas de 12 são 4 turmas, não 3,33.
+    expect(grande.setup!.trainingGroups).toBe(4);
+  });
+
+  /** Parcela zerada não vira linha: "Integrações: R$ 0" só gera pergunta. */
+  it("não lista parcela zerada", () => {
+    const result = calculateQuote(
+      input({
+        ...EMPTY_USAGE,
+        includeSetup: true,
+        setup: {
+          whatsappNumbers: 1,
+          integrations: 0,
+          peopleToTrain: 0,
+          contactsToMigrate: 0,
+          flows: 0,
+        },
+      }),
+    );
+
+    expect(result.setup!.lines.map((line) => line.key)).toEqual(["base"]);
   });
 });
 

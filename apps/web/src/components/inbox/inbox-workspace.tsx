@@ -29,6 +29,7 @@ import { buildConversationContext } from "@/lib/ai/context";
 import { ConversationList } from "./conversation-list";
 import { ConversationThread } from "./conversation-thread";
 import { InboxRightPanel } from "./right-panel";
+import { ProposalQuickAction } from "./proposal-quick-action";
 import { Metric, MetricStrip } from "@/components/shell/metric-strip";
 import { InboxFilters, type QuickFilter } from "./inbox-filters";
 import type { ComposerHandle, ComposerSubmission } from "./composer";
@@ -304,6 +305,30 @@ export function InboxWorkspace(data: InboxData) {
         : [],
     [selected, liveWebchat.messagesByConversation, data.messagesByConversation, extraMessages],
   );
+
+  /**
+   * O que a busca do catálogo lê como contexto da conversa.
+   *
+   * Assunto, tags e as **últimas** mensagens — não a conversa inteira. Um
+   * histórico de sessenta mensagens dilui o sinal: o cliente falou de trilho no
+   * começo e de nota fiscal no fim, e a sugestão passaria a apontar para o
+   * assunto mais antigo. Seis mensagens é o que costuma cobrir a pergunta que
+   * motivou a proposta.
+   *
+   * Só entra texto que já está na tela de quem monta. Nada aqui vai para modelo
+   * nenhum: a busca é léxica e roda no navegador.
+   */
+  const proposalContext = useMemo(() => {
+    if (!selected) return undefined;
+
+    const tags = selected.tagIds.map((tagId) => tagById.get(tagId)?.name ?? "").join(" ");
+    const recent = selectedMessages
+      .slice(-6)
+      .map((message) => message.body)
+      .join(" ");
+
+    return `${selected.subject} ${tags} ${recent}`.trim();
+  }, [selected, selectedMessages, tagById]);
 
   const selectedNotes = useMemo(
     () =>
@@ -869,6 +894,26 @@ export function InboxWorkspace(data: InboxData) {
             onChangeState={handleChangeState}
             onTransferQueue={handleTransferQueue}
             onSend={handleSend}
+            composerQuickActions={
+              selectedContact ? (
+                <ProposalQuickAction
+                  conversationId={selected.id}
+                  contactId={selectedContact.id}
+                  contactName={selectedContact.fullName}
+                  products={data.products}
+                  conversationContext={proposalContext}
+                  disabled={selected.state === "encerrada"}
+                  onSendMessage={(text) =>
+                    handleSend({
+                      mode: "resposta",
+                      body: text,
+                      asTemplate: false,
+                      attachments: [],
+                    })
+                  }
+                />
+              ) : null
+            }
           />
         ) : (
           <div className="chat-canvas flex flex-1 items-center justify-center">
@@ -887,6 +932,10 @@ export function InboxWorkspace(data: InboxData) {
           <InboxRightPanel
             products={data.products}
             proposals={data.proposals}
+            conversationContext={proposalContext}
+            onSendProposalMessage={(text) =>
+              handleSend({ mode: "resposta", body: text, asTemplate: false, attachments: [] })
+            }
             conversationId={selected?.id ?? null}
             currentUserId={data.currentUserId}
             contact={selectedContact}

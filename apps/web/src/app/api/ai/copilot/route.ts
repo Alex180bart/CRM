@@ -49,7 +49,16 @@ export const dynamic = "force-dynamic";
  * duas coisas dividirem o mesmo freio de uso e a mesma forma de erro, quando o
  * risco de cada uma é de outra ordem.
  */
-type CopilotTask = Exclude<AiTask, "redigir_email" | "atender">;
+/**
+ * As tarefas que **esta** rota atende.
+ *
+ * Escrita por exclusão de propósito: cada tarefa nova do Gateway aparece aqui
+ * automaticamente, e o `switch` do fim do arquivo para de compilar até alguém
+ * decidir se ela é do copiloto. Foi o que aconteceu quando `redigir_proposta`
+ * entrou — o erro apareceu no lugar certo, antes de a rota aceitar um pedido que
+ * não sabe atender.
+ */
+type CopilotTask = Exclude<AiTask, "redigir_email" | "redigir_proposta" | "atender">;
 
 const TASKS: CopilotTask[] = ["analisar_conversa", "sugerir_resposta", "reescrever", "perguntar"];
 

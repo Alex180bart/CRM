@@ -27,8 +27,8 @@ const COLUMNS = [
     title: "Comercial",
     links: [
       { href: "/precos", label: "Planos e preços" },
-      { href: "/precos#simulador", label: "Simulador de custo" },
-      { href: "/orcamento", label: "Solicitar orçamento" },
+      { href: "/precos#faq", label: "Dúvidas de preço" },
+      { href: "/orcamento", label: "Solicitar proposta" },
       { href: "/cadastrar", label: "Criar conta" },
     ],
   },
@@ -37,7 +37,7 @@ const COLUMNS = [
     links: [
       { href: "/#seguranca", label: "Segurança e LGPD" },
       { href: "/#produto", label: "Como é a implantação" },
-      { href: "/precos#simulador", label: "Perguntas frequentes" },
+      { href: "/precos#faq", label: "Perguntas frequentes" },
       { href: "/entrar", label: "Área do cliente" },
     ],
   },
@@ -78,8 +78,8 @@ export function SiteFooter() {
         <div className="border-border mt-12 border-t pt-6">
           <p className="text-muted-foreground text-xs leading-relaxed">
             <strong className="text-foreground font-semibold">Estado da plataforma.</strong> As
-            telas e o simulador são reais e navegáveis, e as bases de demonstração são abertas pela
-            equipe comercial durante a apresentação. A camada de escrita persistente, a autenticação
+            telas são reais e navegáveis, e as bases de demonstração são abertas pela equipe
+            comercial durante a apresentação. A camada de escrita persistente, a autenticação
             corporativa e a conexão com os canais estão em construção — contas criadas aqui vivem na
             memória do servidor e são apagadas no reinício. Preferimos dizer isso na primeira página
             a explicar na primeira reunião.

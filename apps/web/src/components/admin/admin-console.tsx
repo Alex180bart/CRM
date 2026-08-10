@@ -72,6 +72,7 @@ import {
   Library,
   Palette,
   PackageSearch,
+  Calculator,
   UserCog,
   Plus,
   Database,
@@ -103,6 +104,7 @@ import { CatalogTab } from "./admin-catalog";
 import { AccessTab } from "./admin-access";
 import { AppearanceTab } from "./admin-appearance";
 import { ProductsTab } from "./admin-products";
+import { PricingTab } from "./admin-pricing";
 
 import { ChannelIcon } from "@/lib/channel";
 
@@ -308,6 +310,10 @@ export function AdminConsole(data: AdminData) {
             <TabsTrigger value="produtos">
               <PackageSearch className="size-3" />
               Produtos
+            </TabsTrigger>
+            <TabsTrigger value="precificacao">
+              <Calculator className="size-3" />
+              Precificação
             </TabsTrigger>
             <TabsTrigger value="aparencia">
               <Palette className="size-3" />
@@ -580,6 +586,10 @@ export function AdminConsole(data: AdminData) {
           {/* Perfis e acesso ---------------------------------------------- */}
           <TabsContent value="produtos" className="m-0">
             <ProductsTab products={data.products} onSubmit={mutate} busy={busy} />
+          </TabsContent>
+
+          <TabsContent value="precificacao" className="m-0">
+            <PricingTab />
           </TabsContent>
 
           <TabsContent value="aparencia" className="m-0">
