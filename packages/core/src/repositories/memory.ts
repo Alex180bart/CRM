@@ -1,24 +1,35 @@
-﻿/**
+/**
  * Implementação em memória dos repositórios.
  *
  * Serve à primeira onda do front, antes do Supabase existir. Toda leitura é
  * assíncrona de propósito: quando a implementação real entrar, a assinatura não
  * muda e nenhuma tela precisa ser reescrita.
+ *
+ * ## Por que quase tudo passa por `dataset()`
+ *
+ * As coleções que descrevem **o negócio** — contato, conversa, negócio,
+ * campanha — vêm da vertical de demonstração ativa, não de um `import` de
+ * módulo. A diferença aparece na troca de vertical: um `import` é resolvido uma
+ * vez e congela o arranjo daquele instante, então o Inbox continuaria mostrando
+ * a base anterior depois da troca. `dataset()` é lido a cada chamada, e a
+ * chamada acontece dentro do método assíncrono — que é exatamente onde a
+ * implementação real fará a consulta.
+ *
+ * O que descreve **a plataforma** (fluxos, jornadas, regras, e-mail, analytics,
+ * agentes) continua vindo do `mock/`: não muda com o segmento do cliente.
  */
 
 import type { Id } from "../types/common";
 import { CURRENT_USER_ID } from "../mock/organization";
 import { botFlows } from "../mock/bots";
-import { conversations, internalNotes, messages } from "../mock/inbox";
-import { companies, contacts } from "../mock/contacts";
-import { deals, pipelines, tasks } from "../mock/pipeline";
 import { journeyEnrollments, journeys } from "../mock/journeys";
-import { campaigns, messageTemplates, segments } from "../mock/campaigns";
 import { automationRules, ruleRuns } from "../mock/rules";
+import { dataset } from "../demo/active";
 import { webchatWidgets } from "../mock/webchat";
 import { deriveWebchatChannel } from "../utils/channels";
 import { aiAgents, agentKnowledgeSources } from "../mock/agents";
 import { adminMemoryRepository } from "./admin-memory";
+import { commerceMemoryRepository } from "./commerce-memory";
 import { store } from "./store";
 import {
   brandKits,
@@ -43,8 +54,6 @@ import {
   REFERENCE_HOUR,
   revenueWonSeries,
 } from "../mock/analytics";
-import { organization } from "../mock/organization";
-import { timeline } from "../mock/timeline";
 import type {
   AutomationRepository,
   CampaignRepository,
@@ -73,7 +82,7 @@ function normalize(value: string): string {
 
 const directory: DirectoryRepository = {
   async getOrganization() {
-    return organization;
+    return dataset().organization;
   },
   async listUsers() {
     return store.users;
@@ -135,6 +144,9 @@ const directory: DirectoryRepository = {
   async listInvitations() {
     return store.invitations;
   },
+  async getAppearance() {
+    return store.appearance;
+  },
   async getRotation(queueId: Id) {
     return store.rotations.find((item) => item.queueId === queueId)?.lastUserId;
   },
@@ -144,7 +156,7 @@ const contactRepository: ContactRepository = {
   async list(filter: ContactFilter = {}) {
     const search = filter.search ? normalize(filter.search) : undefined;
 
-    return contacts.filter((contact) => {
+    return dataset().contacts.filter((contact) => {
       if (filter.onlyDuplicates && !contact.duplicateOf) return false;
       if (
         filter.lifecycleStages?.length &&
@@ -173,25 +185,26 @@ const contactRepository: ContactRepository = {
     });
   },
   async getById(id: Id) {
-    return contacts.find((contact) => contact.id === id) ?? null;
+    return dataset().contacts.find((contact) => contact.id === id) ?? null;
   },
   async listCompanies() {
-    return companies;
+    return dataset().companies;
   },
   async getCompanyById(id: Id) {
-    return companies.find((company) => company.id === id) ?? null;
+    return dataset().companies.find((company) => company.id === id) ?? null;
   },
   async listTimeline(contactId: Id) {
-    return timeline.filter((entry) => entry.contactId === contactId);
+    return dataset().timeline.filter((entry) => entry.contactId === contactId);
   },
   async listTasks(contactId: Id) {
-    return tasks.filter((task) => task.contactId === contactId);
+    return dataset().tasks.filter((task) => task.contactId === contactId);
   },
 };
 
 const conversationRepository: ConversationRepository = {
   async list(filter: ConversationFilter = {}) {
     const search = filter.search ? normalize(filter.search) : undefined;
+    const { contacts, conversations } = dataset();
     const contactNameById = new Map(contacts.map((contact) => [contact.id, contact.fullName]));
 
     return conversations
@@ -240,61 +253,61 @@ const conversationRepository: ConversationRepository = {
       .sort((a, b) => Date.parse(b.lastMessageAt) - Date.parse(a.lastMessageAt));
   },
   async getById(id: Id) {
-    return conversations.find((conversation) => conversation.id === id) ?? null;
+    return dataset().conversations.find((conversation) => conversation.id === id) ?? null;
   },
   async listMessages(conversationId: Id) {
-    return messages
-      .filter((message) => message.conversationId === conversationId)
+    return dataset()
+      .messages.filter((message) => message.conversationId === conversationId)
       .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
   },
   async listNotes(conversationId: Id) {
-    return internalNotes
-      .filter((note) => note.conversationId === conversationId)
+    return dataset()
+      .internalNotes.filter((note) => note.conversationId === conversationId)
       .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
   },
   async listByContact(contactId: Id) {
-    return conversations
-      .filter((conversation) => conversation.contactId === contactId)
+    return dataset()
+      .conversations.filter((conversation) => conversation.contactId === contactId)
       .sort((a, b) => Date.parse(b.lastMessageAt) - Date.parse(a.lastMessageAt));
   },
 };
 
 const dealRepository: DealRepository = {
   async listPipelines() {
-    return pipelines;
+    return dataset().pipelines;
   },
   async getPipelineById(id: Id) {
-    return pipelines.find((pipeline) => pipeline.id === id) ?? null;
+    return dataset().pipelines.find((pipeline) => pipeline.id === id) ?? null;
   },
   async listByPipeline(pipelineId: Id) {
-    return deals.filter((deal) => deal.pipelineId === pipelineId);
+    return dataset().deals.filter((deal) => deal.pipelineId === pipelineId);
   },
   async listByContact(contactId: Id) {
-    return deals.filter((deal) => deal.contactId === contactId);
+    return dataset().deals.filter((deal) => deal.contactId === contactId);
   },
   async listTasks() {
-    return tasks;
+    return dataset().tasks;
   },
 };
 
 const campaignRepository: CampaignRepository = {
   async list() {
-    return campaigns;
+    return dataset().campaigns;
   },
   async getById(id: Id) {
-    return campaigns.find((campaign) => campaign.id === id) ?? null;
+    return dataset().campaigns.find((campaign) => campaign.id === id) ?? null;
   },
   async listSegments() {
-    return segments;
+    return dataset().segments;
   },
   async getSegmentById(id: Id) {
-    return segments.find((segment) => segment.id === id) ?? null;
+    return dataset().segments.find((segment) => segment.id === id) ?? null;
   },
   async listTemplates() {
-    return messageTemplates;
+    return dataset().messageTemplates;
   },
   async getTemplateById(id: Id) {
-    return messageTemplates.find((template) => template.id === id) ?? null;
+    return dataset().messageTemplates.find((template) => template.id === id) ?? null;
   },
 };
 
@@ -434,7 +447,7 @@ const governanceRepository: GovernanceRepository = {
  * fixa de modelo não ensina nada sobre latência, custo ou qualidade do prompt,
  * então o AI Gateway é montado em `./index.ts` apontando para o serviço real.
  */
-export const memoryRepositories: Omit<Repositories, "ai"> = {
+export const memoryRepositories: Omit<Repositories, "ai" | "site"> = {
   directory,
   contacts: contactRepository,
   conversations: conversationRepository,
@@ -448,4 +461,5 @@ export const memoryRepositories: Omit<Repositories, "ai"> = {
   insights: insightsRepository,
   governance: governanceRepository,
   admin: adminMemoryRepository,
+  commerce: commerceMemoryRepository,
 };

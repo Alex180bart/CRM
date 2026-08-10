@@ -1,14 +1,34 @@
 ﻿/**
  * Tokens da Elora — identidade Arena Elora.
  *
- *   Azul principal    #102850   hsl(218 67% 19%)
- *   Azul secundário   #212D51   hsl(225 42% 22%)
- *   Branco            #FFFFFF
- *   Laranja (acento)  #FF9933   hsl(30 100% 60%)
+ *   Índigo principal   #1E1B4B   hsl(244 47% 20%)
+ *   Índigo secundário  #312E81   hsl(242 48% 34%)
+ *   Branco             #FFFFFF
+ *   Âmbar (acento)     #DC8F09   hsl(38 92% 45%)
  *
  * Princípio de composição: **a borda é exceção**. Superfícies se separam por
  * cor e sombra, não por traço. Hairline só onde duas regiões roláveis se
- * encontram. O laranja marca uma coisa por tela — o que precisa de ação.
+ * encontram. O âmbar marca uma coisa por tela — o que precisa de ação.
+ *
+ * ## Por que o acento não é mais #FF9933
+ *
+ * A laranja anterior rendia **2,13:1 contra branco** — abaixo do 3:1 que a WCAG
+ * 1.4.11 exige de qualquer limite de componente, e foi essa a razão de existir um
+ * `--focus-ring` separado. O âmbar fechado rende **2,63:1**: ainda insuficiente
+ * para traço fino (o token do foco continua existindo, e continua necessário),
+ * mas 23% melhor onde ele preenche — selo, filete, botão.
+ *
+ * A conta é `(Lmaior + 0,05) / (Lmenor + 0,05)` sobre luminância relativa. Ao
+ * mexer em qualquer valor desta folha, refaça-a: o alvo é a **pior** superfície
+ * onde a cor aparece, não a mais favorável.
+ *
+ * ## Paletas alternativas
+ *
+ * Os tokens de marca — e só eles — são redefinidos por `[data-palette]` mais
+ * abaixo. Semântica (sucesso, alerta, erro) e as seis séries de gráfico **não**
+ * mudam com a paleta: as primeiras significam a mesma coisa em qualquer tema, e
+ * as segundas foram validadas para daltonismo e não sobrevivem a serem trocadas
+ * por gosto.
  */
 
 @tailwind base;
@@ -17,37 +37,41 @@
 
 @layer base {
   :root {
-    /* Plano de fundo levemente azulado: o branco dos cartões "sobe" sozinho. */
-    --background: 220 24% 97%;
-    --foreground: 218 45% 16%;
+    /* Plano de fundo levemente arroxeado: o branco dos cartões "sobe" sozinho. */
+    --background: 245 28% 97%;
+    --foreground: 245 40% 16%;
 
     --surface: 0 0% 100%;
     --surface-raised: 0 0% 100%;
-    --surface-sunken: 220 24% 95%;
+    --surface-sunken: 245 26% 95%;
 
     --card: 0 0% 100%;
-    --card-foreground: 218 45% 16%;
+    --card-foreground: 245 40% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 218 45% 16%;
+    --popover-foreground: 245 40% 16%;
 
-    --primary: 218 67% 19%;
+    --primary: 244 47% 20%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 218 52% 96%;
+    --primary-soft: 244 46% 96%;
 
-    --primary-2: 225 42% 22%;
+    --primary-2: 242 48% 34%;
     --primary-2-foreground: 0 0% 100%;
 
-    --secondary: 220 22% 94%;
-    --secondary-foreground: 218 45% 20%;
+    --secondary: 245 24% 94%;
+    --secondary-foreground: 245 40% 22%;
 
-    --muted: 220 22% 95%;
-    --muted-foreground: 218 12% 46%;
+    --muted: 245 24% 95%;
+    --muted-foreground: 245 12% 46%;
 
-    --accent: 30 100% 60%;
-    --accent-foreground: 24 62% 16%;
-    --accent-soft: 32 100% 95%;
-    --accent-ink: 26 82% 38%;
+    /**
+     * Âmbar da marca: 2,63:1 contra branco. Preenche — não desenha traço fino.
+     * `--accent-foreground` é a tinta que vai **sobre** ele, e rende 5,8:1.
+     */
+    --accent: 38 92% 45%;
+    --accent-foreground: 30 65% 13%;
+    --accent-soft: 40 92% 95%;
+    --accent-ink: 34 88% 34%;
 
     --destructive: 0 68% 47%;
     --destructive-foreground: 0 0% 100%;
@@ -85,34 +109,40 @@
      * pede 3:1, e ele foi resolvido para cumprir isso na pior superfície onde um
      * campo aparece (`--muted`, 95%), não só sobre o branco — daí 3,02:1 no pior
      * caso. Ao mexer nestes valores, refaça a conta em vez de ajustar a olho.
+     *
+     * Na virada para o índigo só a **matiz** mudou: luminosidade e saturação são
+     * as mesmas de antes, e é isso que preserva as três razões acima. A 16% de
+     * saturação, deslocar a matiz de 220 para 245 move a luminância relativa em
+     * menos de 1%. Mexer no **L** é outra história — aí a conta tem de ser
+     * refeita de fato.
      */
-    --border: 220 16% 76%;
-    --border-strong: 220 16% 64%;
-    --input: 220 16% 57%;
+    --border: 245 16% 76%;
+    --border-strong: 245 16% 64%;
+    --input: 245 16% 57%;
     /* Apontado ao anel de foco: se alguem usar `ring-ring`, ganha o acessivel. */
     --ring: var(--focus-ring);
 
     /**
      * Anel de foco.
      *
-     * Token próprio porque o laranja da marca **não serve** aqui no tema claro:
-     * `--accent` rende 2,13:1 contra branco, abaixo do 3:1 que a WCAG 1.4.11
-     * exige de indicador de foco. Escurecer `--accent` corrigiria o foco e
+     * Token próprio porque o âmbar da marca **não serve** aqui no tema claro:
+     * `--accent` rende 2,63:1 contra branco, ainda abaixo do 3:1 que a WCAG
+     * 1.4.11 exige de indicador de foco. Escurecê-lo corrigiria o foco e
      * estragaria todo o resto (preenchimento de botão, selo, filete).
      *
-     * Então o foco ganha a sua própria laranja: mais fechada no claro (3,43:1) e
-     * a da marca no escuro, onde ela já rende 8:1.
+     * Então o foco ganha o seu próprio âmbar: mais fechado no claro (3,73:1) e o
+     * da marca no escuro, onde ele já passa folgado.
      */
-    --focus-ring: 28 90% 45%;
+    --focus-ring: 36 95% 38%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 218 60% 14%;
-    --sidebar-foreground: 213 30% 92%;
-    --sidebar-muted: 214 16% 62%;
-    --sidebar-accent: 222 40% 21%;
-    /* Traço sobre o azul profundo da barra: clareado ao mesmo alvo de ~2:1. */
-    --sidebar-border: 222 30% 35%;
+    --sidebar-background: 245 45% 15%;
+    --sidebar-foreground: 245 25% 92%;
+    --sidebar-muted: 244 14% 64%;
+    --sidebar-accent: 244 38% 22%;
+    /* Traço sobre o índigo profundo da barra: clareado ao mesmo alvo de ~2:1. */
+    --sidebar-border: 244 28% 36%;
 
     /* Séries de gráfico — validadas para daltonismo e contraste na superfície branca. */
     --chart-1: 216 67% 50%;
@@ -137,28 +167,28 @@
      *
      * A textura de rabiscos vem do WhatsApp — ela existe porque o olho precisa
      * de um plano com "grão" para as bolhas descolarem. A cor, não: é a Arena
-     * CF. Bege azulado no claro, azul profundo no escuro, e o desenho entra
+     * Elora. Pergaminho no claro, índigo profundo no escuro, e o desenho entra
      * como máscara (`.chat-canvas`) para que a tinta continue saindo de token.
      *
      * As duas bolhas se separam por matiz e não por peso: branco de um lado,
-     * azul claro do outro, texto escuro nos dois. Isso mantém contraste alto
+     * índigo claro do outro, texto escuro nos dois. Isso mantém contraste alto
      * sobre um plano claro texturizado — bolha escura sobre bege briga com a
      * textura e some no tema escuro.
      */
-    --chat-canvas: 38 26% 93%;
-    --chat-doodle: 218 45% 30%;
+    --chat-canvas: 40 24% 93%;
+    --chat-doodle: 245 42% 30%;
     --chat-doodle-a: 0.05;
 
     --chat-in: 0 0% 100%;
-    --chat-in-foreground: 218 45% 16%;
-    --chat-out: 213 62% 90%;
-    --chat-out-foreground: 218 52% 18%;
-    --chat-out-ink: 214 42% 40%;
-    --chat-quote: 218 40% 34%;
+    --chat-in-foreground: 245 40% 16%;
+    --chat-out: 244 55% 92%;
+    --chat-out-foreground: 245 45% 20%;
+    --chat-out-ink: 244 30% 42%;
+    --chat-quote: 245 40% 34%;
 
-    --elev-1: 0 1px 2px -1px hsl(218 40% 20% / 0.06), 0 1px 3px 0 hsl(218 40% 20% / 0.05);
-    --elev-2: 0 2px 4px -2px hsl(218 40% 20% / 0.08), 0 6px 16px -6px hsl(218 40% 20% / 0.1);
-    --elev-3: 0 8px 24px -8px hsl(218 40% 20% / 0.16), 0 24px 56px -24px hsl(218 40% 20% / 0.22);
+    --elev-1: 0 1px 2px -1px hsl(245 40% 20% / 0.06), 0 1px 3px 0 hsl(245 40% 20% / 0.05);
+    --elev-2: 0 2px 4px -2px hsl(245 40% 20% / 0.08), 0 6px 16px -6px hsl(245 40% 20% / 0.1);
+    --elev-3: 0 8px 24px -8px hsl(245 40% 20% / 0.16), 0 24px 56px -24px hsl(245 40% 20% / 0.22);
 
     /**
      * Ladrilho de 400 px da textura da conversa — só forma, nenhuma cor: o SVG
@@ -170,36 +200,42 @@
   }
 
   .dark {
-    --background: 220 32% 8%;
-    --foreground: 213 28% 92%;
+    --background: 245 32% 8%;
+    --foreground: 245 25% 92%;
 
-    --surface: 220 28% 12%;
-    --surface-raised: 220 24% 15%;
-    --surface-sunken: 220 34% 6%;
+    --surface: 245 26% 12%;
+    --surface-raised: 245 22% 15%;
+    --surface-sunken: 245 34% 6%;
 
-    --card: 220 28% 12%;
-    --card-foreground: 213 28% 92%;
+    --card: 245 26% 12%;
+    --card-foreground: 245 25% 92%;
 
-    --popover: 220 26% 14%;
-    --popover-foreground: 213 28% 92%;
+    --popover: 245 24% 14%;
+    --popover-foreground: 245 25% 92%;
 
-    --primary: 213 70% 62%;
-    --primary-foreground: 220 40% 10%;
-    --primary-soft: 218 32% 20%;
+    /**
+     * No escuro `--primary` inverte de papel: deixa de ser o fundo profundo e
+     * passa a ser a tinta que aparece **sobre** ele. Por isso é um índigo claro,
+     * e não o mesmo valor do tema claro rebaixado.
+     */
+    --primary: 245 72% 74%;
+    --primary-foreground: 245 40% 10%;
+    --primary-soft: 245 30% 20%;
 
-    --primary-2: 225 34% 28%;
-    --primary-2-foreground: 213 28% 92%;
+    --primary-2: 243 34% 30%;
+    --primary-2-foreground: 245 25% 92%;
 
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 213 28% 92%;
+    --secondary: 245 18% 18%;
+    --secondary-foreground: 245 25% 92%;
 
-    --muted: 220 20% 17%;
-    --muted-foreground: 215 14% 64%;
+    --muted: 245 18% 17%;
+    --muted-foreground: 245 14% 64%;
 
-    --accent: 30 100% 60%;
-    --accent-foreground: 24 62% 12%;
-    --accent-soft: 28 40% 19%;
-    --accent-ink: 32 96% 66%;
+    /* Sobre o plano escuro o âmbar pode abrir: aqui ele passa dos 3:1 sozinho. */
+    --accent: 40 95% 58%;
+    --accent-foreground: 32 70% 10%;
+    --accent-soft: 38 40% 19%;
+    --accent-ink: 42 96% 68%;
 
     --destructive: 0 66% 58%;
     --destructive-foreground: 0 0% 100%;
@@ -223,20 +259,20 @@
      * claro — 1,96:1, 2,66:1 e 3,55:1 —, resolvidos contra a pior superfície
      * onde cada um aparece.
      */
-    --border: 220 14% 31%;
-    --border-strong: 220 14% 39%;
-    --input: 220 14% 47%;
+    --border: 245 14% 31%;
+    --border-strong: 245 14% 39%;
+    --input: 245 14% 47%;
     /* Apontado ao anel de foco: se alguem usar `ring-ring`, ganha o acessivel. */
     --ring: var(--focus-ring);
 
-    /* No escuro a laranja da marca já rende 8:1 — não precisa de degrau próprio. */
-    --focus-ring: 30 100% 60%;
+    /* No escuro o âmbar da marca já passa folgado — não precisa de degrau próprio. */
+    --focus-ring: 40 95% 58%;
 
-    --sidebar-background: 220 34% 6%;
-    --sidebar-foreground: 213 26% 90%;
-    --sidebar-muted: 215 12% 58%;
-    --sidebar-accent: 220 24% 14%;
-    --sidebar-border: 220 18% 29%;
+    --sidebar-background: 245 34% 6%;
+    --sidebar-foreground: 245 24% 90%;
+    --sidebar-muted: 245 12% 58%;
+    --sidebar-accent: 245 22% 14%;
+    --sidebar-border: 245 18% 29%;
 
     /* Mesmas seis matizes, degrau próprio para a superfície escura. */
     --chart-1: 214 79% 61%;
@@ -251,20 +287,350 @@
     --hue-fg-l: 72%;
 
     /* Mesma textura, degrau próprio: o plano escurece abaixo da superfície. */
-    --chat-canvas: 220 36% 7%;
-    --chat-doodle: 213 60% 78%;
+    --chat-canvas: 245 30% 8%;
+    --chat-doodle: 244 55% 78%;
     --chat-doodle-a: 0.055;
 
+    --chat-in: 245 22% 15%;
+    --chat-in-foreground: 245 25% 92%;
+    --chat-out: 244 38% 27%;
+    --chat-out-foreground: 245 30% 94%;
+    --chat-out-ink: 244 32% 74%;
+    --chat-quote: 244 55% 76%;
+
+    --elev-1: 0 1px 2px -1px hsl(245 40% 2% / 0.5), 0 1px 3px 0 hsl(245 40% 2% / 0.4);
+    --elev-2: 0 2px 4px -2px hsl(245 40% 2% / 0.5), 0 6px 16px -6px hsl(245 40% 2% / 0.55);
+    --elev-3: 0 8px 24px -8px hsl(245 40% 2% / 0.7), 0 24px 56px -24px hsl(245 40% 2% / 0.75);
+  }
+
+  /* ==========================================================================
+     Paletas da organização
+
+     Redefinem **só os tokens de marca**: primária, secundária, acento, foco,
+     barra lateral e a matiz das sombras. Fundo, superfície e traço acompanham
+     pela matiz; semântica e gráficos ficam de fora, de propósito.
+
+     A regra de especificidade importa: `[data-palette]` mora no `<html>`, o
+     mesmo elemento que carrega `.dark`. Por isso cada paleta precisa de um
+     bloco claro e um escuro, e o escuro é escrito como `.dark[data-palette=…]`
+     — dois seletores de classe/atributo no mesmo elemento vencem o `.dark`
+     sozinho, que é exatamente o desempate desejado.
+
+     `indigo` é o padrão e não aparece aqui: quem não escolhe nada recebe os
+     valores de `:root` acima. Declará-lo de novo criaria a única cópia da
+     paleta padrão em duas mãos, e a segunda envelheceria em silêncio.
+     ========================================================================== */
+
+  /* --- Petróleo + coral ---------------------------------------------------- */
+
+  [data-palette="petroleo"] {
+    --background: 176 22% 97%;
+    --foreground: 187 45% 13%;
+    --surface-sunken: 176 20% 95%;
+    --card-foreground: 187 45% 13%;
+    --popover-foreground: 187 45% 13%;
+
+    --primary: 176 61% 19%;
+    --primary-soft: 176 40% 95%;
+    --primary-2: 175 55% 25%;
+
+    --secondary: 176 20% 94%;
+    --secondary-foreground: 187 40% 20%;
+    --muted: 176 18% 95%;
+    --muted-foreground: 187 12% 42%;
+
+    /* Coral: 2,74:1 contra branco — o melhor acento quente da coleção. */
+    --accent: 7 93% 68%;
+    --accent-foreground: 6 60% 14%;
+    --accent-soft: 8 90% 96%;
+    --accent-ink: 6 72% 42%;
+    --focus-ring: 6 78% 44%;
+
+    --border: 180 14% 74%;
+    --border-strong: 180 14% 62%;
+    --input: 180 14% 55%;
+
+    --sidebar-background: 183 52% 12%;
+    --sidebar-foreground: 176 22% 92%;
+    --sidebar-muted: 178 12% 62%;
+    --sidebar-accent: 180 40% 18%;
+    --sidebar-border: 180 26% 32%;
+
+    --chat-canvas: 44 22% 93%;
+    --chat-doodle: 183 45% 24%;
+    --chat-out: 176 45% 90%;
+    --chat-out-foreground: 187 45% 16%;
+    --chat-out-ink: 180 30% 38%;
+    --chat-quote: 180 42% 28%;
+
+    --elev-1: 0 1px 2px -1px hsl(183 40% 14% / 0.07), 0 1px 3px 0 hsl(183 40% 14% / 0.05);
+    --elev-2: 0 2px 4px -2px hsl(183 40% 14% / 0.09), 0 6px 16px -6px hsl(183 40% 14% / 0.11);
+    --elev-3: 0 8px 24px -8px hsl(183 40% 14% / 0.17), 0 24px 56px -24px hsl(183 40% 14% / 0.22);
+  }
+
+  .dark[data-palette="petroleo"] {
+    --background: 187 32% 7%;
+    --foreground: 176 20% 92%;
+    --surface: 185 26% 11%;
+    --surface-raised: 185 22% 14%;
+    --surface-sunken: 187 34% 5%;
+    --card: 185 26% 11%;
+    --card-foreground: 176 20% 92%;
+    --popover: 185 24% 13%;
+    --popover-foreground: 176 20% 92%;
+
+    --primary: 174 62% 58%;
+    --primary-foreground: 187 40% 8%;
+    --primary-soft: 180 28% 18%;
+    --primary-2: 178 34% 24%;
+
+    --secondary: 185 16% 17%;
+    --secondary-foreground: 176 20% 92%;
+    --muted: 185 16% 16%;
+    --muted-foreground: 180 12% 62%;
+
+    --accent: 7 93% 70%;
+    --accent-foreground: 6 60% 10%;
+    --accent-soft: 6 36% 19%;
+    --accent-ink: 8 92% 74%;
+    --focus-ring: 7 93% 70%;
+
+    --border: 185 14% 29%;
+    --border-strong: 185 14% 37%;
+    --input: 185 14% 45%;
+
+    --sidebar-background: 187 34% 5%;
+    --sidebar-foreground: 176 20% 90%;
+    --sidebar-muted: 180 10% 56%;
+    --sidebar-accent: 185 22% 13%;
+    --sidebar-border: 185 18% 27%;
+
+    --chat-canvas: 187 30% 7%;
+    --chat-doodle: 174 50% 76%;
+    --chat-in: 185 22% 14%;
+    --chat-in-foreground: 176 20% 92%;
+    --chat-out: 180 34% 24%;
+    --chat-out-foreground: 176 26% 94%;
+    --chat-out-ink: 178 28% 72%;
+    --chat-quote: 174 50% 72%;
+  }
+
+  /* --- Grafite + violeta ---------------------------------------------------- */
+
+  [data-palette="grafite"] {
+    --background: 240 12% 97%;
+    --foreground: 240 10% 12%;
+    --surface-sunken: 240 10% 95%;
+    --card-foreground: 240 10% 12%;
+    --popover-foreground: 240 10% 12%;
+
+    --primary: 240 6% 10%;
+    --primary-soft: 262 40% 96%;
+    --primary-2: 240 6% 20%;
+
+    --secondary: 240 10% 94%;
+    --secondary-foreground: 240 10% 18%;
+    --muted: 240 10% 95%;
+    --muted-foreground: 240 6% 44%;
+
+    /**
+     * Violeta: 5,71:1 contra branco — o único acento da coleção que **também**
+     * serve para texto. Onde as outras paletas precisam de `--accent-ink` para
+     * escrever, esta poderia usar o próprio acento; o token continua existindo
+     * para que nenhum componente precise saber qual paleta está ativa.
+     */
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --accent-soft: 262 80% 96%;
+    --accent-ink: 262 72% 46%;
+    --focus-ring: 262 83% 52%;
+
+    --border: 240 8% 76%;
+    --border-strong: 240 8% 64%;
+    --input: 240 8% 56%;
+
+    --sidebar-background: 240 8% 10%;
+    --sidebar-foreground: 240 10% 92%;
+    --sidebar-muted: 240 5% 62%;
+    --sidebar-accent: 240 7% 17%;
+    --sidebar-border: 240 6% 32%;
+
+    --chat-canvas: 240 10% 94%;
+    --chat-doodle: 240 12% 26%;
+    --chat-out: 262 55% 93%;
+    --chat-out-foreground: 262 40% 20%;
+    --chat-out-ink: 262 26% 44%;
+    --chat-quote: 262 40% 38%;
+
+    --elev-1: 0 1px 2px -1px hsl(240 10% 10% / 0.07), 0 1px 3px 0 hsl(240 10% 10% / 0.05);
+    --elev-2: 0 2px 4px -2px hsl(240 10% 10% / 0.09), 0 6px 16px -6px hsl(240 10% 10% / 0.11);
+    --elev-3: 0 8px 24px -8px hsl(240 10% 10% / 0.18), 0 24px 56px -24px hsl(240 10% 10% / 0.24);
+  }
+
+  .dark[data-palette="grafite"] {
+    --background: 240 8% 7%;
+    --foreground: 240 10% 92%;
+    --surface: 240 7% 11%;
+    --surface-raised: 240 6% 14%;
+    --surface-sunken: 240 9% 5%;
+    --card: 240 7% 11%;
+    --card-foreground: 240 10% 92%;
+    --popover: 240 7% 13%;
+    --popover-foreground: 240 10% 92%;
+
+    --primary: 262 78% 74%;
+    --primary-foreground: 240 20% 8%;
+    --primary-soft: 262 26% 19%;
+    --primary-2: 240 8% 24%;
+
+    --secondary: 240 6% 17%;
+    --secondary-foreground: 240 10% 92%;
+    --muted: 240 6% 16%;
+    --muted-foreground: 240 6% 62%;
+
+    --accent: 262 86% 70%;
+    --accent-foreground: 262 60% 10%;
+    --accent-soft: 262 32% 20%;
+    --accent-ink: 262 90% 78%;
+    --focus-ring: 262 86% 70%;
+
+    --border: 240 5% 29%;
+    --border-strong: 240 5% 37%;
+    --input: 240 5% 45%;
+
+    --sidebar-background: 240 9% 5%;
+    --sidebar-foreground: 240 10% 90%;
+    --sidebar-muted: 240 5% 56%;
+    --sidebar-accent: 240 6% 13%;
+    --sidebar-border: 240 5% 27%;
+
+    --chat-canvas: 240 9% 6%;
+    --chat-doodle: 262 50% 76%;
+    --chat-in: 240 6% 14%;
+    --chat-in-foreground: 240 10% 92%;
+    --chat-out: 262 28% 26%;
+    --chat-out-foreground: 240 12% 94%;
+    --chat-out-ink: 262 24% 74%;
+    --chat-quote: 262 60% 76%;
+  }
+
+  /* --- Arena clássica: o azul e a laranja originais -------------------------- */
+
+  [data-palette="arena"] {
+    --background: 220 24% 97%;
+    --foreground: 218 45% 16%;
+    --surface-sunken: 220 24% 95%;
+    --card-foreground: 218 45% 16%;
+    --popover-foreground: 218 45% 16%;
+
+    --primary: 218 67% 19%;
+    --primary-soft: 218 52% 96%;
+    --primary-2: 225 42% 22%;
+
+    --secondary: 220 22% 94%;
+    --secondary-foreground: 218 45% 20%;
+    --muted: 220 22% 95%;
+    --muted-foreground: 218 12% 46%;
+
+    --accent: 30 100% 60%;
+    --accent-foreground: 24 62% 16%;
+    --accent-soft: 32 100% 95%;
+    --accent-ink: 26 82% 38%;
+    --focus-ring: 28 90% 45%;
+
+    --border: 220 16% 76%;
+    --border-strong: 220 16% 64%;
+    --input: 220 16% 57%;
+
+    --sidebar-background: 218 60% 14%;
+    --sidebar-foreground: 213 30% 92%;
+    --sidebar-muted: 214 16% 62%;
+    --sidebar-accent: 222 40% 21%;
+    --sidebar-border: 222 30% 35%;
+
+    --chat-canvas: 38 26% 93%;
+    --chat-doodle: 218 45% 30%;
+    --chat-out: 213 62% 90%;
+    --chat-out-foreground: 218 52% 18%;
+    --chat-out-ink: 214 42% 40%;
+    --chat-quote: 218 40% 34%;
+
+    --elev-1: 0 1px 2px -1px hsl(218 40% 20% / 0.06), 0 1px 3px 0 hsl(218 40% 20% / 0.05);
+    --elev-2: 0 2px 4px -2px hsl(218 40% 20% / 0.08), 0 6px 16px -6px hsl(218 40% 20% / 0.1);
+    --elev-3: 0 8px 24px -8px hsl(218 40% 20% / 0.16), 0 24px 56px -24px hsl(218 40% 20% / 0.22);
+  }
+
+  .dark[data-palette="arena"] {
+    --background: 220 32% 8%;
+    --foreground: 213 28% 92%;
+    --surface: 220 28% 12%;
+    --surface-raised: 220 24% 15%;
+    --surface-sunken: 220 34% 6%;
+    --card: 220 28% 12%;
+    --card-foreground: 213 28% 92%;
+    --popover: 220 26% 14%;
+    --popover-foreground: 213 28% 92%;
+
+    --primary: 213 70% 62%;
+    --primary-foreground: 220 40% 10%;
+    --primary-soft: 218 32% 20%;
+    --primary-2: 225 34% 28%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 213 28% 92%;
+    --muted: 220 20% 17%;
+    --muted-foreground: 215 14% 64%;
+
+    --accent: 30 100% 60%;
+    --accent-foreground: 24 62% 12%;
+    --accent-soft: 28 40% 19%;
+    --accent-ink: 32 96% 66%;
+    --focus-ring: 30 100% 60%;
+
+    --border: 220 14% 31%;
+    --border-strong: 220 14% 39%;
+    --input: 220 14% 47%;
+
+    --sidebar-background: 220 34% 6%;
+    --sidebar-foreground: 213 26% 90%;
+    --sidebar-muted: 215 12% 58%;
+    --sidebar-accent: 220 24% 14%;
+    --sidebar-border: 220 18% 29%;
+
+    --chat-canvas: 220 36% 7%;
+    --chat-doodle: 213 60% 78%;
     --chat-in: 220 24% 15%;
     --chat-in-foreground: 213 28% 92%;
     --chat-out: 218 42% 26%;
     --chat-out-foreground: 213 34% 94%;
     --chat-out-ink: 213 34% 72%;
     --chat-quote: 213 60% 74%;
+  }
 
-    --elev-1: 0 1px 2px -1px hsl(220 40% 2% / 0.5), 0 1px 3px 0 hsl(220 40% 2% / 0.4);
-    --elev-2: 0 2px 4px -2px hsl(220 40% 2% / 0.5), 0 6px 16px -6px hsl(220 40% 2% / 0.55);
-    --elev-3: 0 8px 24px -8px hsl(220 40% 2% / 0.7), 0 24px 56px -24px hsl(220 40% 2% / 0.75);
+  /* ==========================================================================
+     Densidade
+
+     Escala a **raiz tipográfica**, e não uma lista de utilitários. A razão é que
+     o Tailwind mede espaçamento em `rem`: mexer aqui move padding, altura de
+     linha, gap e tamanho de texto juntos e na mesma proporção, que é o que
+     "densidade" significa. Uma tabela de exceções por componente daria o mesmo
+     efeito só nas telas que alguém lembrasse de listar.
+
+     Os degraus são de 1 px. Parecem tímidos e não são: 15/16 encolhe cada
+     medida em 6,25%, o que numa lista de conversas devolve uma linha inteira por
+     tela sem que nada fique apertado.
+     ========================================================================== */
+
+  :root {
+    font-size: 16px;
+  }
+
+  [data-density="compacto"] {
+    font-size: 15px;
+  }
+
+  [data-density="amplo"] {
+    font-size: 17px;
   }
 }
 
@@ -483,6 +849,164 @@
     font-family: var(--font-display);
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
+  }
+
+  /* ==========================================================================
+     Efeitos
+
+     Regra única desta seção: **só `transform` e `opacity`**. O perfil deste
+     front mostra ~300 ms de script contra ~800 ms de estilo e layout numa
+     sequência de sete trocas de conversa — o gargalo é o recálculo, não o
+     JavaScript. Animar `width`, `top`, `box-shadow` ou `filter` acrescenta
+     trabalho exatamente onde já dói; `transform` e `opacity` são resolvidos pelo
+     compositor e não disparam layout nenhum.
+
+     Consequência prática: todo brilho aqui é um pseudo-elemento que **desliza**
+     sobre a peça, nunca um gradiente cuja posição de fundo muda; todo halo é
+     opacidade de uma camada existente, nunca uma sombra que cresce.
+
+     A segunda regra é o repouso. A folha termina com `prefers-reduced-motion`
+     cortando a duração para 0,01 ms e a repetição para 1, o que leva **toda**
+     animação ao seu último quadro. Então o último quadro de qualquer laço aqui é
+     o estado parado — brilho fora da peça, halo invisível. Um laço cujo quadro
+     final fosse o meio do efeito congelaria a interface num estado que parece
+     defeito, e para a pessoa que pediu ao sistema para não animar.
+     ========================================================================== */
+
+  /**
+   * Brilho que atravessa a peça no `hover`.
+   *
+   * Sem JavaScript de propósito: seguir o cursor exigiria ouvir `pointermove` e
+   * escrever variável CSS a cada quadro, e o efeito percebido é o mesmo. O
+   * `overflow: hidden` mora aqui porque a faixa é maior que a peça — sem ele o
+   * brilho vaza por cima do vizinho.
+   */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .sheen::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -60%;
+    width: 45%;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent,
+      hsl(var(--accent) / 0.16) 45%,
+      hsl(0 0% 100% / 0.28) 55%,
+      transparent
+    );
+    transform: translateX(0) skewX(-14deg);
+    opacity: 0;
+    transition:
+      transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.18s ease-out;
+  }
+
+  .sheen:hover::after,
+  .sheen:focus-visible::after {
+    transform: translateX(340%) skewX(-14deg);
+    opacity: 1;
+  }
+
+  /**
+   * Sublinhado que cresce do centro.
+   *
+   * Alternativa barata ao indicador que desliza entre abas: aquele precisa medir
+   * o gatilho ativo e reposicionar um elemento absoluto — leitura de layout a
+   * cada troca. Aqui cada gatilho tem o seu, e o que anima é `scaleX` de 0 a 1,
+   * que o compositor resolve sozinho. O olho lê a mesma coisa.
+   */
+  .underline-grow {
+    position: relative;
+  }
+
+  .underline-grow::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 999px;
+    background: hsl(var(--accent));
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .underline-grow:hover::after,
+  .underline-grow[data-state="active"]::after,
+  .underline-grow[aria-current="page"]::after {
+    transform: scaleX(1);
+  }
+
+  /**
+   * Entrada de linha de lista.
+   *
+   * Irmã de `.reveal`, com dois ajustes: percurso menor (6 px contra 10) e
+   * atraso mais curto (28 ms contra 60). Uma lista de trinta conversas com o
+   * escalonamento da página levaria 1,8 s para terminar de aparecer — a última
+   * linha chegaria depois de a pessoa já ter clicado na primeira. O teto de dez
+   * índices existe pela mesma razão e está no componente, não aqui.
+   */
+  .stagger {
+    opacity: 0;
+    animation: stagger-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: calc(var(--stagger-index, 0) * 28ms);
+  }
+
+  /**
+   * Halo que respira, para o que está **vivo**: agente de IA em execução, canal
+   * recebendo, gravação em curso.
+   *
+   * É opacidade de uma camada pronta, não `box-shadow` crescendo. A sombra
+   * animada repinta a peça e a vizinhança a cada quadro; esta camada já existe
+   * no seu tamanho final desde o primeiro quadro e só aparece e some.
+   */
+  .glow-pulse {
+    position: relative;
+  }
+
+  .glow-pulse::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(circle, hsl(var(--accent) / 0.4), transparent 70%);
+    opacity: 0;
+    animation: glow-breathe 2.6s ease-in-out infinite;
+  }
+
+  /**
+   * Levantar com inclinação.
+   *
+   * `.lift` sobe 2 px; esta acrescenta 1,2° de rotação no eixo X, o que dá a
+   * impressão de a peça se aproximar em vez de apenas subir. `perspective` entra
+   * na própria `transform` — um `perspective` no pai criaria contexto 3D para
+   * toda a subárvore, e aí qualquer filho posicionado passaria a ser achatado
+   * junto.
+   */
+  .lift-3d {
+    transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: perspective(800px) translateY(0) rotateX(0deg);
+  }
+
+  .lift-3d:hover {
+    transform: perspective(800px) translateY(-3px) rotateX(1.2deg) scale(1.006);
+  }
+
+  /** Entrada de painel e diálogo: sobe e assenta, sem exagero de escala. */
+  .rise-in {
+    animation: rise-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }
 
@@ -706,6 +1230,89 @@
   }
 }
 
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/**
+ * O halo nasce e morre invisível.
+ *
+ * Os dois extremos em `opacity: 0` não são simetria decorativa: são o que faz o
+ * corte de `prefers-reduced-motion` — que leva a animação ao último quadro —
+ * parar o halo apagado em vez de deixá-lo aceso para sempre em volta do
+ * elemento.
+ */
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/**
+ * Varredura lenta da marca na barra lateral.
+ *
+ * Doze segundos entre passagens, e não dois: isto fica visível o tempo inteiro,
+ * em toda tela, ao lado da navegação. Um brilho frequente naquele canto é a
+ * definição de distração periférica — o olho persegue movimento repetido mesmo
+ * quando a tarefa está no centro da tela.
+ */
+@keyframes brand-sheen {
+  0%,
+  72% {
+    transform: translateX(-120%) skewX(-16deg);
+    opacity: 0;
+  }
+  78% {
+    opacity: 1;
+  }
+  94%,
+  100% {
+    transform: translateX(320%) skewX(-16deg);
+    opacity: 0;
+  }
+}
+
+.brand-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-sheen::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, hsl(var(--accent) / 0.22), transparent);
+  animation: brand-sheen 12s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -715,12 +1322,23 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .reveal {
+  .reveal,
+  .stagger {
     opacity: 1;
     transform: none;
   }
-  .lift:hover {
+  .lift:hover,
+  .lift-3d:hover {
     transform: none;
+  }
+  /**
+   * O brilho de `hover` não tem "quadro final em repouso" a que recorrer: ele é
+   * uma transição, e o corte global só a encurta — a faixa continuaria cruzando
+   * a peça, instantaneamente. Aqui ela simplesmente não existe.
+   */
+  .sheen::after,
+  .brand-sheen::after {
+    display: none;
   }
 }
 
@@ -733,7 +1351,7 @@
    alcance, e o cubo continuaria girando para quem pediu para o sistema parar
    de animar — que é justamente quem passa mal com isso.
 
-   A paleta é uma só: o laranja da marca, com opacidade decrescente por eixo.
+   A paleta é uma só: o âmbar da marca, com opacidade decrescente por eixo.
    O original trazia ciano, roxo e índigo, que não existem em token nenhum
    deste produto. Três cores dariam profundidade; a opacidade por eixo dá a
    mesma leitura e mantém a peça reconhecível como Arena Elora.
@@ -857,3 +1475,151 @@
    contrário: invertê-los deixaria a peça congelada explodida, parecendo
    defeito.
 */
+
+/* ==========================================================================
+   Site público
+
+   O produto e o site têm exigências opostas de movimento. Dentro da aplicação a
+   regra é "nada em laço infinito": a pessoa passa oito horas ali e movimento
+   periférico repetido cansa. Numa landing page a pessoa passa noventa segundos,
+   e a página precisa parecer viva no primeiro deles.
+
+   O que **não** muda entre os dois: só `transform` e `opacity` são animados, e
+   `prefers-reduced-motion` continua anulando tudo pela regra global do fim da
+   folha. Nada aqui anima `filter`, `width` ou `box-shadow`.
+   ========================================================================== */
+
+/**
+ * Fundo do herói.
+ *
+ * Três manchas radiais que derivam devagar. A duração é longa de propósito —
+ * 28 s por ciclo — porque o efeito precisa ser percebido como profundidade, não
+ * como animação: se o olho consegue seguir o movimento, ele vira distração e
+ * disputa com o título.
+ */
+@keyframes aurora-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(3%, -2%, 0) scale(1.06);
+  }
+  66% {
+    transform: translate3d(-2%, 3%, 0) scale(0.97);
+  }
+}
+
+.aurora {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.aurora::before {
+  content: "";
+  position: absolute;
+  inset: -25%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 42% 38% at 18% 22%, hsl(var(--accent) / 0.28), transparent 62%),
+    radial-gradient(ellipse 46% 40% at 82% 12%, hsl(var(--primary-2) / 0.55), transparent 64%),
+    radial-gradient(ellipse 52% 44% at 58% 96%, hsl(var(--info) / 0.24), transparent 66%);
+  animation: aurora-drift 28s ease-in-out infinite;
+}
+
+/**
+ * Faixa de logotipos em movimento contínuo.
+ *
+ * A trilha carrega **duas cópias** da lista e desliza exatamente 50%. É o que
+ * torna o laço invisível: em qualquer instante existe conteúdo suficiente à
+ * direita, e o instante do reinício coincide com um estado idêntico ao inicial.
+ * Uma cópia só produziria o salto que todo mundo reconhece.
+ */
+@keyframes marquee-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee {
+  overflow: hidden;
+  /* As pontas somem em vez de cortar: sem isso o logotipo "nasce" na borda. */
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-slide 32s linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/**
+ * Bolha da conversa de demonstração.
+ *
+ * Entra uma por vez, com atraso vindo de `--bubble-index`. `both` mantém o
+ * estado inicial antes de começar — sem isso, todas as bolhas apareceriam no
+ * primeiro quadro e só então recuariam para animar, que é o pior dos dois
+ * mundos.
+ */
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.bubble-in {
+  animation: bubble-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--bubble-index, 0) * 700ms);
+}
+
+/**
+ * Cabeçalho translúcido do site.
+ *
+ * `backdrop-filter` é a única exceção à regra de não animar filtro — e ela não
+ * é animada: é estática, aplicada uma vez. O que muda no scroll é a borda, por
+ * troca de classe, não por transição de filtro.
+ */
+.site-header {
+  backdrop-filter: saturate(160%) blur(12px);
+  background-color: hsl(var(--background) / 0.82);
+}
+
+/**
+ * Cartão de vidro sobre superfície escura.
+ *
+ * Usado nos números do herói. A borda é clara e translúcida em vez de vir de
+ * `--border`: o token é calibrado contra fundo claro, e sobre o índigo profundo
+ * ele desaparece.
+ */
+.glass-card {
+  background: hsl(0 0% 100% / 0.07);
+  border: 1px solid hsl(0 0% 100% / 0.14);
+  border-radius: var(--radius);
+}
+
+/**
+ * Barra de proporção do simulador.
+ *
+ * Anima `transform: scaleX`, não `width`: largura força layout a cada quadro, e
+ * há uma barra por linha do orçamento. Com `transform-origin` à esquerda o
+ * efeito visual é idêntico e o custo cai para composição.
+ */
+.bar-grow {
+  transform-origin: left center;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}

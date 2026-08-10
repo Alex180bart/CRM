@@ -124,7 +124,7 @@ export function AgentList({
 
             return (
               <Reveal key={agent.id} index={Math.min(index + 4, 9)} as="li">
-                <div className="bg-card shadow-card lift flex h-full flex-col rounded-lg p-5">
+                <div className="bg-card shadow-card sheen lift-3d flex h-full flex-col rounded-lg p-5">
                   <div className="flex items-start gap-3">
                     <span
                       className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-2xl"

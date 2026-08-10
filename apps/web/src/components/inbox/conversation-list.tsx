@@ -22,9 +22,9 @@ const STATE_TONE: Record<string, "neutral" | "info" | "warning" | "success" | "a
 /**
  * Lista de conversas.
  *
- * A seleção usa superfície elevada com filete azul, não o laranja: o acento
+ * A seleção usa superfície elevada com filete índigo, não o âmbar: o acento
  * carrega **uma** coisa por tela, e nesta é a contagem de não lidas somada ao
- * botão de enviar. Marcar também a seleção de laranja faria o olho perder o que
+ * botão de enviar. Marcar também a seleção de âmbar faria o olho perder o que
  * pede ação — que é o único propósito daquela cor.
  *
  * ## Por que a linha é um componente memorizado
@@ -152,7 +152,7 @@ const ConversationRow = memo(function ConversationRow({
 
   return (
     <li className="group/item relative">
-      {/* Separador laranja: divide as conversas sem virar mais uma linha cheia. */}
+      {/* Separador em âmbar: divide as conversas sem virar mais uma linha cheia. */}
       {index > 0 ? (
         <span
           className="conversation-divider mx-2 mb-1.5 block"

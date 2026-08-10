@@ -637,7 +637,12 @@ function SectionLabel({ children }: { children: ReactNode }) {
 
 function AnalysisSkeleton() {
   return (
-    <div className="ai-thinking animate-ai-sweep space-y-3 rounded-lg p-1">
+    /**
+     * `.glow-pulse` acompanha a varredura: a varredura diz "está trabalhando", o
+     * halo diz "ainda está". Numa chamada de três segundos ao provedor, o
+     * primeiro sinal já passou duas vezes quando a pessoa volta o olho para cá.
+     */
+    <div className="ai-thinking animate-ai-sweep glow-pulse space-y-3 rounded-lg p-1">
       <div className="space-y-1.5">
         <Skeleton className="h-2.5 w-20" />
         <Skeleton className="h-3 w-full" />

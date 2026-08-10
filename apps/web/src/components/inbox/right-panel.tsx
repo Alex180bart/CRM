@@ -1,12 +1,22 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { AiConversationContext, Company, Contact, Deal, Tag, User } from "@elora/core";
+import type {
+  AiConversationContext,
+  Company,
+  Contact,
+  Deal,
+  Product,
+  Proposal,
+  Tag,
+  User,
+} from "@elora/core";
 import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from "@elora/ui";
-import { Bot, Sparkles, UserRound } from "lucide-react";
+import { Bot, ReceiptText, Sparkles, UserRound } from "lucide-react";
 
 import { AgentActivityPanel } from "./agent-activity-panel";
 import { ContactContextPanel } from "./contact-context-panel";
+import { ProposalPanel } from "./proposal-panel";
 import { CopilotPanel, type TabulationBinding } from "./copilot-panel";
 import type { CopilotController } from "./use-copilot";
 import type { LiveAgentActivity, LiveSurvey } from "./use-live-webchat";
@@ -38,6 +48,10 @@ export function InboxRightPanel({
   tabulation,
   agentActivity,
   survey,
+  products,
+  proposals,
+  conversationId,
+  currentUserId,
   className,
 }: {
   contact?: Contact;
@@ -57,6 +71,11 @@ export function InboxRightPanel({
   agentActivity?: LiveAgentActivity;
   /** Avaliação do atendimento, quando a pesquisa foi oferecida. */
   survey?: LiveSurvey;
+  /** Catálogo comercial, para montar proposta na conversa (seção 26.1). */
+  products: Product[];
+  proposals: Proposal[];
+  conversationId: string | null;
+  currentUserId: string;
   className?: string;
 }) {
   /**
@@ -72,6 +91,19 @@ export function InboxRightPanel({
    * assim a chegada do dado abre a aba uma vez, e a troca manual depois disso
    * não é desfeita pela leitura seguinte.
    */
+  /**
+   * O selo conta só as propostas **vivas** da conversa.
+   *
+   * Incluir paga, recusada e cancelada faria o número crescer para sempre e
+   * parar de significar "tem algo esperando você" — que é a única razão de um
+   * selo existir numa aba.
+   */
+  const proposalCount = proposals.filter(
+    (proposal) =>
+      proposal.conversationId === conversationId &&
+      ["rascunho", "aguardando_aprovacao", "enviada", "aceita"].includes(proposal.status),
+  ).length;
+
   const [tab, setTab] = useState("copiloto");
   const settledFor = useRef<string | null>(null);
 
@@ -114,6 +146,15 @@ export function InboxRightPanel({
             <Sparkles className="size-3.5" aria-hidden />
             Copiloto
           </TabsTrigger>
+          <TabsTrigger value="proposta" className="flex-1 gap-1.5 py-2 text-xs">
+            <ReceiptText className="size-3.5" />
+            Proposta
+            {proposalCount > 0 ? (
+              <span className="bg-accent text-accent-foreground rounded-full px-1.5 text-[10px] font-semibold">
+                {proposalCount}
+              </span>
+            ) : null}
+          </TabsTrigger>
           <TabsTrigger value="contato" className="flex-1 gap-1.5 py-2 text-xs">
             <UserRound className="size-3.5" aria-hidden />
             Contato
@@ -142,6 +183,26 @@ export function InboxRightPanel({
             onUseReply={onUseReply}
             tabulation={tabulation}
           />
+        </TabsContent>
+
+        <TabsContent
+          value="proposta"
+          className="flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+        >
+          {conversationId && contact ? (
+            <ProposalPanel
+              conversationId={conversationId}
+              contactId={contact.id}
+              contactName={contact.fullName}
+              products={products}
+              proposals={proposals}
+              currentUserId={currentUserId}
+            />
+          ) : (
+            <p className="text-muted-foreground p-4 text-center text-xs">
+              Selecione uma conversa para montar uma proposta.
+            </p>
+          )}
         </TabsContent>
 
         <TabsContent

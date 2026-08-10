@@ -57,6 +57,8 @@ import {
   UserPlus,
   Zap,
   type LucideIcon,
+  BadgeDollarSign,
+  FileCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -144,7 +146,18 @@ const TRIGGER_FIELDS: Record<RuleTriggerKind, FieldSpec[]> = {
       options: ["Qualquer", "Site", "WhatsApp", "Importação", "Indicação"],
     },
   ],
+  /**
+   * Os dois gatilhos comerciais não pedem parâmetro nenhum.
+   *
+   * "Aceitou uma proposta" e "teve a compra aprovada" já são específicos o
+   * bastante: filtrar por produto aqui obrigaria a escolher um item do catálogo
+   * na montagem da regra, e a regra deixaria de valer para o produto lançado
+   * depois. Quem precisa desse recorte usa condição, que é onde recorte mora.
+   */
+  proposta_aceita: [],
+  compra_aprovada: [],
 };
+
 
 const ACTION_FIELDS: Record<RuleActionKind, FieldSpec[]> = {
   enviar_whatsapp: [
@@ -202,6 +215,8 @@ const TRIGGER_META: Record<RuleTriggerKind, { icon: LucideIcon; hue: number }> =
   tag_adicionada: { icon: TagIcon, hue: 280 },
   etapa_alterada: { icon: Route, hue: 30 },
   contato_criado: { icon: UserPlus, hue: 218 },
+  proposta_aceita: { icon: FileCheck, hue: 174 },
+  compra_aprovada: { icon: BadgeDollarSign, hue: 145 },
 };
 
 const ACTION_META: Record<RuleActionKind, { icon: LucideIcon; hue: number }> = {

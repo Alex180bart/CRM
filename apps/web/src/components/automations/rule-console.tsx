@@ -57,6 +57,8 @@ import {
   UserPlus,
   Zap,
   type LucideIcon,
+  BadgeDollarSign,
+  FileCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -82,6 +84,8 @@ const TRIGGER_META: Record<RuleTriggerKind, { icon: LucideIcon; hue: number }> =
   tag_adicionada: { icon: TagIcon, hue: 280 },
   etapa_alterada: { icon: Route, hue: 30 },
   contato_criado: { icon: UserPlus, hue: 218 },
+  proposta_aceita: { icon: FileCheck, hue: 174 },
+  compra_aprovada: { icon: BadgeDollarSign, hue: 145 },
 };
 
 const ACTION_META: Record<RuleActionKind, { icon: LucideIcon; hue: number }> = {

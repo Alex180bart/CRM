@@ -31,6 +31,18 @@ import type { ClosingReason, CustomFieldDefinition, SkillDefinition } from "../t
 import type { Tag } from "../types/crm";
 import type { CannedResponse } from "../types/inbox";
 import type { Id } from "../types/common";
+import type { Product } from "../types/commerce";
+import { PRODUCT_KIND_LABEL, RECURRENCE_SUFFIX } from "../types/commerce";
+import { validateCheckoutBaseUrl } from "../utils/commerce";
+import { formatCurrencyCents } from "../utils/format";
+import {
+  DENSITY_LABEL,
+  MODE_LABEL,
+  PALETTE_CATALOG,
+  isAppearanceMode,
+  isDensityKey,
+  isPaletteKey,
+} from "../types/appearance";
 import {
   canChangeRole,
   canCreateChannel,
@@ -1409,6 +1421,192 @@ export const adminMemoryRepository: AdminRepository = {
 
     return ok();
   },
+
+  /* Catálogo comercial -------------------------------------------------------- */
+
+  /**
+   * Produto novo.
+   *
+   * A chave é conferida contra o catálogo inteiro, incluindo inativos: produto
+   * inativo continua citado dentro de propostas antigas, e reaproveitar a chave
+   * faria duas ofertas diferentes compartilharem identidade no relatório.
+   */
+  async createProduct(actor, data) {
+    const key = data.key.trim().toLowerCase();
+    const keyRefusal = checkCatalogKey(
+      key,
+      store.products.map((item) => item.key),
+    );
+    if (keyRefusal) return no(keyRefusal);
+    if (!data.name.trim()) return no("O nome é obrigatório.");
+    if (!Number.isFinite(data.priceCents) || data.priceCents < 0) {
+      return no("O preço precisa ser um valor válido.");
+    }
+
+    const priceCheck = checkProductPricing(data);
+    if (!priceCheck.ok) return no(priceCheck.reason);
+
+    const timestamp = offsetIso({});
+    const product: Product = {
+      ...data,
+      key,
+      id: nextId("prod"),
+      organizationId: ORG_ID,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    store.products.push(product);
+
+    audit(actor, {
+      action: "produto.criado",
+      target: product.name,
+      detail: `${PRODUCT_KIND_LABEL[product.kind]} por ${formatCurrencyCents(product.priceCents)}${RECURRENCE_SUFFIX[product.recurrence]}, teto de desconto ${product.maxDiscountPct}%.`,
+    });
+
+    return ok(product);
+  },
+
+  async updateProduct(actor, id, patch) {
+    const product = store.products.find((item) => item.id === id);
+    if (!product) return no("Produto não encontrado.");
+
+    /**
+     * A chave é imutável depois de criada, como habilidade e motivo de
+     * encerramento. Ela viaja dentro de cada `ProposalItem` e de cada evento
+     * publicado — renomeá-la renomearia metade do passado, e o relatório
+     * passaria a mostrar duas linhas para a mesma oferta.
+     */
+    if (patch.key !== undefined && patch.key !== product.key) {
+      return no("A chave do produto não muda depois de criada: ela já está gravada em propostas e eventos.");
+    }
+
+    const merged = { ...product, ...patch };
+    const priceCheck = checkProductPricing(merged);
+    if (!priceCheck.ok) return no(priceCheck.reason);
+
+    Object.assign(product, patch, { key: product.key, updatedAt: offsetIso({}) });
+
+    audit(actor, {
+      action: "produto.editado",
+      target: product.name,
+      detail: describeProductPatch(patch),
+    });
+
+    return ok(product);
+  },
+
+  /**
+   * Excluir é **desativar**, e a diferença importa.
+   *
+   * Sumir com o registro quebraria toda proposta que o cita: o item guarda uma
+   * cópia do nome e do preço, mas o `productId` deixaria de resolver, e o
+   * relatório por produto perderia as vendas já feitas. Inativo some da montagem
+   * de proposta nova e da resposta da IA, que é o efeito que quem clica espera.
+   */
+  async deleteProduct(actor, id) {
+    const product = store.products.find((item) => item.id === id);
+    if (!product) return no("Produto não encontrado.");
+
+    const used = store.proposals.some((proposal) =>
+      proposal.items.some((item) => item.productId === id),
+    );
+
+    if (!used) {
+      store.products = store.products.filter((item) => item.id !== id);
+      audit(actor, {
+        action: "produto.excluido",
+        target: product.name,
+        detail: "Excluído do catálogo. Nunca foi usado em proposta.",
+        severity: "atencao",
+      });
+      return ok();
+    }
+
+    product.active = false;
+    product.updatedAt = offsetIso({});
+
+    audit(actor, {
+      action: "produto.desativado",
+      target: product.name,
+      detail: "Já usado em proposta: foi desativado em vez de excluído, para não quebrar o histórico.",
+      severity: "atencao",
+    });
+
+    return ok();
+  },
+
+  /* Aparência ---------------------------------------------------------------- */
+
+  /**
+   * Paleta e padrões visuais da organização.
+   *
+   * **A validação não é cerimônia.** `data-palette` com um valor que não existe
+   * em `tokens.css` não produz erro nenhum: o navegador simplesmente não casa o
+   * seletor, e a instalação inteira volta para a paleta padrão sem que nada
+   * avise. O sintoma chega como "escolhi petróleo e continua índigo", que é
+   * indistinguível de um defeito de gravação.
+   *
+   * A gravidade é `atencao`, não `informativo`: mudar a paleta muda a tela de
+   * todo mundo da organização ao mesmo tempo, e quem abrir um chamado dizendo
+   * "o sistema está diferente hoje" precisa que a auditoria responda em uma
+   * linha.
+   */
+  async updateAppearance(actor, patch) {
+    const current = store.appearance;
+    const next = { ...current };
+    const changes: string[] = [];
+
+    if (patch.palette !== undefined) {
+      if (!isPaletteKey(patch.palette)) return no("Paleta desconhecida.");
+      if (patch.palette !== current.palette) {
+        const label = PALETTE_CATALOG.find((item) => item.key === patch.palette)?.label;
+        changes.push(`paleta para ${label ?? patch.palette}`);
+      }
+      next.palette = patch.palette;
+    }
+
+    if (patch.defaultMode !== undefined) {
+      if (!isAppearanceMode(patch.defaultMode)) return no("Modo de exibição desconhecido.");
+      if (patch.defaultMode !== current.defaultMode) {
+        changes.push(`modo padrão para ${MODE_LABEL[patch.defaultMode].toLowerCase()}`);
+      }
+      next.defaultMode = patch.defaultMode;
+    }
+
+    if (patch.defaultDensity !== undefined) {
+      if (!isDensityKey(patch.defaultDensity)) return no("Densidade desconhecida.");
+      if (patch.defaultDensity !== current.defaultDensity) {
+        changes.push(`densidade padrão para ${DENSITY_LABEL[patch.defaultDensity].toLowerCase()}`);
+      }
+      next.defaultDensity = patch.defaultDensity;
+    }
+
+    if (patch.allowPersonalOverride !== undefined) {
+      const allow = patch.allowPersonalOverride === true;
+      if (allow !== current.allowPersonalOverride) {
+        changes.push(
+          allow
+            ? "escolha individual de tema liberada"
+            : "escolha individual de tema bloqueada para toda a organização",
+        );
+      }
+      next.allowPersonalOverride = allow;
+    }
+
+    if (changes.length === 0) return ok(current);
+
+    store.appearance = next;
+
+    audit(actor, {
+      action: "aparencia.alterada",
+      target: "Aparência da organização",
+      detail: `Alterado: ${changes.join("; ")}.`,
+      severity: "atencao",
+    });
+
+    return ok(next);
+  },
 };
 
 const BUILT_IN_ROLES = new Set<string>([
@@ -1422,6 +1620,51 @@ const BUILT_IN_ROLES = new Set<string>([
   "analista_dados",
   "auditor_dpo",
 ]);
+
+/**
+ * Coerência entre preço, desconto e forma de pagamento.
+ *
+ * As três recusas foram escolhidas pelo dano silencioso, não por rigor:
+ *
+ * - teto acima de 100% permitiria proposta com valor negativo, que o link de
+ *   pagamento aceitaria e a conciliação nunca fecharia;
+ * - modo `link` sem endereço só falharia no instante do aceite do cliente — o
+ *   pior momento possível para descobrir, com a pessoa esperando;
+ * - endereço que não é http(s) vira `href` de um botão que o cliente clica, e
+ *   `javascript:` ali executa no nosso domínio.
+ */
+function checkProductPricing(product: {
+  maxDiscountPct: number;
+  checkout: { mode: string; baseUrl?: string };
+}): { ok: true } | { ok: false; reason: string } {
+  if (product.maxDiscountPct < 0 || product.maxDiscountPct > 100) {
+    return { ok: false, reason: "O teto de desconto precisa ficar entre 0% e 100%." };
+  }
+
+  if (product.checkout.mode === "link") {
+    if (!product.checkout.baseUrl?.trim()) {
+      return {
+        ok: false,
+        reason: "No modo de link próprio, o endereço de pagamento é obrigatório.",
+      };
+    }
+    const url = validateCheckoutBaseUrl(product.checkout.baseUrl);
+    if (!url.ok) return { ok: false, reason: url.reason ?? "Endereço de pagamento inválido." };
+  }
+
+  return { ok: true };
+}
+
+function describeProductPatch(patch: Partial<Product>): string {
+  const parts: string[] = [];
+  if (patch.name !== undefined) parts.push(`nome para "${patch.name}"`);
+  if (patch.priceCents !== undefined) parts.push(`preço para ${formatCurrencyCents(patch.priceCents)}`);
+  if (patch.maxDiscountPct !== undefined) parts.push(`teto de desconto para ${patch.maxDiscountPct}%`);
+  if (patch.recurrence !== undefined) parts.push(`recorrência para ${patch.recurrence}`);
+  if (patch.checkout !== undefined) parts.push("forma de pagamento");
+  if (patch.active !== undefined) parts.push(patch.active ? "reativado" : "desativado");
+  return parts.length ? `Alterado: ${parts.join("; ")}.` : "Alteração de conteúdo.";
+}
 
 /** Identificadores usados pelas leituras do repositório em memória. */
 export type { Id };

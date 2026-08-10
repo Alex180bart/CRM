@@ -84,7 +84,7 @@ function DomainCard({
     <Reveal index={index} className="min-w-0">
       <Link
         href={href}
-        className="lift press bg-card shadow-card focus-visible:ring-accent group flex h-full flex-col rounded-lg p-5 focus-visible:outline-none focus-visible:ring-2"
+        className="sheen lift-3d press bg-card shadow-card focus-visible:ring-accent group flex h-full flex-col rounded-lg p-5 focus-visible:outline-none focus-visible:ring-2"
       >
         <div className="flex items-center gap-2">
           <span className="bg-primary-soft text-primary flex size-7 items-center justify-center rounded-lg [&_svg]:size-4">

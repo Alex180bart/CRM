@@ -421,7 +421,7 @@ export function EmailCanvas({
     setDrop(null);
   }
 
-  /** Fio laranja de encaixe. Ocupa altura zero para não empurrar o layout. */
+  /** Fio de encaixe em âmbar. Ocupa altura zero para não empurrar o layout. */
   function DropLine({ active }: { active: boolean }) {
     return (
       <div className="relative h-0" aria-hidden>

@@ -14,6 +14,8 @@ import type {
   Deal,
   InternalNote,
   Message,
+  Product,
+  Proposal,
   Queue,
   Tag,
   User,
@@ -47,6 +49,10 @@ export interface InboxData {
   currentUserId: string;
   /** O servidor informa se há credencial de IA: a tela não oferece o que vai falhar. */
   copilotAvailable: boolean;
+  /** Catálogo comercial da organização (seção 26.1). */
+  products: Product[];
+  /** Propostas de todas as conversas; o painel filtra a da conversa aberta. */
+  proposals: Proposal[];
 }
 
 export function InboxWorkspace(data: InboxData) {
@@ -879,6 +885,10 @@ export function InboxWorkspace(data: InboxData) {
         {/* Copiloto e contexto do contato */}
         {selected && showContext ? (
           <InboxRightPanel
+            products={data.products}
+            proposals={data.proposals}
+            conversationId={selected?.id ?? null}
+            currentUserId={data.currentUserId}
             contact={selectedContact}
             company={selectedCompany}
             owner={selectedContact?.ownerId ? userById.get(selectedContact.ownerId) : undefined}

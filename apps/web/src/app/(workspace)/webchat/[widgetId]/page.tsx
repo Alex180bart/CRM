@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { repositories } from "@elora/core";
+import { DEFAULT_APP_HOST, repositories } from "@elora/core";
 
 import { WidgetEditor } from "@/components/webchat/widget-editor";
 
@@ -32,7 +32,7 @@ export default async function WebchatWidgetPage({
    * desenvolvimento apontar para produção — e o widget carregaria a configuração
    * errada sem nenhum erro visível.
    */
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "localhost:3100";
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? DEFAULT_APP_HOST;
   const protocol = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
 
   return (

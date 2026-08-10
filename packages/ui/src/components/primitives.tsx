@@ -61,7 +61,15 @@ export const TabsTrigger = React.forwardRef<
     <TabsPrimitive.Trigger
       ref={ref}
       className={cn(
-        "text-muted-foreground hover:text-foreground data-[state=active]:border-accent data-[state=active]:text-foreground relative -mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2 text-sm font-medium transition-colors",
+        /**
+         * O traço da aba ativa é `.underline-grow`, não mais `border-accent`.
+         *
+         * A borda continua aqui, transparente, e continua sendo quem reserva os
+         * 2 px: trocá-la por nada faria toda a fila de abas subir 2 px no
+         * primeiro clique. O que mudou é quem pinta — um pseudo-elemento que
+         * cresce do centro por `scaleX`, sem tocar em layout.
+         */
+        "underline-grow text-muted-foreground hover:text-foreground data-[state=active]:text-foreground relative -mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2 text-sm font-medium transition-colors",
         className,
       )}
       {...props}

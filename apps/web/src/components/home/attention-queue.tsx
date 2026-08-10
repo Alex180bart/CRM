@@ -121,8 +121,14 @@ export function AttentionQueue({ items }: { items: AttentionItem[] }) {
               return (
                 <li
                   key={item.id}
-                  className="reveal hover:bg-muted/60 group relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors"
-                  style={{ "--reveal-index": Math.min(index, 8) } as React.CSSProperties}
+                  /**
+                   * `.stagger` no lugar de `.reveal`: mesma ideia, cadência de
+                   * lista. A orquestração da página escalona a 60 ms porque são
+                   * poucas seções; aqui são linhas, e a 60 ms a última chegaria
+                   * meio segundo depois de a pessoa já ter clicado na primeira.
+                   */
+                  className="stagger hover:bg-muted/60 group relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors"
+                  style={{ "--stagger-index": Math.min(index, 8) } as React.CSSProperties}
                 >
                   {/* Gravidade como filete, não como fundo colorido. */}
                   <span

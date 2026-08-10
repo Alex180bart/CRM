@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import type { Organization, User } from "@elora/core";
+import type { DemoVerticalId, Organization, User } from "@elora/core";
 import { PRESENCE_LABEL, ROLE_LABEL } from "@elora/core";
 import {
   Avatar,
@@ -20,6 +20,7 @@ import {
 } from "@elora/ui";
 import { ChevronsLeft, ChevronsRight, LogOut, Settings, ShieldCheck } from "lucide-react";
 
+import { DemoSwitcher } from "./demo-switcher";
 import { SidebarBrand } from "./logo";
 import { NAV_GROUPS } from "@/lib/nav";
 import { ThemeToggle } from "./theme-toggle";
@@ -27,9 +28,22 @@ import { ThemeToggle } from "./theme-toggle";
 export function AppSidebar({
   organization,
   currentUser,
+  allowThemeChoice = true,
+  demoVertical,
 }: {
   organization: Organization;
   currentUser: User;
+  /** Vem da aparência da organização: desligado, o atalho de tema não aparece. */
+  allowThemeChoice?: boolean;
+  /**
+   * Base de demonstração carregada agora.
+   *
+   * Ausente quando quem está na tela não é da equipe comercial — e, nesse caso,
+   * o seletor não é desenhado. Um campo opcional em vez de um booleano separado
+   * porque as duas informações andam juntas: só faz sentido saber qual base está
+   * ativa se você pode trocá-la.
+   */
+  demoVertical?: DemoVerticalId;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -44,7 +58,7 @@ export function AppSidebar({
       {/* Marca */}
       <div
         className={cn(
-          "brand-surface flex h-16 items-center gap-2.5 px-4",
+          "brand-surface brand-sheen flex h-16 items-center gap-2.5 px-4",
           collapsed && "justify-center px-0",
         )}
       >
@@ -78,7 +92,7 @@ export function AppSidebar({
                           : "text-sidebar-muted hover:bg-sidebar-accent/70 hover:text-sidebar-foreground",
                     )}
                   >
-                    {/* Marcador de página atual: um filete laranja à esquerda. */}
+                    {/* Marcador de página atual: um filete âmbar à esquerda. */}
                     {active ? (
                       <span
                         className="bg-accent absolute -left-2.5 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full"
@@ -127,8 +141,14 @@ export function AppSidebar({
         ))}
       </nav>
 
-      {/* Rodapé: usuário e controles */}
+      {/* Rodapé: base de demonstração, usuário e controles */}
       <div className="p-2.5">
+        {demoVertical ? (
+          <div className="mb-2">
+            <DemoSwitcher activeId={demoVertical} collapsed={collapsed} />
+          </div>
+        ) : null}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -180,7 +200,7 @@ export function AppSidebar({
         <div
           className={cn("mt-1 flex items-center gap-1", collapsed ? "flex-col" : "justify-between")}
         >
-          <ThemeToggle />
+          <ThemeToggle allowed={allowThemeChoice} />
           <Button
             variant="ghost"
             size="icon-sm"

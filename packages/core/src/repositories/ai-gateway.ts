@@ -11,6 +11,7 @@
  * atende `/api/ai/copilot`.
  */
 
+import { DEFAULT_APP_ORIGIN } from "../utils/app-origin";
 import type {
   AiAnalyzeInput,
   AiAskInput,
@@ -37,7 +38,7 @@ function gatewayUrl(): string {
   // Node — ele precisa continuar rodando em qualquer runtime.
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
     ?.env;
-  const base = env?.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100";
+  const base = env?.NEXT_PUBLIC_APP_URL ?? DEFAULT_APP_ORIGIN;
   return `${base.replace(/\/$/, "")}${GATEWAY_PATH}`;
 }
 

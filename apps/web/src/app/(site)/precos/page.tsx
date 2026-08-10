@@ -1,0 +1,253 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  ADDONS,
+  PLANS,
+  WHATSAPP_PRICES,
+  formatCurrencyCents,
+  formatNumber,
+} from "@elora/core";
+import { Card, CardContent, Reveal } from "@elora/ui";
+
+import { Faq } from "@/components/site/faq";
+import { PlanCards } from "@/components/site/plan-cards";
+import { PricingSimulator } from "@/components/site/pricing-simulator";
+import { parseQuoteInput } from "@/lib/site/quote-params";
+
+export const metadata: Metadata = {
+  title: "Preços e simulador",
+  description:
+    "Edições, franquias, preço por excedente e o repasse da Meta — a tabela inteira, com simulador " +
+    "que mostra a conta linha a linha antes de falar com vendedor.",
+};
+
+/**
+ * Página de preços.
+ *
+ * A tabela de excedente vem depois dos cartões, e não escondida atrás de um
+ * "consulte-nos". O preço do excedente é o que decide a conta de quem cresce, e
+ * é exatamente o número que costuma aparecer só na terceira fatura.
+ */
+export default async function PrecosPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const initial = parseQuoteInput(params);
+
+  return (
+    <>
+      <section className="bg-primary text-primary-foreground aurora">
+        <div className="mx-auto w-full max-w-6xl px-5 py-16 md:py-20">
+          <Reveal index={0}>
+            <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
+              Preço em dois eixos: quantas pessoas usam e quanto a operação consome.
+            </h1>
+            <p className="text-primary-foreground/75 mt-4 max-w-2xl text-base leading-relaxed">
+              Assinatura da plataforma, assento e consumo medido — separados, para que o
+              crescimento de um não pague pelo do outro. O que o provedor cobra viaja como repasse,
+              sem margem e em linha própria.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-6xl px-5 py-16">
+        <PlanCards />
+      </section>
+
+      {/* Excedente ---------------------------------------------------------- */}
+      <section className="bg-surface-sunken py-16">
+        <div className="mx-auto w-full max-w-6xl px-5">
+          <Reveal index={0}>
+            <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+              O que custa passar da franquia
+            </h2>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+              Contato é cobrado em faixas <strong>progressivas</strong>: cada fatia paga o preço da
+              própria faixa. Aplicar o preço da faixa final ao total produziria o salto em que
+              cadastrar mil contatos a mais reduz a fatura.
+            </p>
+          </Reveal>
+
+          <div className="mt-8 overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse text-sm">
+              <thead>
+                <tr className="border-border border-b text-left">
+                  <th className="py-2.5 pr-4 font-semibold">Edição</th>
+                  <th className="py-2.5 pr-4 font-semibold">Contato extra (por mil)</th>
+                  <th className="py-2.5 pr-4 font-semibold">Conversa extra</th>
+                  <th className="py-2.5 pr-4 font-semibold">E-mail extra (por mil)</th>
+                  <th className="py-2.5 pr-4 font-semibold">Resposta de IA (por mil)</th>
+                  <th className="py-2.5 font-semibold">Implantação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {PLANS.map((plan) => (
+                  <tr key={plan.key} className="border-border border-b">
+                    <td className="py-3 pr-4 font-medium">{plan.name}</td>
+                    <td className="figure py-3 pr-4">
+                      {plan.contactTiers
+                        .map((tier) => formatCurrencyCents(tier.pricePerThousandCents))
+                        .join(" → ")}
+                    </td>
+                    <td className="figure py-3 pr-4">
+                      {formatCurrencyCents(plan.conversationOverageCents)}
+                    </td>
+                    <td className="figure py-3 pr-4">
+                      {formatCurrencyCents(plan.emailOveragePerThousandCents)}
+                    </td>
+                    <td className="figure py-3 pr-4">
+                      {formatCurrencyCents(plan.aiOveragePerThousandCents)}
+                    </td>
+                    <td className="figure py-3">{formatCurrencyCents(plan.setupCents)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-muted-foreground mt-3 text-xs">
+            A seta indica a progressão entre faixas — a primeira faixa vale até o teto declarado no
+            simulador, e o excedente cai na faixa seguinte.
+          </p>
+
+          {/* WhatsApp */}
+          <div className="mt-12 grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardContent className="p-5">
+                <h3 className="font-display text-base font-semibold">Repasse do WhatsApp</h3>
+                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  Valores cobrados pela Meta, referência de agosto de 2026 para o Brasil. Repassados
+                  sem margem — o desconto comercial não incide sobre eles.
+                </p>
+                <ul className="divide-border mt-4 divide-y">
+                  {WHATSAPP_PRICES.map((price) => (
+                    <li key={price.category} className="flex items-baseline justify-between gap-4 py-2.5">
+                      <span>
+                        <span className="text-sm font-medium">{price.label}</span>
+                        <span className="text-muted-foreground block text-xs leading-snug">
+                          {price.description}
+                        </span>
+                      </span>
+                      <span className="figure shrink-0 text-sm font-semibold">
+                        {price.metaCostCents === 0
+                          ? "grátis"
+                          : `${formatCurrencyCents(price.metaCostCents)} / msg`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-5">
+                <h3 className="font-display text-base font-semibold">Complementos</h3>
+                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  Contratáveis por edição. Alguns já vêm inclusos nas edições superiores.
+                </p>
+                <ul className="divide-border mt-4 divide-y">
+                  {ADDONS.map((addon) => (
+                    <li key={addon.key} className="flex items-baseline justify-between gap-4 py-2.5">
+                      <span>
+                        <span className="text-sm font-medium">{addon.name}</span>
+                        <span className="text-muted-foreground block text-xs leading-snug">
+                          {addon.description}
+                        </span>
+                      </span>
+                      <span className="figure shrink-0 text-sm font-semibold">
+                        {formatCurrencyCents(addon.priceCents)}
+                        <span className="text-muted-foreground block text-[10px] font-normal">
+                          {addon.oneTime ? "única" : "/ mês"}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Franquias comparadas */}
+          <div className="mt-12 overflow-x-auto">
+            <h3 className="font-display text-base font-semibold">O que está incluído</h3>
+            <table className="mt-4 w-full min-w-[720px] border-collapse text-sm">
+              <thead>
+                <tr className="border-border border-b text-left">
+                  <th className="py-2.5 pr-4 font-semibold">Incluído por mês</th>
+                  {PLANS.map((plan) => (
+                    <th key={plan.key} className="py-2.5 pr-4 font-semibold">
+                      {plan.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(
+                  [
+                    ["Contatos", (p: (typeof PLANS)[number]) => formatNumber(p.includedContacts)],
+                    ["Conversas", (p: (typeof PLANS)[number]) => formatNumber(p.includedConversations)],
+                    ["E-mails", (p: (typeof PLANS)[number]) => formatNumber(p.includedEmails)],
+                    ["Respostas de IA", (p: (typeof PLANS)[number]) => formatNumber(p.includedAiReplies)],
+                    [
+                      "Números de WhatsApp",
+                      (p: (typeof PLANS)[number]) => formatNumber(p.includedWhatsappNumbers),
+                    ],
+                    [
+                      "Colaboradores",
+                      (p: (typeof PLANS)[number]) =>
+                        p.maxSeats === null ? "ilimitados" : `${p.minSeats} a ${p.maxSeats}`,
+                    ],
+                  ] as const
+                ).map(([label, render]) => (
+                  <tr key={label} className="border-border border-b">
+                    <td className="text-muted-foreground py-3 pr-4">{label}</td>
+                    {PLANS.map((plan) => (
+                      <td key={plan.key} className="figure py-3 pr-4">
+                        {render(plan)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Simulador ------------------------------------------------------------ */}
+      <section id="simulador" className="mx-auto w-full max-w-6xl scroll-mt-20 px-5 py-16">
+        <Reveal index={0}>
+          <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+            Simule o seu caso
+          </h2>
+          <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+            O endereço desta página carrega o cenário: ajuste, copie o link e mande para quem decide.
+          </p>
+        </Reveal>
+
+        <div className="mt-8">
+          <PricingSimulator initial={initial} />
+        </div>
+      </section>
+
+      <section className="bg-surface-sunken py-16">
+        <div className="mx-auto w-full max-w-4xl px-5">
+          <h2 className="font-display text-2xl font-semibold tracking-tight">Dúvidas de preço</h2>
+          <div className="mt-6">
+            <Faq />
+          </div>
+          <p className="text-muted-foreground mt-8 text-sm">
+            Ficou algo de fora?{" "}
+            <Link href="/orcamento" className="text-primary font-medium underline underline-offset-4">
+              Peça um orçamento
+            </Link>{" "}
+            e escreva a pergunta no campo aberto — ela vai junto com o cenário.
+          </p>
+        </div>
+      </section>
+    </>
+  );
+}

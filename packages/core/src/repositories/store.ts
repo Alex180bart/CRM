@@ -39,12 +39,13 @@ import type { BusinessSchedule } from "../types/scheduling";
 import type { ClosingReason, CustomFieldDefinition, SkillDefinition } from "../types/catalog";
 import type { Tag } from "../types/crm";
 import type { CannedResponse } from "../types/inbox";
+import { DEFAULT_APPEARANCE, type OrganizationAppearance } from "../types/appearance";
+import type { Product, Proposal } from "../types/commerce";
+import type { QuoteRequest, SiteAccount } from "../types/site";
 import { auditLog, featureFlags, permissionMatrix, retentionPolicies } from "../mock/governance";
 import { accessPolicy, customRoles, invitations } from "../mock/access";
 import { businessSchedules } from "../mock/scheduling";
-import { closingReasons, customFields, skills } from "../mock/catalog";
-import { channelAccounts, queues, tags, teams, users } from "../mock/organization";
-import { cannedResponses } from "../mock/inbox";
+import { dataset } from "../demo/active";
 
 export interface MutableStore {
   users: User[];
@@ -64,6 +65,27 @@ export interface MutableStore {
   customRoles: CustomRole[];
   accessPolicy: AccessPolicy;
   invitations: Invitation[];
+  /** Paleta da organização e os padrões de modo e densidade. */
+  appearance: OrganizationAppearance;
+  /** Catálogo de produtos e serviços (seção 26.1). */
+  products: Product[];
+  /**
+   * Propostas.
+   *
+   * Nasce **vazio**, ao contrário das demais coleções. Semear proposta enviada
+   * inventaria um histórico comercial que nunca aconteceu — e, pior, inventaria
+   * um aceite de cliente, que é o registro que sustenta cobrança depois.
+   */
+  proposals: Proposal[];
+  /**
+   * Contas do site público e pedidos de orçamento.
+   *
+   * Nascem vazias e **não são recarregadas na troca de vertical**: quem se
+   * cadastrou não deixa de existir porque alguém abriu a demonstração de
+   * e-commerce. Ver `reseedStore`.
+   */
+  siteAccounts: SiteAccount[];
+  quoteRequests: QuoteRequest[];
   /**
    * Cursor da roleta por fila.
    *
@@ -84,6 +106,19 @@ const globalStore = globalThis as unknown as { __crmAdminStore?: Partial<Mutable
  * o "estado inicial" deixaria de existir para quem reiniciar o processo.
  */
 function seed(): MutableStore {
+  const demo = dataset();
+  const {
+    users,
+    teams,
+    queues,
+    channelAccounts,
+    tags,
+    skills,
+    closingReasons,
+    customFields,
+    cannedResponses,
+  } = demo;
+
   return {
     users: users.map((user) => ({ ...user, teamIds: [...user.teamIds] })),
     teams: [...teams],
@@ -131,6 +166,27 @@ function seed(): MutableStore {
       allowedIpRanges: [...accessPolicy.allowedIpRanges],
     },
     invitations: invitations.map((item) => ({ ...item, teamIds: [...item.teamIds] })),
+    appearance: { ...DEFAULT_APPEARANCE },
+    products: demo.products.map((product) => ({
+      ...product,
+      includes: [...product.includes],
+      checkout: { ...product.checkout },
+    })),
+    /**
+     * As propostas vêm da vertical, e não vazias como antes.
+     *
+     * A decisão anterior — nascer vazio para não inventar aceite de cliente —
+     * continua certa para dado de produção e estava errada para demonstração:
+     * sem proposta semeada não há como conferir a tela de nenhum estado sem
+     * montar o caso à mão, cinco vezes, em cada vertical. São fictícias e a
+     * interface diz isso.
+     */
+    proposals: demo.proposals.map((proposal) => ({
+      ...proposal,
+      items: proposal.items.map((item) => ({ ...item })),
+    })),
+    siteAccounts: [],
+    quoteRequests: [],
     rotations: [],
   };
 }
@@ -203,3 +259,39 @@ export const store: MutableStore = (() => {
 
   return existing as MutableStore;
 })();
+
+/**
+ * Recarrega o armazém a partir da vertical ativa.
+ *
+ * Muta o objeto **no lugar**, e isso não é preferência de estilo: `store` é um
+ * `const` exportado, e dezenas de módulos já guardaram essa referência. Trocá-la
+ * por um objeto novo deixaria metade da aplicação lendo o armazém antigo — o
+ * Inbox mostrando e-commerce e a Administração mostrando contabilidade, sem
+ * erro nenhum no console.
+ *
+ * O que sobrevive à troca: nada. É recarga de base de demonstração, e manter a
+ * fila que alguém criou na vertical anterior produziria a mistura que a mescla
+ * de `registry.ts` existe para impedir. O que é editado depois da troca vale
+ * até a próxima.
+ */
+/**
+ * O que **não** é recarregado, e por quê.
+ *
+ * Conta do site e pedido de orçamento não pertencem à base de demonstração: são
+ * gente de fora que se cadastrou. Zerá-los ao abrir a demonstração de
+ * e-commerce faria o interessado perder o acesso no meio da própria avaliação —
+ * e o defeito apareceria como "criei conta e o login não funciona".
+ */
+const PRESERVED_ON_RESEED = ["siteAccounts", "quoteRequests"] as const satisfies ReadonlyArray<
+  keyof MutableStore
+>;
+
+export function reseedStore(): void {
+  const fresh = seed();
+  const preserved = new Set<string>(PRESERVED_ON_RESEED);
+
+  for (const key of Object.keys(fresh) as Array<keyof MutableStore>) {
+    if (preserved.has(key)) continue;
+    (store as unknown as Record<string, unknown>)[key] = fresh[key];
+  }
+}

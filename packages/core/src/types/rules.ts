@@ -25,7 +25,9 @@ export type RuleTriggerKind =
   | "sem_resposta"
   | "tag_adicionada"
   | "etapa_alterada"
-  | "contato_criado";
+  | "contato_criado"
+  | "proposta_aceita"
+  | "compra_aprovada";
 
 export const RULE_TRIGGER_LABEL: Record<RuleTriggerKind, string> = {
   email_aberto: "Abriu um e-mail",
@@ -38,6 +40,8 @@ export const RULE_TRIGGER_LABEL: Record<RuleTriggerKind, string> = {
   tag_adicionada: "Ganhou uma tag",
   etapa_alterada: "Mudou de etapa no funil",
   contato_criado: "Foi criado no CRM",
+  proposta_aceita: "Aceitou uma proposta",
+  compra_aprovada: "Teve a compra aprovada",
 };
 
 /** Evento de domínio que o motor escuta para cada gatilho (seção 8). */
@@ -52,6 +56,9 @@ export const RULE_TRIGGER_EVENT: Record<RuleTriggerKind, string> = {
   tag_adicionada: "contact.tagged",
   etapa_alterada: "deal.stage_changed",
   contato_criado: "contact.created",
+  proposta_aceita: "proposal.accepted",
+  /** A seção 15 nomeia este gatilho como "compra aprovada". */
+  compra_aprovada: "proposal.paid",
 };
 
 export interface RuleTrigger {

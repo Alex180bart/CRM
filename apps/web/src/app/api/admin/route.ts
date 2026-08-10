@@ -22,8 +22,11 @@ import type {
   AdminActor,
   AdminWriteResult,
   ChannelKind,
+  CheckoutMode,
   CustomFieldEntity,
   CustomFieldType,
+  ProductCheckout,
+  ProductRecurrence,
   DistributionModel,
   DistributionTiebreak,
   PermissionLevel,
@@ -127,6 +130,25 @@ function strings(value: unknown, max = 30, length = 120): string[] | undefined {
     .map((item) => item.trim().slice(0, length))
     .filter(Boolean)
     .slice(0, max);
+}
+
+/**
+ * Forma de pagamento do produto.
+ *
+ * O endereço chega como texto e é recortado, mas **não é validado aqui**: quem
+ * confere protocolo e formato é `validateCheckoutBaseUrl`, no repositório, com a
+ * mesma função que monta o link no envio. Uma segunda validação nesta camada
+ * seria a cópia que envelhece — e é justamente a checagem que impede um
+ * `javascript:` de virar o `href` de um botão que o cliente clica.
+ */
+function checkout(value: unknown): ProductCheckout {
+  const raw = (value ?? {}) as Record<string, unknown>;
+  const mode: CheckoutMode = raw.mode === "integrado" ? "integrado" : "link";
+  return {
+    mode,
+    baseUrl: mode === "link" ? text(raw.baseUrl, 500) : undefined,
+    providerKey: mode === "integrado" ? text(raw.providerKey, 40) || undefined : undefined,
+  };
 }
 
 /** Mapa recurso → nível, para o `overrides` do perfil customizado. */
@@ -529,6 +551,68 @@ export async function POST(request: NextRequest): Promise<Response> {
 
       case "convite.excluir":
         return respond(await admin.revokeInvitation(actor, id));
+
+      /* Catálogo comercial -------------------------------------------------- */
+
+      case "produto.criar":
+        return respond(
+          await admin.createProduct(actor, {
+            key: text(data.key, 40),
+            name: text(data.name, 120),
+            kind: data.kind === "produto" ? "produto" : "servico",
+            summary: text(data.summary, 200),
+            description: text(data.description, 4_000),
+            priceCents: Math.max(0, integer(data.priceCents) ?? 0),
+            recurrence: text(data.recurrence, 16) as ProductRecurrence,
+            maxDiscountPct: Math.max(0, Math.min(100, integer(data.maxDiscountPct) ?? 0)),
+            includes: strings(data.includes, 12, 120) ?? [],
+            salesNotes: text(data.salesNotes, 2_000),
+            checkout: checkout(data.checkout),
+            active: data.active !== false,
+          }),
+        );
+
+      case "produto.editar": {
+        const patch: Record<string, unknown> = {};
+        if (data.name !== undefined) patch.name = text(data.name, 120);
+        if (data.kind !== undefined) patch.kind = data.kind === "produto" ? "produto" : "servico";
+        if (data.summary !== undefined) patch.summary = text(data.summary, 200);
+        if (data.description !== undefined) patch.description = text(data.description, 4_000);
+        if (data.priceCents !== undefined) patch.priceCents = Math.max(0, integer(data.priceCents) ?? 0);
+        if (data.recurrence !== undefined) patch.recurrence = text(data.recurrence, 16);
+        if (data.maxDiscountPct !== undefined) {
+          patch.maxDiscountPct = Math.max(0, Math.min(100, integer(data.maxDiscountPct) ?? 0));
+        }
+        if (data.includes !== undefined) patch.includes = strings(data.includes, 12, 120) ?? [];
+        if (data.salesNotes !== undefined) patch.salesNotes = text(data.salesNotes, 2_000);
+        if (data.checkout !== undefined) patch.checkout = checkout(data.checkout);
+        if (data.active !== undefined) patch.active = data.active === true;
+        return respond(await admin.updateProduct(actor, id, patch));
+      }
+
+      case "produto.excluir":
+        return respond(await admin.deleteProduct(actor, id));
+
+      /* Aparência ---------------------------------------------------------- */
+
+      /**
+       * A rota não confere se a paleta existe — só recorta a string. Quem
+       * recusa valor desconhecido é o repositório, e é lá que a checagem tem de
+       * viver: uma segunda validação aqui seria a cópia clássica que envelhece
+       * sozinha na próxima paleta adicionada.
+       */
+      case "aparencia.editar": {
+        const patch: Record<string, unknown> = {};
+        if (data.palette !== undefined) patch.palette = text(data.palette, 24);
+        if (data.defaultMode !== undefined) patch.defaultMode = text(data.defaultMode, 12);
+        if (data.defaultDensity !== undefined) {
+          patch.defaultDensity = text(data.defaultDensity, 12);
+        }
+        if (data.allowPersonalOverride !== undefined) {
+          patch.allowPersonalOverride = data.allowPersonalOverride === true;
+        }
+        return respond(await admin.updateAppearance(actor, patch));
+      }
 
       default:
         return fail(`Operação desconhecida: ${entity}.${action}`);

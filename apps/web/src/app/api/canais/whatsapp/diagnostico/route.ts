@@ -16,6 +16,7 @@
  * metade, alcançabilidade pela internet, só a Meta prova, e a tela diz isso.
  */
 
+import { DEFAULT_APP_HOST } from "@elora/core";
 import type { WhatsappDiagnostics } from "@elora/core";
 import type { NextRequest } from "next/server";
 
@@ -25,7 +26,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function hostOf(request: NextRequest): string {
-  return request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "localhost:3100";
+  return request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? DEFAULT_APP_HOST;
 }
 
 export function GET(request: NextRequest): Response {

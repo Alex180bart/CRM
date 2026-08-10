@@ -27,6 +27,8 @@ export default async function AdministracaoPage() {
     customRoles,
     accessPolicy,
     invitations,
+    appearance,
+    products,
   ] = await Promise.all([
     repositories.directory.getOrganization(),
     repositories.directory.listUsers(),
@@ -46,6 +48,8 @@ export default async function AdministracaoPage() {
     repositories.directory.listCustomRoles(),
     repositories.directory.getAccessPolicy(),
     repositories.directory.listInvitations(),
+    repositories.directory.getAppearance(),
+    repositories.commerce.listProducts(),
   ]);
 
   return (
@@ -75,6 +79,8 @@ export default async function AdministracaoPage() {
         customRoles={customRoles}
         accessPolicy={accessPolicy}
         invitations={invitations}
+        appearance={appearance}
+        products={products}
       />
     </div>
   );

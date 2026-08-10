@@ -13,6 +13,8 @@ import type {
   FeatureFlag,
   Invitation,
   Organization,
+  OrganizationAppearance,
+  Product,
   PermissionLevel,
   PermissionRow,
   Queue,
@@ -68,6 +70,8 @@ import {
   Building2,
   CalendarClock,
   Library,
+  Palette,
+  PackageSearch,
   UserCog,
   Plus,
   Database,
@@ -97,6 +101,8 @@ import { ConnectDialog, NewChannelDialog } from "./channel-connect";
 import { SchedulesTab } from "./admin-schedules";
 import { CatalogTab } from "./admin-catalog";
 import { AccessTab } from "./admin-access";
+import { AppearanceTab } from "./admin-appearance";
+import { ProductsTab } from "./admin-products";
 
 import { ChannelIcon } from "@/lib/channel";
 
@@ -143,12 +149,14 @@ export interface AdminData {
   customRoles: CustomRole[];
   accessPolicy: AccessPolicy;
   invitations: Invitation[];
+  appearance: OrganizationAppearance;
+  products: Product[];
 }
 
 export function AdminConsole(data: AdminData) {
   const [auditSearch, setAuditSearch] = useState("");
   const router = useRouter();
-  const { mutate } = useAdminMutation();
+  const { mutate, busy } = useAdminMutation();
 
   /**
    * Um estado por diálogo, guardando o registro em edição.
@@ -296,6 +304,14 @@ export function AdminConsole(data: AdminData) {
             <TabsTrigger value="politicas">
               <ShieldCheck className="size-3" />
               Políticas
+            </TabsTrigger>
+            <TabsTrigger value="produtos">
+              <PackageSearch className="size-3" />
+              Produtos
+            </TabsTrigger>
+            <TabsTrigger value="aparencia">
+              <Palette className="size-3" />
+              Aparência
             </TabsTrigger>
           </TabsList>
 
@@ -562,6 +578,14 @@ export function AdminConsole(data: AdminData) {
           </TabsContent>
 
           {/* Perfis e acesso ---------------------------------------------- */}
+          <TabsContent value="produtos" className="m-0">
+            <ProductsTab products={data.products} onSubmit={mutate} busy={busy} />
+          </TabsContent>
+
+          <TabsContent value="aparencia" className="m-0">
+            <AppearanceTab appearance={data.appearance} onSubmit={mutate} busy={busy} />
+          </TabsContent>
+
           <TabsContent value="acesso" className="m-0">
             <AccessTab
               customRoles={data.customRoles}

@@ -63,6 +63,11 @@ export type DomainEventName =
   | "lead.qualified"
   | "deal.won"
   | "deal.lost"
+  // Comercio (secao 26.1)
+  | "proposal.sent"
+  | "proposal.accepted"
+  | "proposal.rejected"
+  | "proposal.paid"
   // Configuração
   | "channel.connected"
   | "queue.created"
@@ -83,6 +88,10 @@ export const DOMAIN_EVENT_LABEL: Record<DomainEventName, string> = {
   "lead.qualified": "Lead qualificado",
   "deal.won": "Negócio ganho",
   "deal.lost": "Negócio perdido",
+  "proposal.sent": "Proposta enviada",
+  "proposal.accepted": "Proposta aceita pelo cliente",
+  "proposal.rejected": "Proposta recusada pelo cliente",
+  "proposal.paid": "Compra aprovada",
   "channel.connected": "Canal conectado",
   "queue.created": "Fila criada",
   "user.invited": "Pessoa convidada",
@@ -204,6 +213,15 @@ export const EVENT_SUBSCRIPTIONS: Record<DomainEventName, OutboxDestination[]> =
   "agent.handed_off": ["inbox", "analytics"],
   "agent.action.pending": ["inbox"],
   "contact.created": ["automacoes", "analytics"],
+  /**
+   * Proposta enviada não vai para `automacoes`: nada deve disparar por ela.
+   * O fato comercial que interessa a jornada é o aceite e o pagamento — reagir
+   * ao envio produziria régua de cobrança para quem ainda nem leu a proposta.
+   */
+  "proposal.sent": ["inbox", "analytics"],
+  "proposal.accepted": ["inbox", "automacoes", "analytics"],
+  "proposal.rejected": ["inbox", "automacoes", "analytics"],
+  "proposal.paid": ["inbox", "automacoes", "analytics"],
   "lead.qualified": ["automacoes", "analytics"],
   "deal.won": ["automacoes", "analytics", "webhook_externo"],
   "deal.lost": ["automacoes", "analytics"],

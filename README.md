@@ -5,16 +5,16 @@
 Plataforma omnichannel da **Contabilidade Facilitada**: atendimento, CRM 360º, automação visual e
 inteligência artificial em um só lugar — o que o mercado vende como quatro produtos separados.
 
-| Categoria | Módulos da Elora | O que o mercado cobra em separado |
-| --- | --- | --- |
-| Atendimento omnichannel | Inbox, Webchat, WhatsApp, filas e distribuição | Zendesk, Octadesk, Movidesk, Digisac |
-| CRM de relacionamento | Contatos, Contato 360º, Pipeline | Pipedrive, Ploomes, Agendor, Moskit |
-| Automação de marketing | Campanhas, Jornadas, E-mail Studio, Automações | RD Station, HubSpot, Marketing Cloud |
-| IA aplicada | Agentes, Chatbot Builder, copiloto do atendente | Take Blip, Weni, Intercom Fin |
+| Categoria               | Módulos da Elora                                | O que o mercado cobra em separado    |
+| ----------------------- | ----------------------------------------------- | ------------------------------------ |
+| Atendimento omnichannel | Inbox, Webchat, WhatsApp, filas e distribuição  | Zendesk, Octadesk, Movidesk, Digisac |
+| CRM de relacionamento   | Contatos, Contato 360º, Pipeline                | Pipedrive, Ploomes, Agendor, Moskit  |
+| Automação de marketing  | Campanhas, Jornadas, E-mail Studio, Automações  | RD Station, HubSpot, Marketing Cloud |
+| IA aplicada             | Agentes, Chatbot Builder, copiloto do atendente | Take Blip, Weni, Intercom Fin        |
 
-**Sobre o nome.** *Elora* junta **elo** — o vínculo com o cliente, que é a definição de CRM — e
+**Sobre o nome.** _Elora_ junta **elo** — o vínculo com o cliente, que é a definição de CRM — e
 **ágora**, a praça grega onde comércio, deliberação e conversa aconteciam no mesmo lugar. A
-terminação `-ora` fecha em *agora*, que é a promessa de qualquer plataforma de atendimento em tempo
+terminação `-ora` fecha em _agora_, que é a promessa de qualquer plataforma de atendimento em tempo
 real. Três camadas em três sílabas, e nenhuma precisa ser explicada ao usuário.
 
 A fonte da verdade do produto continua sendo `docs/referencia/plano-completo-crm-v2.txt` (35 seções).
@@ -25,11 +25,11 @@ A fonte da verdade do produto continua sendo `docs/referencia/plano-completo-crm
 
 A regra deste repositório é não fingir que algo funciona. O que existe se divide em três camadas:
 
-| Camada | Situação |
-| --- | --- |
-| **Funciona de ponta a ponta** | Webchat (widget embutido em site de cliente → Inbox → resposta do atendente), copiloto do atendente, redação de e-mail por IA, agente de atendimento com ferramentas e avaliação, escrita real na Administração, barramento de eventos com outbox |
-| **Fronteira pronta, sem persistência** | Webhook do WhatsApp — verificação e assinatura HMAC validadas de verdade; a mensagem ainda não vira conversa |
-| **Front-end sobre base de demonstração** | Todo o resto: Inbox, Contatos, Pipeline, Campanhas, Jornadas, E-mail Studio, Analytics |
+| Camada                                   | Situação                                                                                                                                                                                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Funciona de ponta a ponta**            | Webchat (widget embutido em site de cliente → Inbox → resposta do atendente), copiloto do atendente, redação de e-mail por IA, agente de atendimento com ferramentas e avaliação, escrita real na Administração, barramento de eventos com outbox |
+| **Fronteira pronta, sem persistência**   | Webhook do WhatsApp — verificação e assinatura HMAC validadas de verdade; a mensagem ainda não vira conversa                                                                                                                                      |
+| **Front-end sobre base de demonstração** | Todo o resto: Inbox, Contatos, Pipeline, Campanhas, Jornadas, E-mail Studio, Analytics                                                                                                                                                            |
 
 **Não há back-end, Supabase nem autenticação real.** A camada de escrita de conversas, contatos e
 negócios ainda vive em estado de componente. Isso é o próximo grande bloco de trabalho, não um
@@ -43,25 +43,25 @@ estado "desligado" em vez de quebrar.
 
 ## Módulos
 
-| Tela | Rota | O que faz |
-| --- | --- | --- |
-| **Início** | `/inicio` | Fila "precisa de você agora" reunindo SLA em risco, tarefas vencidas, aprovações paradas, execuções com erro e canais degradados; pulso do dia por hora; origem das conversas |
-| **Inbox** | `/inbox` | Filas, filtros, busca, SLA com prazo vivo, conversa sobre plano texturizado, anexos (arrastar, colar, galeria com lightbox, áudio com transcrição), emojis em português, notas internas, respostas rápidas, transferência, janela de 24 h do WhatsApp, **copiloto de IA** e **painel de tabulação** |
-| **Contatos** | `/contatos` | Tabela com busca, filtros por estágio, proprietário e tag, detecção de duplicidade, ações em massa |
-| **Contato 360º** | `/contatos/[id]` | Visão geral, linha do tempo filtrável, conversas, negócios, identificadores e consentimentos com base legal |
-| **Pipeline** | `/pipeline` | Kanban com arrastar e soltar, dois funis, valor ponderado, negócios parados |
-| **Campanhas** | `/campanhas` | Lista com progresso de envio, construtor de segmentos com motivos de exclusão, biblioteca de templates |
-| **Campanha** | `/campanhas/[id]` | Funil do envio, lotes, teste A/B, proteções (consentimento, supressão, quiet hours, frequência), fluxo de aprovação |
-| **Automações** | `/automacoes` | Regras "aconteceu isto → faça aquilo", com gatilho declarando o evento de domínio que escuta |
-| **Chatbot Builder** | `/chatbots/[id]` | Editor de blocos, catálogo, inspetor, validação de publicação, versionamento imutável e simulador |
-| **Journey Builder** | `/jornadas/[id]` | Editor de jornada, política de reentrada, janela de envio, participantes com nó atual, publicação versionada |
-| **E-mail Studio** | `/email-studio` | Templates com métricas, módulos de marca travados, brand kits, entregabilidade (SPF/DKIM/DMARC, aquecimento, supressão) |
-| **Editor de e-mail** | `/email-studio/[id]` | Montagem por blocos com prévia real, merge tags, checagem antes do envio, **redação por IA** |
-| **Agentes de IA** | `/agentes/[id]` | Instrução, base de conhecimento, ferramentas com allowlist, roteamento, simulador e **conjunto de avaliação executável** |
-| **Webchat** | `/webchat/[id]` | Widget configurável com prévia fiel, domínios autorizados, formulário pré-conversa, contraste calculado e publicação versionada |
-| **Analytics** | `/analytics` | Atendimento, comercial, campanhas e automação por período, mais o dicionário de métricas com definição, fonte e dono |
-| **Administração** | `/administracao` | Pessoas, times, filas com SLA e distribuição, canais, escalas, catálogos, perfis, política de acesso e auditoria — **com escrita real** |
-| **Setup do WhatsApp** | `/administracao/whatsapp` | As seis etapas separadas por dono, endereço do webhook, variáveis presentes (nunca o valor) e os últimos eventos recebidos |
+| Tela                  | Rota                      | O que faz                                                                                                                                                                                                                                                                                           |
+| --------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Início**            | `/inicio`                 | Fila "precisa de você agora" reunindo SLA em risco, tarefas vencidas, aprovações paradas, execuções com erro e canais degradados; pulso do dia por hora; origem das conversas                                                                                                                       |
+| **Inbox**             | `/inbox`                  | Filas, filtros, busca, SLA com prazo vivo, conversa sobre plano texturizado, anexos (arrastar, colar, galeria com lightbox, áudio com transcrição), emojis em português, notas internas, respostas rápidas, transferência, janela de 24 h do WhatsApp, **copiloto de IA** e **painel de tabulação** |
+| **Contatos**          | `/contatos`               | Tabela com busca, filtros por estágio, proprietário e tag, detecção de duplicidade, ações em massa                                                                                                                                                                                                  |
+| **Contato 360º**      | `/contatos/[id]`          | Visão geral, linha do tempo filtrável, conversas, negócios, identificadores e consentimentos com base legal                                                                                                                                                                                         |
+| **Pipeline**          | `/pipeline`               | Kanban com arrastar e soltar, dois funis, valor ponderado, negócios parados                                                                                                                                                                                                                         |
+| **Campanhas**         | `/campanhas`              | Lista com progresso de envio, construtor de segmentos com motivos de exclusão, biblioteca de templates                                                                                                                                                                                              |
+| **Campanha**          | `/campanhas/[id]`         | Funil do envio, lotes, teste A/B, proteções (consentimento, supressão, quiet hours, frequência), fluxo de aprovação                                                                                                                                                                                 |
+| **Automações**        | `/automacoes`             | Regras "aconteceu isto → faça aquilo", com gatilho declarando o evento de domínio que escuta                                                                                                                                                                                                        |
+| **Chatbot Builder**   | `/chatbots/[id]`          | Editor de blocos, catálogo, inspetor, validação de publicação, versionamento imutável e simulador                                                                                                                                                                                                   |
+| **Journey Builder**   | `/jornadas/[id]`          | Editor de jornada, política de reentrada, janela de envio, participantes com nó atual, publicação versionada                                                                                                                                                                                        |
+| **E-mail Studio**     | `/email-studio`           | Templates com métricas, módulos de marca travados, brand kits, entregabilidade (SPF/DKIM/DMARC, aquecimento, supressão)                                                                                                                                                                             |
+| **Editor de e-mail**  | `/email-studio/[id]`      | Montagem por blocos com prévia real, merge tags, checagem antes do envio, **redação por IA**                                                                                                                                                                                                        |
+| **Agentes de IA**     | `/agentes/[id]`           | Instrução, base de conhecimento, ferramentas com allowlist, roteamento, simulador e **conjunto de avaliação executável**                                                                                                                                                                            |
+| **Webchat**           | `/webchat/[id]`           | Widget configurável com prévia fiel, domínios autorizados, formulário pré-conversa, contraste calculado e publicação versionada                                                                                                                                                                     |
+| **Analytics**         | `/analytics`              | Atendimento, comercial, campanhas e automação por período, mais o dicionário de métricas com definição, fonte e dono                                                                                                                                                                                |
+| **Administração**     | `/administracao`          | Pessoas, times, filas com SLA e distribuição, canais, escalas, catálogos, perfis, política de acesso, **aparência** e auditoria — **com escrita real**                                                                                                                                              |
+| **Setup do WhatsApp** | `/administracao/whatsapp` | As seis etapas separadas por dono, endereço do webhook, variáveis presentes (nunca o valor) e os últimos eventos recebidos                                                                                                                                                                          |
 
 ---
 
@@ -90,13 +90,13 @@ Três coisas que só existem aqui:
 Tudo passa pelo **AI Gateway**. A tela chama `repositories.ai`, que chama a rota, que é o único lugar
 com a credencial, a escolha de modelo, a política, a validação por schema e a medição de custo.
 
-| Recurso | Onde | O que faz |
-| --- | --- | --- |
-| **Copiloto do atendente** | Inbox | Analisa a conversa (resumo, intenção, sentimento, urgência, próximo passo, checklist, resposta sugerida), responde pergunta livre em fluxo, sugere e melhora rascunho, ajusta tom em sete direções |
-| **Tabulação assistida** | Inbox | O copiloto **propõe**, a aplicação **valida** contra o cadastro, a pessoa **grava**. Lacuna e divergência nunca compartilham botão |
-| **Redação de e-mail** | E-mail Studio | Recebe briefing e devolve assunto, preheader, corpo e chamada validados contra schema |
-| **Agente de atendimento** | Agentes | Laço completo: recebe, decide, usa ferramenta, responde, transfere. Leitura executa; **escrita nunca** — vira ação pendente que espera clique de gente |
-| **Avaliação** | `/api/ai/agent/avaliar` | Executa os casos e pontua por dimensão com verificações determinísticas, atreladas à `promptVersion` |
+| Recurso                   | Onde                    | O que faz                                                                                                                                                                                          |
+| ------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Copiloto do atendente** | Inbox                   | Analisa a conversa (resumo, intenção, sentimento, urgência, próximo passo, checklist, resposta sugerida), responde pergunta livre em fluxo, sugere e melhora rascunho, ajusta tom em sete direções |
+| **Tabulação assistida**   | Inbox                   | O copiloto **propõe**, a aplicação **valida** contra o cadastro, a pessoa **grava**. Lacuna e divergência nunca compartilham botão                                                                 |
+| **Redação de e-mail**     | E-mail Studio           | Recebe briefing e devolve assunto, preheader, corpo e chamada validados contra schema                                                                                                              |
+| **Agente de atendimento** | Agentes                 | Laço completo: recebe, decide, usa ferramenta, responde, transfere. Leitura executa; **escrita nunca** — vira ação pendente que espera clique de gente                                             |
+| **Avaliação**             | `/api/ai/agent/avaliar` | Executa os casos e pontua por dimensão com verificações determinísticas, atreladas à `promptVersion`                                                                                               |
 
 **Três guardas moram na aplicação, não no prompt**: o piso de confiança vira transferência, a fila
 escolhida é validada contra o catálogo (fila inventada cai na padrão) e o teto de custo é por
@@ -105,10 +105,10 @@ funciona sempre.
 
 #### Reserva de provedor
 
-| Ordem | Provedor | Modelo | Papel |
-| --- | --- | --- | --- |
-| 1º | Google | `gemini-2.5-flash` | atende sempre; é a qualidade do dia a dia |
-| 2º | OpenAI | `gpt-4.1-mini` | entra só quando o primário não pode atender |
+| Ordem | Provedor | Modelo             | Papel                                       |
+| ----- | -------- | ------------------ | ------------------------------------------- |
+| 1º    | Google   | `gemini-2.5-flash` | atende sempre; é a qualidade do dia a dia   |
+| 2º    | OpenAI   | `gpt-4.1-mini`     | entra só quando o primário não pode atender |
 
 **A troca é por disponibilidade, nunca por qualidade.** Só `indisponivel`, `limite_excedido` e
 `sem_credencial` acionam a reserva. Recusa de conteúdo seria a mesma dos dois lados, e falha de schema
@@ -157,10 +157,10 @@ o número da empresa na mão do cliente.
 
 ### Anexos
 
-| Origem | Situação |
-| --- | --- |
-| **Link** | Funciona. `/api/media/preview` resolve tipo, tamanho, título e capa no servidor, inclusive vídeo do YouTube por oEmbed |
-| **Arquivo** | Não sai do navegador. Vive num `File` em memória com object URL; o caminho real de mídia é trabalho de back-end |
+| Origem      | Situação                                                                                                               |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Link**    | Funciona. `/api/media/preview` resolve tipo, tamanho, título e capa no servidor, inclusive vídeo do YouTube por oEmbed |
+| **Arquivo** | Não sai do navegador. Vive num `File` em memória com object URL; o caminho real de mídia é trabalho de back-end        |
 
 > **Toda busca de URL informada pelo cliente passa por `lib/net/safe-fetch.ts`**: só http e https, só
 > portas 80 e 443, resolução de DNS com todos os endereços conferidos, faixas privadas, loopback,
@@ -178,8 +178,11 @@ cp .env.example .env      # preencha GEMINI_API_KEY para ligar a camada de IA
 pnpm dev
 ```
 
-A aplicação sobe em <http://localhost:3100>. A rota `/` redireciona para `/inicio`; `/login` mostra a
-tela de entrada com seleção de perfil de demonstração.
+A aplicação sobe em <http://localhost:3200>. A rota `/` é a **landing page**; o produto começa em
+`/inicio`. Duas entradas convivem e não são a mesma coisa: `/entrar` é a área do cliente do site
+público (conta com senha, orçamentos salvos e, para a equipe comercial, as bases de demonstração em
+`/admin`); `/login` continua sendo a tela de entrada do protótipo do produto, com seleção de perfil e
+sem validação de credencial.
 
 O `.env` fica na **raiz** do repositório, não em `apps/web`: é um valor por repositório, e
 `apps/web/next.config.mjs` carrega a raiz para o segredo não existir em dois lugares. Nenhuma variável
@@ -298,22 +301,55 @@ vêm das campanhas, erros vêm das jornadas. Nada aparece ali sem um evento por 
 
 ## Identidade visual — Arena Elora
 
-| Papel | Cor | HSL |
-| --- | --- | --- |
-| Azul principal | `#102850` | `218 67% 19%` |
-| Azul secundário | `#212D51` | `225 42% 22%` |
-| Branco | `#FFFFFF` | superfícies |
-| Laranja (acento) | `#FF9933` | `30 100% 60%` |
+| Papel             | Cor       | HSL           |
+| ----------------- | --------- | ------------- |
+| Índigo principal  | `#1E1B4B` | `244 47% 20%` |
+| Índigo secundário | `#312E81` | `242 48% 34%` |
+| Branco            | `#FFFFFF` | superfícies   |
+| Âmbar (acento)    | `#DC8F09` | `38 92% 45%`  |
+
+**O símbolo é um anel que não fecha, e a abertura é preenchida pelas três hastes do E** — "elo" e
+"Elora" na mesma forma. Vive em `components/shell/logo.tsx`, desenhado em SVG: herda cor de token,
+funciona nos dois temas sem segundo arquivo e acompanha a troca de paleta de graça. Não há PNG de
+marca no repositório.
 
 Três regras de composição sustentam a interface:
 
 1. **A borda é exceção — e exceção precisa ser vista.** Superfícies se separam por cor e sombra;
    hairline só onde duas regiões roláveis se encontram. O traço tem piso de contraste: `--border` em
-   1,86:1, `--border-strong` em 2,68:1, `--input` em **3,41:1** e `--focus-ring` em 3,43:1. O foco não
-   usa `--accent`: a laranja rende 2,13:1 contra branco e não serve para traço fino.
-2. **Um acento por tela.** O laranja marca o que precisa de ação — não decora.
+   1,86:1, `--border-strong` em 2,68:1, `--input` em **3,41:1** e `--focus-ring` em 3,73:1. O foco não
+   usa `--accent`: o âmbar rende 2,63:1 contra branco e não serve para traço fino.
+2. **Um acento por tela.** O âmbar marca o que precisa de ação — não decora.
 3. **A tipografia carrega a hierarquia.** Sora nos números e títulos, Inter na interface, ambas
    auto-hospedadas via `@fontsource`.
+
+### Aparência configurável
+
+A Administração tem uma aba **Aparência** com duas metades que gravam em lugares diferentes, porque
+respondem a perguntas de donos diferentes.
+
+| Decisão                     | Dono        | Onde grava                                   |
+| --------------------------- | ----------- | -------------------------------------------- |
+| Paleta da instalação        | Organização | `AdminRepository`, com validação e auditoria |
+| Padrões de modo e densidade | Organização | idem                                         |
+| Permitir escolha individual | Organização | idem                                         |
+| Modo e densidade de cada um | Pessoa      | `localStorage` do navegador                  |
+
+São **quatro paletas** — Índigo (padrão), Petróleo, Grafite e Arena clássica, esta última preservando
+o azul e a laranja originais. A troca redefine só os tokens de marca: semântica (`--success`,
+`--warning`, `--destructive`) e as seis séries de gráfico ficam de fora, porque as primeiras
+significam a mesma coisa em qualquer tema e as segundas foram validadas para daltonismo. Cada paleta
+carrega o seu `--focus-ring` acima de 3:1.
+
+**A paleta é servida, a preferência é do navegador.** `data-palette` sai do servidor já no HTML;
+resolvê-la no cliente pintaria a página com a paleta padrão para repintá-la no primeiro quadro — o
+flash mais caro possível, porque atinge todos os tokens de uma vez. Modo e densidade dependem de
+`localStorage` e de `prefers-color-scheme`, e por isso continuam no único script inline da aplicação.
+
+**Densidade escala a raiz tipográfica** (15 / 16 / 17 px), e não uma lista de utilitários: o Tailwind
+mede espaçamento em `rem`, então padding, gap, altura de linha e texto se movem juntos e na mesma
+proporção. Compacto encolhe cada medida em 6,25% — numa lista de conversas, isso devolve uma linha
+inteira por tela.
 
 **O Inbox tem plano próprio.** Não usa `surface-sunken`: usa `--chat-canvas`, um bege azulado
 texturizado. O desenho entra como **máscara** — o SVG carrega só a forma, a tinta sai de
@@ -329,6 +365,24 @@ envolvida por `<RevealScope>`, que marca a entrada como concluída após 1,2 s. 
 reexecutava a orquestração inteira — 910 ms de espera para conteúdo que já estava em memória.
 `prefers-reduced-motion` anula tudo no CSS.
 
+**Todo efeito é `transform` ou `opacity`.** Não é preferência estética: o gargalo deste front é
+recálculo de estilo e layout, não JavaScript (números abaixo), e animar `width`, `top`, `box-shadow`
+ou `filter` acrescenta trabalho exatamente onde já dói.
+
+| Efeito            | O que faz                                   | Como evita layout                                                         |
+| ----------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
+| `.sheen`          | brilho atravessa cartão no hover            | pseudo-elemento que desliza, não posição de fundo                         |
+| `.brand-sheen`    | varredura lenta da marca, a cada 12 s       | idem — e devagar, porque fica visível o tempo todo ao lado da navegação   |
+| `.underline-grow` | sublinhado da aba ativa cresce do centro    | `scaleX`, em vez de medir o gatilho e reposicionar um indicador           |
+| `.stagger`        | entrada de linha de lista, 28 ms por índice | o mesmo par `opacity`/`translateY` de `.reveal`, em cadência de lista     |
+| `.glow-pulse`     | halo que respira no que está vivo           | acende uma camada já no tamanho final, em vez de crescer sombra           |
+| `.lift-3d`        | cartão se aproxima no hover                 | `perspective` dentro da própria `transform`, sem criar contexto 3D no pai |
+
+**Laço tem de parar em repouso.** O bloco de `prefers-reduced-motion` leva toda animação ao último
+quadro, então o último quadro de cada laço é o estado parado — halo apagado, brilho fora da peça,
+cubo fechado. Efeito de `hover` não tem esse recurso, e por isso `.sheen` e `.brand-sheen` são
+desligados por completo ali.
+
 ---
 
 ## Desempenho
@@ -336,12 +390,12 @@ reexecutava a orquestração inteira — 910 ms de espera para conteúdo que já
 Medido em build de produção com **Event Timing** (`processingEnd - processingStart`, isto é, o
 trabalho de script — sem a latência de quadro do navegador de teste):
 
-| Interação | Antes | Depois |
-| --- | --- | --- |
+| Interação                   | Antes   | Depois  |
+| --------------------------- | ------- | ------- |
 | Trocar de conversa, mediana | 64,1 ms | 15,9 ms |
-| Trocar de conversa, pior | 76,3 ms | 24,2 ms |
-| Digitar uma tecla, mediana | 4,0 ms | 2,1 ms |
-| Digitar uma tecla, pior | 16,8 ms | 3,5 ms |
+| Trocar de conversa, pior    | 76,3 ms | 24,2 ms |
+| Digitar uma tecla, mediana  | 4,0 ms  | 2,1 ms  |
+| Digitar uma tecla, pior     | 16,8 ms | 3,5 ms  |
 
 **O gargalo deste front não é JavaScript.** Em sete trocas de conversa havia ~300 ms de script contra
 ~800 ms de recálculo de estilo e layout. Antes de memorizar qualquer coisa, tire um perfil e olhe

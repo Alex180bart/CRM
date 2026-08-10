@@ -7,7 +7,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "allowJs": true,
     "incremental": true
@@ -15,11 +17,16 @@
   "include": [
     "*.mjs",
     "*.ts",
+    ".next-build/types/**/*.ts",
     ".next-inbox/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    ".next-verify/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next-inbox"]
+  "exclude": [
+    "node_modules",
+    ".next-inbox"
+  ]
 }

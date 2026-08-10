@@ -1,8 +1,8 @@
 # Elora — instruções do repositório
 
 **Elora** é a plataforma omnichannel da Contabilidade Facilitada: atendimento, CRM 360º, automação e
-inteligência artificial em uma plataforma só. O nome junta *elo* (o vínculo com o cliente) e *ágora*
-(a praça onde tudo acontece no mesmo lugar), e fecha em *agora*.
+inteligência artificial em uma plataforma só. O nome junta _elo_ (o vínculo com o cliente) e _ágora_
+(a praça onde tudo acontece no mesmo lugar), e fecha em _agora_.
 
 **Elora é o produto; Contabilidade Facilitada é a empresa.** A distinção decide renomeações: onde o
 texto é o escritório falando com o cliente dele — cabeçalho do widget, rodapé de e-mail, papel do
@@ -174,7 +174,7 @@ Três coisas que o resto do produto não tem:
   contra a cor, e esse teste aprova tudo: como a tinta é escolhida pela máquina entre branco e
   escuro, a razão do texto nunca cai abaixo de ~4,03:1. O que reprova de verdade é a **peça contra a
   página branca** (WCAG 1.4.11, 3:1). Abaixo de 2:1 é erro e bloqueia; entre 2 e 3 é alerta, porque
-  a sombra do lançador compensa em parte — é onde cai o próprio laranja da marca, com 2,13:1.
+  a sombra do lançador compensa em parte — é onde cai o próprio âmbar da marca, com 2,63:1.
 - **A prévia é o produto.** `widget-preview.tsx` não usa token nenhum: usa a cor configurada e
   neutros literais, porque no site do cliente não existe `--primary`. Um widget pintado com
   `bg-primary` mudaria junto com o nosso tema e mentiria sobre o resultado. Pelo mesmo motivo o
@@ -379,7 +379,7 @@ compartilhada entre rota e interface — não duplique a lógica em componente.
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:3100
+pnpm dev          # http://localhost:3200
 pnpm typecheck    # tsc --noEmit nos 3 pacotes
 pnpm lint         # eslint com --max-warnings=0
 pnpm build        # next build
@@ -404,12 +404,152 @@ travou compilando o Inbox".
 
 ```
 apps/web/            Next.js 15 (App Router) + React 19 + Tailwind 3
+  src/app/(site)/    site público: landing page, preços, simulador, orçamento e área do cliente
+  src/app/(workspace)/  o produto
 packages/core/       tipos canônicos, utilitários, base de demonstração e repositórios
+  src/demo/          verticais de demonstração (overlay sobre a base contábil)
+  src/pricing/       tabela de preços e motor do simulador
 packages/ui/         design system (@elora/ui) — tokens, componentes, primitivas Radix
 packages/config/     preset Tailwind compartilhado
 docs/referencia/     Plano Completo (fonte da verdade)
 .claude/agents/      equipe de agentes especializados
 ```
+
+## Site público, simulador de preço e verticais de demonstração
+
+**A raiz `/` deixou de redirecionar: agora é a landing page.** O grupo `(site)` em
+`apps/web/src/app/(site)` traz `/`, `/precos`, `/orcamento`, `/entrar`, `/cadastrar`, `/conta` e
+`/admin` (restrita); o produto continua em `(workspace)`. Grupo de rotas, e não um segundo
+Next: o site usa os mesmos tokens, os mesmos componentes e o mesmo motor de preço que o produto —
+dois aplicativos duplicariam o design system em dois pacotes e produziriam a divergência que
+aparece meses depois, quando o botão da landing page deixa de ser o botão do produto.
+
+**O cabeçalho do site é `sticky`, e o layout não pode ter `overflow`.** A primeira versão copiou o
+`overflow-y-auto` do workspace por simetria, e o cabeçalho deixava de grudar — sem erro, sem aviso.
+A causa é a regra de contexto: **um ancestral com `overflow` diferente de `visible` vira o contexto
+de rolagem do `sticky`**. Como aquele contêiner tem `min-height` (e não `height`), ele cresce com o
+conteúdo e nunca rola por dentro, então o cabeçalho grudava no topo de uma caixa que subia junto com
+a página. No site quem rola é o documento; no produto, o painel. São exigências opostas, e agora
+estão escritas assim nos dois layouts.
+
+**As telas do produto na landing page são desenhadas, não capturadas.**
+`components/site/module-previews.tsx` traz sete prévias em JSX — Inbox, Pipeline, Contato 360º,
+Chatbot, Campanhas, Analytics e agente de IA — exibidas em abas por `product-showcase.tsx`. Captura
+de tela envelhece na primeira mudança de espaçamento, vira retângulo branco no tema escuro e não
+anima; desenhada, a prévia herda token, funciona nos dois temas e o texto dentro dela é texto de
+verdade. O custo é conhecido: **estas prévias precisam ser revistas quando a tela real mudar de
+forma**, e nenhuma delas pode inventar recurso que o produto não tem.
+
+Duas armadilhas de largura, ambas já cobradas uma vez: item de grade nasce com `min-width: auto`, e
+os pontos de corte do Tailwind medem a **janela**, não o contêiner. Foi assim que o painel do
+copiloto apareceu cortado dentro do cartão, sem rolagem horizontal na página para denunciar. A
+coluna de texto da galeria tem largura fixa e a prévia fica com o resto; as colunas internas do
+Inbox só aparecem a partir de `lg` e `xl`.
+
+**O preço tem dois eixos, e isso é a decisão central.** Do Salesforce vem a edição por assento; do
+RD Station, a escada por volume. Sozinho, o primeiro pune operação enxuta de volume alto; o
+segundo, base grande e adormecida. A Elora cobra os dois separados — assinatura + assento +
+consumo medido. A tabela inteira mora em `packages/core/src/pricing/catalog.ts` e **não há um único
+número em `calculator.ts`**: reajustar preço não deveria exigir ler lógica de cálculo.
+
+Quatro consequências que valem enunciar:
+
+1. **Repasse de provedor viaja separado da margem.** A conversa de WhatsApp tem o custo da Meta
+   (sem margem) e a taxa da plataforma. Somá-los produziria a linha que ninguém consegue auditar
+   quando a Meta reajusta — e a Meta reajusta. Por isso o desconto comercial **não incide sobre o
+   repasse**: descontá-lo sairia do nosso bolso a cada mensagem, e o prejuízo cresceria justamente
+   com quem mais dispara. Coberto por teste.
+2. **A escada de contatos é progressiva.** Cada fatia paga o preço da própria faixa. Aplicar o
+   preço da faixa final ao total cria o degrau em que cadastrar mil contatos a mais **reduz** a
+   fatura — o tipo de tabela que o cliente descobre uma vez e nunca mais confia. Há teste de
+   monotonicidade.
+3. **Colaborador ilimitado existe só na edição de cima.** "Ilimitado" numa edição barata é preço
+   por assento escondido num número redondo, e quebra no dia em que o cliente cadastra a operação
+   inteira.
+4. **O cálculo roda no navegador e é refeito no servidor.** No simulador, porque arrastar o volume
+   vinte vezes precisa ser instantâneo; no pedido de orçamento, porque aceitar o total que o
+   navegador enviou permitiria pedir proposta de R$ 1. Os dois lados chamam a **mesma função pura** —
+   não existe uma conta "de exibição" e outra "de verdade".
+
+**A conta do site é autenticação de verdade no que faz e de demonstração no que guarda.** `scrypt`
+com sal por conta, comparação em tempo constante, cookie com HMAC e vencimento **dentro** da
+assinatura (confiar no `maxAge` deixaria um cookie copiado valendo para sempre). E as contas vivem
+no armazém em memória: somem no reinício, e a tela diz isso **antes** do formulário. `SiteAccount`
+não reaproveita `Contact` porque o interessado é anterior à organização que ele talvez contrate; e
+`QuoteRequest` não reaproveita `Proposal`, que é a proposta que o cliente da Elora envia ao cliente
+_dele_. O orçamento guarda **fotografia** do cálculo, pela mesma razão de `ProposalItem`.
+
+**A vertical de demonstração é um overlay, não um banco paralelo.** `packages/core/src/demo/`
+reescreve o que carrega narrativa — organização, times, filas, contatos, conversas, funis,
+campanhas — e herda o resto da base contábil. A mescla em `registry.ts` é **rasa por coleção**:
+mesclar item a item produziria a base híbrida que ninguém escreveu, metade falando de tributação e
+metade de rastreio.
+
+Três famílias de identificador **não mudam** entre verticais, e o motivo é concreto: `queue_*`,
+`chan_*` e as chaves de habilidade são citadas por módulos que a vertical não reescreve —
+`mock/agents.ts` aponta a fila de transbordo, `mock/webchat.ts` a fila do widget, `mock/bots.ts`
+exige competência. Trocar o identificador junto com o rótulo deixaria essas referências penduradas,
+e o sintoma seria discreto do pior jeito: nome de fila em branco no meio da demonstração, sem erro
+no console. O mesmo vale para `usr_*`, porque `CURRENT_USER_ID` é constante consumida por componente
+de cliente.
+
+**A leitura passou a ser por função, não por `import`.** `memory.ts` chama `dataset()` dentro de
+cada método: um `import` é resolvido uma vez e congela o arranjo daquele instante, então o Inbox
+continuaria mostrando a base anterior depois da troca. O que descreve a **plataforma** (fluxos,
+jornadas, regras, e-mail, analytics, agentes) continua vindo do `mock/` — não muda com o segmento do
+cliente.
+
+**A troca recarrega o armazém no lugar, e preserva duas coleções.** `reseedStore()` muta `store`
+por dentro porque dezenas de módulos já guardaram aquela referência — trocá-la por outro objeto
+deixaria metade da aplicação lendo o armazém antigo, sem erro nenhum. `siteAccounts` e
+`quoteRequests` sobrevivem: quem se cadastrou não deixa de existir porque alguém abriu a
+demonstração de e-commerce.
+
+**A vertical não troca a paleta, e isso foi revertido de propósito.** A primeira versão aplicava uma
+paleta por segmento; ficava bonito dentro do produto e virava defeito no site, porque a landing page
+é a marca da Elora e mudava de cor quando alguém abria a demonstração de e-commerce. A cor da
+vertical vive no cartão da vitrine, onde é decoração.
+
+**Trocar de vertical vale para a instância inteira**, e a interface diz isso em três lugares. Sem
+back-end, o repositório em memória é único: não existe versão "só para o meu navegador". Esconder
+isso produziria a cena em que dois vendedores demonstram ao mesmo tempo e um vê a base do outro.
+
+**E é exatamente por isso que a demonstração é restrita.** As bases saíram da landing page e vivem
+atrás de conta de administrador: quem carrega uma base troca os dados de todo mundo, e um visitante
+curioso derrubaria a apresentação de outra pessoa. A vitrine aparece em `/admin` — a mesa de
+trabalho de quem vende — e na área da conta; o seletor da barra lateral do produto só é desenhado
+para quem tem o papel.
+
+**`/admin` junta demonstração e simulador em abas**, e a razão é o uso: as duas ferramentas são
+alternadas na mesma reunião — mostra a tela, o cliente pergunta o preço, calcula com os números
+dele, volta para a tela. Em páginas separadas, cada pergunta custa duas navegações, e a segunda cai
+numa página pública com chamada de marketing que não serve a quem está do lado de cá. O simulador é
+o **mesmo componente** de `/precos`: uma cópia "de vendedor" divergiria no primeiro reajuste, com os
+dois lados olhando telas diferentes na mesma chamada.
+
+A checagem existe em **dois lugares, e nenhum é redundante**: a tela não desenha o botão, e
+`openVerticalAction` recusa a chamada. Server Action tem endereço próprio — um `POST` montado à mão
+nunca passa pela função que renderiza a página. Esconder a peça protege contra o clique; validar a
+ação protege contra a requisição.
+
+**Não há autocadastro de administrador.** A conta nasce de `ELORA_ADMIN_EMAIL` e
+`ELORA_ADMIN_PASSWORD`, semeadas por `ensureAdminAccount` no login (e não na carga do módulo: o
+`next dev` recarrega módulos e o armazém morre no reinício, então a semeadura precisa acontecer no
+instante em que a conta é necessária). Sem as duas variáveis, **nenhuma conta é criada** e a área
+fica inacessível — um administrador com senha conhecida por omissão seria abrir a porta e escrever
+"não use" ao lado. A senha nunca aparece no código: este repositório é publicado, e o que entra no
+histórico do Git não sai.
+
+**A tela de entrada avisa quando o servidor está sem administrador configurado.** Sem as variáveis,
+o login responde "e-mail ou senha incorretos" — a mesma mensagem de quem errou a senha, porque
+distinguir as duas transformaria o formulário em oráculo de cadastro. O efeito colateral é alguém
+digitar a credencial certa cinco vezes achando que errou. `adminConfigured()` responde uma pergunta
+de **configuração**, não de credencial: se as variáveis existem, nunca o que elas valem.
+
+**O destino após o login aceita `?proximo=`, e só caminho interno.** Aceitar qualquer string
+transformaria o formulário em redirecionador aberto — mandar a vítima para
+`/entrar?proximo=https://site-falso` e devolvê-la autenticada em outro domínio. Duas barras no
+início também são recusadas: `//site-falso` é URL absoluta com o protocolo herdado.
 
 ## Regras que não se negociam
 
@@ -479,27 +619,27 @@ Os três níveis de traço têm **piso de contraste**, não estimativa a olho:
 | `--border`        | 1,86:1        | hairline estrutural: separador, divisória, moldura de menu |
 | `--border-strong` | 2,68:1        | onde a divisão precisa de peso                             |
 | `--input`         | 3,41:1        | **limite de componente** — WCAG 1.4.11 exige 3:1           |
-| `--focus-ring`    | 3,43:1        | indicador de foco — mesma exigência                        |
+| `--focus-ring`    | 3,73:1        | indicador de foco — mesma exigência                        |
 
 **Campo usa `border-input`, nunca `border-border`.** A distinção não é estética: caixa de texto, caixa
 de seleção, gatilho de select e a moldura do compositor são limites de componente de interface e têm
 piso obrigatório de 3:1. Foi exatamente esse o erro da primeira versão — a moldura do compositor usava
 o traço estrutural e o campo desaparecia quando o texto de exemplo saía.
 
-**O foco não usa `--accent`.** A laranja da marca rende 2,13:1 contra branco: serve para preencher
-botão (onde o contraste que importa é o do texto sobre ela), não para desenhar um traço de 2 px. Daí o
-token separado. Ao mexer em qualquer um destes valores, **refaça a conta de contraste** — a razão é
+**O foco não usa `--accent`.** O âmbar da marca rende 2,63:1 contra branco: serve para preencher
+botão (onde o contraste que importa é o do texto sobre ele), não para desenhar um traço de 2 px. Daí o
+token separado — e ele existe em **todas** as paletas, com valor próprio em cada uma. Ao mexer em qualquer um destes valores, **refaça a conta de contraste** — a razão é
 `(Lmaior + 0,05) / (Lmenor + 0,05)` sobre luminância relativa, e o alvo é a pior superfície onde o
 traço aparece, não a mais favorável.
 
-**A conversa tem plano próprio.** O Inbox não usa `surface-sunken`: usa `--chat-canvas`, um bege
-azulado texturizado (`.chat-canvas`), com `--chat-in` e `--chat-out` nas bolhas. A textura é a mesma
+**A conversa tem plano próprio.** O Inbox não usa `surface-sunken`: usa `--chat-canvas`, um
+pergaminho texturizado (`.chat-canvas`), com `--chat-in` e `--chat-out` nas bolhas. A textura é a mesma
 sensação do WhatsApp, a cor é Arena Elora, e o desenho entra como **máscara** — o SVG em
 `--chat-doodle-mask` carrega só a forma, a tinta sai de `--chat-doodle`. É assim que a mesma textura
 serve aos dois temas sem duplicar arquivo e sem hexadecimal em componente. As bolhas se separam por
 matiz, não por peso: texto escuro nas duas.
 
-**Um acento por tela.** O laranja marca o que precisa de ação. Selo de estado usa fundo suave sem
+**Um acento por tela.** O âmbar marca o que precisa de ação. Selo de estado usa fundo suave sem
 traço; gravidade vira filete lateral, não fundo colorido.
 
 **Gráfico segue o método.** As primitivas estão em `packages/ui/src/components/chart.tsx` e já
@@ -542,22 +682,84 @@ Quando o back-end entrar, a RLS valida a associação do usuário à organizaç�
 
 ## Identidade visual — Arena Elora
 
-| Papel            | Cor       | HSL           |
-| ---------------- | --------- | ------------- |
-| Azul principal   | `#102850` | `218 67% 19%` |
-| Azul secundário  | `#212D51` | `225 42% 22%` |
-| Branco           | `#FFFFFF` | superfícies   |
-| Laranja (acento) | `#FF9933` | `30 100% 60%` |
+| Papel             | Cor       | HSL           |
+| ----------------- | --------- | ------------- |
+| Índigo principal  | `#1E1B4B` | `244 47% 20%` |
+| Índigo secundário | `#312E81` | `242 48% 34%` |
+| Branco            | `#FFFFFF` | superfícies   |
+| Âmbar (acento)    | `#DC8F09` | `38 92% 45%`  |
 
-O laranja carrega ação primária, foco e destaque de estado. O azul carrega navegação, marca e
-superfícies profundas. Tema claro e escuro compartilham os mesmos nomes de token.
+O âmbar carrega ação primária e destaque de estado; o índigo carrega navegação, marca e superfícies
+profundas. Tema claro e escuro compartilham os mesmos nomes de token.
+
+**O acento mudou por acessibilidade, não por gosto.** A laranja anterior (`#FF9933`) rendia 2,13:1
+contra branco. O âmbar rende 2,63:1 — ainda insuficiente para traço fino, e é por isso que
+`--focus-ring` continua existindo, mas 23% melhor onde o acento de fato aparece.
+
+**O logotipo é SVG e mora em `components/shell/logo.tsx`.** Um anel que não fecha, e a abertura é
+preenchida pelas três hastes do E — "elo" e "Elora" na mesma forma. Não há mais PNG: a arte anterior
+era da marca "Nexa", tinha texto branco que sumia em superfície clara e exigia um segundo arquivo por
+tema. Sendo desenho, ele herda cor de token e acompanha a troca de paleta de graça. As coordenadas do
+vão do anel e as alturas das hastes são solidárias — mexer numa sem a outra fecha o E dentro do anel.
+
+O único hexadecimal literal da marca vive em `apps/web/src/app/icon.svg`, e não tem alternativa: o
+ícone da aba é lido fora do documento, sem folha de estilo e sem tema.
 
 Tipografia: **Sora** (`font-display`, classe `.figure`) nos números e títulos de seção; **Inter** no
 resto. Ambas auto-hospedadas via `@fontsource` — nenhuma requisição externa.
 
 Movimento: uma orquestração por página. `<Reveal index={n}>` sobe a seção com 60 ms de atraso por
-índice; `<AnimatedNumber>` conta até o valor em 700 ms; `.lift` e `.press` cuidam do hover e do
-clique. Nada em laço infinito. `prefers-reduced-motion` anula tudo no CSS.
+índice; `<AnimatedNumber>` conta até o valor em 700 ms; `.lift`, `.lift-3d` e `.press` cuidam do hover
+e do clique. `prefers-reduced-motion` anula tudo no CSS.
+
+**Todo efeito é `transform` ou `opacity`, e isso não é preferência.** O perfil deste front mostra ~300
+ms de script contra ~800 ms de recálculo de estilo e layout — o gargalo é o recálculo. Animar `width`,
+`top`, `box-shadow` ou `filter` acrescenta trabalho exatamente onde já dói. Daí a forma de cada peça:
+`.sheen` e `.brand-sheen` deslizam um pseudo-elemento em vez de mover posição de fundo; `.glow-pulse`
+acende uma camada que já nasceu no tamanho final em vez de crescer uma sombra; `.underline-grow` usa
+`scaleX` em vez de medir o gatilho ativo e reposicionar um indicador.
+
+**Laço tem de parar em repouso.** O bloco de `prefers-reduced-motion` corta a duração para 0,01 ms e a
+repetição para 1, o que leva toda animação ao **último quadro**. Então o último quadro de qualquer
+laço é o estado parado — halo apagado, brilho fora da peça, cubo fechado. Um laço cujo quadro final
+fosse o meio do efeito congelaria a tela num estado que parece defeito, e justamente para quem pediu
+ao sistema para não animar. Efeito de `hover` não tem quadro final a que recorrer: `.sheen` e
+`.brand-sheen` são desligados por `display: none` naquele bloco.
+
+## Aparência: paleta da organização e preferência da pessoa
+
+**São duas perguntas com donos diferentes.** "Qual é a cor desta instalação?" é da organização — numa
+plataforma multiempresa a paleta é identidade, e por pessoa produziria uma captura de tela diferente
+por atendente na hora de reportar problema. "Claro ou escuro? Denso ou espaçado?" é da pessoa: depende
+do monitor, da luz da sala e da vista de quem olha oito horas por dia.
+
+`OrganizationAppearance` (`types/appearance.ts`) guarda as duas coisas em campos distintos, e
+`allowPersonalOverride` decide se a escolha individual existe. Desligada, ela é ignorada **também no
+script do `<head>`** — esconder o controle não apaga o que já estava no `localStorage`, e sem a
+conferência quem tinha valor gravado continuaria com ele para sempre.
+
+**A paleta é servida, a preferência é do navegador.** `data-palette` sai do servidor já no HTML, pelo
+layout raiz; resolvê-la no cliente pintaria a página inteira com a paleta padrão para repintá-la no
+primeiro quadro — o flash mais caro possível, porque atinge todos os tokens de uma vez. Modo e
+densidade não têm essa saída (dependem de `localStorage` e de `prefers-color-scheme`) e continuam no
+único script inline da aplicação.
+
+**Paleta redefine só tokens de marca.** Semântica (`--success`, `--warning`, `--destructive`) e as
+seis séries de gráfico ficam de fora: as primeiras significam a mesma coisa em qualquer tema, e as
+segundas foram validadas para daltonismo e não sobrevivem a serem trocadas por gosto. Cada paleta
+carrega o seu `--focus-ring` acima de 3:1 — o piso não é negociável em nenhuma delas.
+
+**Densidade escala a raiz tipográfica**, e não uma lista de utilitários. O Tailwind mede espaçamento
+em `rem`, então mexer em `font-size` do `:root` move padding, gap, altura de linha e texto juntos e na
+mesma proporção — que é o que densidade significa. Uma tabela de exceções por componente daria o
+efeito só nas telas que alguém lembrasse de listar.
+
+**A escrita da paleta segue a disciplina da Administração**: passa pelo `AdminRepository`, devolve
+`AdminWriteResult` e registra auditoria com gravidade `atencao` — mudar a paleta muda a tela de todo
+mundo ao mesmo tempo, e quem abrir chamado dizendo "o sistema está diferente hoje" precisa que a
+auditoria responda em uma linha. A validação da chave mora no repositório porque `data-palette` com
+valor inexistente **não produz erro nenhum**: o seletor não casa, a instalação volta ao padrão em
+silêncio, e o sintoma chega como "escolhi petróleo e continua índigo".
 
 **"Por página" é aplicado, não só recomendado.** `Reveal` anima na montagem, e o Radix desmonta o
 painel de aba inativo — então trocar de aba reexecutava a orquestração inteira. Toda tela com abas é
@@ -582,8 +784,8 @@ Duas armadilhas ao mexer nisso:
 
 `.claude/agents/` traz doze especialistas mapeados aos papéis da seção 24 do plano:
 
-| Agente           | Escopo                                                          |
-| ---------------- | --------------------------------------------------------------- |
+| Agente             | Escopo                                                          |
+| ------------------ | --------------------------------------------------------------- |
 | `elora-produto`    | requisitos, backlog, critérios de aceite, priorização MVP/P1/P2 |
 | `elora-ux`         | design system, tokens, densidade, acessibilidade                |
 | `elora-frontend`   | telas Next.js/React, estado de cliente, formulários             |

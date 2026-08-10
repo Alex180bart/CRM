@@ -11,16 +11,27 @@ import { isCopilotConfigured } from "@/lib/ai/gateway";
 export const metadata: Metadata = { title: "Inbox" };
 
 export default async function InboxPage() {
-  const [conversations, contacts, companies, users, queues, tags, cannedResponses] =
-    await Promise.all([
-      repositories.conversations.list(),
-      repositories.contacts.list(),
-      repositories.contacts.listCompanies(),
-      repositories.directory.listUsers(),
-      repositories.directory.listQueues(),
-      repositories.directory.listTags(),
-      repositories.directory.listCannedResponses(),
-    ]);
+  const [
+    conversations,
+    contacts,
+    companies,
+    users,
+    queues,
+    tags,
+    cannedResponses,
+    products,
+    proposals,
+  ] = await Promise.all([
+    repositories.conversations.list(),
+    repositories.contacts.list(),
+    repositories.contacts.listCompanies(),
+    repositories.directory.listUsers(),
+    repositories.directory.listQueues(),
+    repositories.directory.listTags(),
+    repositories.directory.listCannedResponses(),
+    repositories.commerce.listProducts(),
+    repositories.commerce.listProposals(),
+  ]);
 
   // O protótipo carrega o histórico completo de uma vez porque a base é local.
   // Com a API real, isto vira carregamento sob demanda por conversa.
@@ -81,6 +92,8 @@ export default async function InboxPage() {
         queues={queues}
         tags={tags}
         cannedResponses={cannedResponses}
+        products={products}
+        proposals={proposals}
         dealsByContact={dealsByContact}
         currentUserId={CURRENT_USER_ID}
         /**

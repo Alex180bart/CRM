@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { repositories } from "@elora/core";
 
 import { LoginForm } from "@/components/auth/login-form";
+import { LogoWordmark } from "@/components/shell/logo";
 
 export const metadata: Metadata = { title: "Entrar" };
 
@@ -16,16 +17,11 @@ export default async function LoginPage() {
       <div className="border-border bg-surface shadow-overlay grid w-full max-w-4xl overflow-hidden rounded-2xl border md:grid-cols-[1.05fr_1fr]">
         {/* Painel de marca */}
         <div className="brand-surface text-primary-foreground hidden flex-col justify-between p-8 md:flex">
-          <div className="flex items-center gap-2.5">
-            <span className="bg-accent text-accent-foreground flex size-9 items-center justify-center rounded-lg text-sm font-bold">
-              CF
-            </span>
-            <div>
-              <p className="text-sm font-semibold leading-tight">Elora</p>
-              <p className="text-primary-foreground/60 text-[11px] leading-tight">
-                {organization.name}
-              </p>
-            </div>
+          <div>
+            <LogoWordmark height={26} />
+            <p className="text-primary-foreground/60 mt-1.5 text-[11px] leading-tight">
+              {organization.name}
+            </p>
           </div>
 
           <div>

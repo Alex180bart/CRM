@@ -7,6 +7,9 @@
  */
 
 import type { ChannelKind, Id } from "../types/common";
+import type { OrganizationAppearance } from "../types/appearance";
+import type { Product, Proposal } from "../types/commerce";
+import type { SiteRepository } from "./site-memory";
 import type { WebchatWidget } from "../types/webchat";
 import type { AgentKnowledgeSource, AiAgent } from "../types/agents";
 import type {
@@ -109,6 +112,14 @@ export interface DirectoryRepository {
   listCustomRoles(): Promise<CustomRole[]>;
   getAccessPolicy(): Promise<AccessPolicy>;
   listInvitations(): Promise<Invitation[]>;
+  /**
+   * Aparência da organização.
+   *
+   * Fica na leitura do diretório, e não na governança, porque o layout raiz a
+   * consulta a cada requisição para pintar o `<html>` antes do primeiro quadro.
+   * É leitura de configuração de instalação, não de política de segurança.
+   */
+  getAppearance(): Promise<OrganizationAppearance>;
   /**
    * Cursor da roleta por fila.
    *
@@ -378,6 +389,78 @@ export interface AdminRepository {
     data: { email: string; role: string; teamIds: Id[] },
   ): Promise<AdminWriteResult<Invitation>>;
   revokeInvitation(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+
+  /* Aparência ---------------------------------------------------------------- */
+
+  updateAppearance(
+    actor: AdminActor,
+    patch: Partial<OrganizationAppearance>,
+  ): Promise<AdminWriteResult<OrganizationAppearance>>;
+
+  /* Catálogo comercial ------------------------------------------------------- */
+
+  createProduct(
+    actor: AdminActor,
+    data: Omit<Product, "id" | "organizationId" | "createdAt" | "updatedAt">,
+  ): Promise<AdminWriteResult<Product>>;
+  updateProduct(
+    actor: AdminActor,
+    id: Id,
+    patch: Partial<Product>,
+  ): Promise<AdminWriteResult<Product>>;
+  deleteProduct(actor: AdminActor, id: Id): Promise<AdminWriteResult>;
+}
+
+/**
+ * Comércio: leitura do catálogo e ciclo de vida da proposta.
+ *
+ * Separado do `AdminRepository` porque responde a outra pergunta. Cadastrar
+ * produto é ato administrativo, raro, feito por quem configura a operação —
+ * fica lá. Montar e enviar proposta é ato **operacional**, diário, feito por
+ * quem atende — fica aqui. Juntar os dois faria a permissão de administrar o
+ * catálogo virar pré-requisito para vender.
+ */
+export interface CommerceRepository {
+  listProducts(): Promise<Product[]>;
+  listProposals(): Promise<Proposal[]>;
+  listProposalsByConversation(conversationId: Id): Promise<Proposal[]>;
+
+  createProposal(
+    actor: AdminActor,
+    input: {
+      conversationId: Id;
+      contactId: Id;
+      sellerId: Id;
+      items: Array<{ productId: Id; quantity: number; discountPct: number }>;
+      message: string;
+      validForDays?: number;
+      origin: Proposal["origin"];
+    },
+  ): Promise<AdminWriteResult<Proposal>>;
+
+  /** Rascunho → enviada, ou → aguardando o gestor quando passa do teto. */
+  submitProposal(actor: AdminActor, id: Id): Promise<AdminWriteResult<Proposal>>;
+
+  /** Decisão do gestor sobre o desconto. Quem pediu não pode aprovar. */
+  decideApproval(
+    actor: AdminActor,
+    id: Id,
+    approve: boolean,
+    note?: string,
+  ): Promise<AdminWriteResult<Proposal>>;
+
+  /** Resposta do cliente. O aceite é o que gera o link de pagamento. */
+  recordClientDecision(
+    actor: AdminActor,
+    id: Id,
+    accepted: boolean,
+  ): Promise<AdminWriteResult<Proposal>>;
+
+  markPaid(actor: AdminActor, id: Id): Promise<AdminWriteResult<Proposal>>;
+  cancelProposal(actor: AdminActor, id: Id, reason?: string): Promise<AdminWriteResult<Proposal>>;
+
+  /** Vence o que passou do prazo. Devolve quantas mudaram. */
+  expireOverdue(): Promise<number>;
 }
 
 export interface InsightsRepository {
@@ -443,5 +526,15 @@ export interface Repositories {
   insights: InsightsRepository;
   governance: GovernanceRepository;
   admin: AdminRepository;
+  commerce: CommerceRepository;
   ai: AiRepository;
+  /**
+   * Site público — conta do interessado e pedido de orçamento.
+   *
+   * Vive no mesmo contrato porque a regra do repositório não tem exceção: se a
+   * página de cadastro escrevesse direto num `Map`, a troca por Supabase
+   * exigiria mexer na tela. O contrato está em `./site-memory.ts`, junto da
+   * implementação, porque nenhum outro módulo do produto o consome.
+   */
+  site: SiteRepository;
 }

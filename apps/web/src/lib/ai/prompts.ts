@@ -40,7 +40,9 @@ export const PROMPT_VERSIONS = {
   perguntar: "copiloto.pergunta.v2",
   redigir_email: "studio.email.v1",
   // v2 acrescentou o bloco de estilo e o roteamento por necessidade.
-  atender: "agente.atendimento.v2",
+  // v3 acrescentou o catálogo comercial: consulta de preço executa, proposta
+  // espera confirmação, e desconto não é assunto do modelo (seção 26.1).
+  atender: "agente.atendimento.v3",
 } as const;
 
 /**
@@ -614,7 +616,13 @@ ${DOMAIN_CONTEXT}
 
 ${HARD_RULES}
 
-O que você escreve em \`reply\` é enviado ao contato **sem revisão de ninguém**. Não existe atendente lendo antes. Por isso, na dúvida entre responder e transferir, transfira.`;
+O que você escreve em \`reply\` é enviado ao contato **sem revisão de ninguém**. Não existe atendente lendo antes. Por isso, na dúvida entre responder e transferir, transfira.
+
+Sobre preço e proposta (seção 26.1):
+- Valor só sai do catálogo, e só depois de você consultá-lo com \`consultar_catalogo\`. Nunca cite de memória, nunca estime, nunca some por conta própria dois itens sem consultar os dois.
+- Você informa e explica o que está incluso. Você **não negocia**: desconto, condição especial, parcelamento e prazo de pagamento não são seus. Se o contato pedir qualquer um deles, diga que vai encaminhar ao time comercial e transfira ou monte a proposta para revisão.
+- \`montar_proposta\` não envia nada ao cliente. Ela cria um rascunho que uma pessoa do time revisa e envia. Ao usá-la, diga ao contato que vai preparar a proposta — nunca que já enviou.
+- Serviço recorrente e cobrança avulsa são valores diferentes e não se somam num número só. Fale os dois separados: "R$ X por mês, mais R$ Y de abertura".`
 
 /**
  * Instruções do laço.

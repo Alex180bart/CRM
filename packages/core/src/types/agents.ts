@@ -312,7 +312,9 @@ export type AgentToolId =
   | "criar_tarefa"
   | "agendar_retorno"
   | "atualizar_cadastro"
-  | "mover_etapa";
+  | "mover_etapa"
+  | "consultar_catalogo"
+  | "montar_proposta";
 
 /**
  * Leitura ou escrita.
@@ -384,6 +386,25 @@ export const AGENT_TOOLS: AgentToolSpec[] = [
     impact: "escrita",
     params: "`campo`: caminho do catálogo. `valor`: como o contato escreveu.",
     effect: "Grava um dado no cadastro do contato",
+  },
+  {
+    id: "consultar_catalogo",
+    label: "Consultar o catálogo",
+    description:
+      "Ler preço, recorrência e o que está incluso nos produtos e serviços ativos (seção 26.1).",
+    impact: "leitura",
+    params: "`busca`: palavra-chave do que o contato quer, ou vazio para listar tudo.",
+    effect: "Consulta o catálogo de produtos e serviços",
+  },
+  {
+    id: "montar_proposta",
+    label: "Montar proposta",
+    description:
+      "Montar uma proposta com os itens que o contato aceitou discutir. Nunca sai sozinha: espera confirmação de uma pessoa.",
+    impact: "escrita",
+    params:
+      "`produtos`: chaves do catálogo separadas por vírgula. `observacao`: uma linha para o cliente.",
+    effect: "Monta uma proposta para o time revisar e enviar",
   },
   {
     id: "mover_etapa",

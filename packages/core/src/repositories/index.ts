@@ -1,9 +1,11 @@
 import { aiGatewayRepository } from "./ai-gateway";
 import { memoryRepositories } from "./memory";
+import { siteMemoryRepository } from "./site-memory";
 import type { Repositories } from "./types";
 
 export * from "./types";
-export { memoryRepositories, aiGatewayRepository };
+export { memoryRepositories, aiGatewayRepository, siteMemoryRepository };
+export * from "./site-memory";
 
 /**
  * Ponto único de resolução da camada de dados.
@@ -18,6 +20,7 @@ export { memoryRepositories, aiGatewayRepository };
 export const repositories: Repositories = {
   ...memoryRepositories,
   ai: aiGatewayRepository,
+  site: siteMemoryRepository,
 };
 
 export * from "./events-memory";

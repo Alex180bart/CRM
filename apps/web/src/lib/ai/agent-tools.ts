@@ -33,7 +33,15 @@ import type {
   AgentToolId,
   AiAgentVersion,
 } from "@elora/core";
-import { agentTool, formatDate, offsetIso, repositories, searchKnowledge } from "@elora/core";
+import {
+  RECURRENCE_SUFFIX,
+  agentTool,
+  formatCurrencyCents,
+  formatDate,
+  offsetIso,
+  repositories,
+  searchKnowledge,
+} from "@elora/core";
 
 export interface AgentToolRequest {
   toolId: AgentToolId;
@@ -98,6 +106,8 @@ export async function runAgentTool(
       return crmTool(request, context);
     case "consultar_horario":
       return scheduleTool(context);
+    case "consultar_catalogo":
+      return catalogTool(request);
     default:
       return {
         status: "falha",
@@ -134,6 +144,68 @@ function pendingWrite(request: AgentToolRequest, label: string, effect: string):
 }
 
 /* Leitura --------------------------------------------------------------------- */
+
+/**
+ * Catálogo de produtos e serviços.
+ *
+ * ## O teto de desconto não vai para o modelo
+ *
+ * `maxDiscountPct` existe no produto e **não** é incluído aqui, de propósito. O
+ * agente informa preço e negocia escopo; quem move preço é gente. Entregar o
+ * teto ao modelo é entregar a informação de que existe margem — e a partir daí
+ * qualquer contato insistente extrai a frase "consigo até 20%", que vira
+ * promessa antes de qualquer aprovação. A decisão foi tomada uma vez, na
+ * configuração do agente; este é o lugar onde ela se sustenta.
+ *
+ * ## `salesNotes` vai, e é interno
+ *
+ * Aquele campo é escrito **para** o modelo — argumento, objeção conhecida, o que
+ * não prometer. Vai marcado como interno no texto, porque um agente que lê
+ * argumento de venda em voz alta soa como script de telemarketing.
+ */
+async function catalogTool(request: AgentToolRequest): Promise<AgentToolOutcome> {
+  const query = (request.params.busca ?? "").trim().toLowerCase();
+  const all = await repositories.commerce.listProducts();
+  const active = all.filter((product) => product.active);
+
+  const matches = query
+    ? active.filter((product) =>
+        [product.name, product.summary, product.description, product.key]
+          .join(" ")
+          .toLowerCase()
+          .includes(query),
+      )
+    : active;
+
+  if (matches.length === 0) {
+    return {
+      status: "ok",
+      result: query
+        ? `Nenhum produto ou serviço do catálogo corresponde a "${query}". Não invente oferta: diga que vai confirmar com o time o que existe para esse caso.`
+        : "O catálogo está vazio. Não cite preço nenhum.",
+    };
+  }
+
+  /**
+   * O limite existe por erro observado no RAG: devolvendo pouco, o agente
+   * responde com o que veio e emenda "sobre o resto, preciso verificar" — com a
+   * resposta inteira disponível no item seguinte. Seis cabe no contexto e cobre
+   * o catálogo real de um escritório.
+   */
+  const lines = matches.slice(0, 6).map((product) => {
+    const price = formatCurrencyCents(product.priceCents) + RECURRENCE_SUFFIX[product.recurrence];
+    const includes = product.includes.length ? ` Inclui: ${product.includes.join("; ")}.` : "";
+    const notes = product.salesNotes ? ` [orientação interna, não leia ao cliente: ${product.salesNotes}]` : "";
+    return `- ${product.name} (chave \`${product.key}\`) — ${price}. ${product.summary}${includes}${notes}`;
+  });
+
+  const catalog = lines.join("\n");
+
+  return {
+    status: "ok",
+    result: `Catálogo ativo (${matches.length} item(ns)):\n${catalog}\n\nInforme os valores exatamente como estão. Você NÃO tem autorização para oferecer desconto, condição especial ou parcelamento que não esteja escrito aqui — se o contato pedir, diga que vai encaminhar para o time comercial avaliar.`,
+  };
+}
 
 function searchTool(request: AgentToolRequest, context: AgentToolContext): AgentToolOutcome {
   const query = (request.params.consulta ?? "").trim();
