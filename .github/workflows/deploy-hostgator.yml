@@ -36,9 +36,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Sem `version` de propósito: a raiz declara `packageManager: pnpm@9.15.9`,
+      # e o action aborta quando recebe as duas fontes — "multiple versions of
+      # pnpm specified". Deixar só o `package.json` também evita a divergência
+      # silenciosa de subir a versão num lugar e esquecer o outro.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
