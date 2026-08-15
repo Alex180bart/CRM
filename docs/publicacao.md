@@ -5,23 +5,50 @@ verificado do repositório, da conta de hospedagem e do DNS em 15/08/2026.
 
 ## O que vai ao ar
 
-**Só o site público**: `/`, `/precos`, `/orcamento`, `/entrar`, `/cadastrar`,
-`/conta` e `/admin`.
+**O site público, aberto**: `/`, `/precos`, `/orcamento`, `/entrar`,
+`/cadastrar`, `/conta` e `/admin`.
 
-O produto — Inbox, Pipeline, Contatos, Administração, Chatbot Builder, o widget
-de webchat e toda a superfície `/api` — fica **fechado por omissão em produção**.
-A guarda está em [`apps/web/src/lib/site/exposicao.ts`](../apps/web/src/lib/site/exposicao.ts),
-é aplicada pelo middleware e tem duas razões concretas:
+**O produto, atrás de login.** Inbox, Pipeline, Contatos, Administração, Chatbot
+Builder, o widget de webchat e a superfície `/api` exigem sessão de
+**administrador** — a conta da equipe comercial, semeada pelas variáveis de
+ambiente. É o que permite abrir a demonstração na frente do cliente sem deixar a
+base à mão de quem chegou pela landing page.
 
-1. O grupo `(workspace)` não verifica sessão. Quem souber o endereço entra.
+A guarda está em [`exposicao.ts`](../apps/web/src/lib/site/exposicao.ts) e
+[`middleware.ts`](../apps/web/src/middleware.ts), e existe por duas razões
+concretas:
+
+1. O grupo `(workspace)` não verifica sessão por conta própria. Quem souber o
+   endereço entraria.
 2. O armazém é único por instância. Um visitante que carrega outra vertical de
    demonstração troca a base que **todo mundo** está vendo — inclusive quem
-   estiver apresentando naquele instante.
+   estiver apresentando naquele instante. Não basta pedir login: precisa ser
+   administrador, porque `/cadastrar` é aberto e uma conta comum sairia de graça.
 
-Verificado em build de produção: site público responde 200, `/inbox` e
-`/administracao` respondem 307 para `/`, `/api/*` responde 404, e o endereço
-inexistente continua caindo na página 404 do site. `ELORA_EXPOR_PRODUTO=1` abre
-tudo — use apenas fora do domínio da empresa.
+**Por que o papel viaja dentro do cookie.** O middleware roda no runtime de
+borda, sem `node:crypto` e sem acesso ao repositório — de lá não há como
+perguntar "esta conta é administradora?". Então `issueToken` assina o papel junto
+com o identificador e o vencimento, e [`sessao-edge.ts`](../apps/web/src/lib/site/sessao-edge.ts)
+confere a assinatura com a Web Crypto API. A contrapartida está escrita lá: papel
+revogado vale até o token vencer, o que é aceitável enquanto o administrador
+nasce do ambiente e não muda em tempo de execução.
+
+`ELORA_EXPOR_PRODUTO` ajusta isso em três estados: ausente (ou valor
+desconhecido) exige administrador; `1` abre para qualquer visitante — só para
+prévia descartável; `fechado` tira o produto do ar sem precisar de deploy.
+
+Verificado em build de produção, com cookies forjados para cada caso:
+
+| Sessão                        | `/inbox`         | `/api/*` |
+| ----------------------------- | ---------------- | -------- |
+| administrador                 | 200              | executa  |
+| conta comum                   | 307 → `/entrar`  | 401      |
+| assinada com outro segredo    | 307              | 401      |
+| papel adulterado sem reassinar| 307              | 401      |
+| vencida                       | 307              | 401      |
+
+O site público responde 200 em todos os casos, e endereço inexistente continua
+caindo na página 404 do site.
 
 ## Por que não na HostGator, apesar de a conta já existir
 
@@ -78,8 +105,8 @@ plugin a declarar à mão.
 | `SMTP_HOST`            | Não         | Padrão `smtp.titan.email`.                                     |
 | `SMTP_PORT`            | Não         | Padrão `465`.                                                  |
 | `ELORA_ORCAMENTO_DESTINO` | Não      | Para onde o pedido é enviado. Sem ela, vai para `SMTP_USER`.   |
-| `ELORA_EXPOR_PRODUTO`  | **Não definir** | Abrir o produto neste domínio é o que a guarda existe para impedir. |
-| `GEMINI_API_KEY`       | Não         | A IA só é usada pelo produto, que está fechado.                 |
+| `ELORA_EXPOR_PRODUTO`  | **Não definir** | Ausente já significa "exige administrador", que é o comportamento desejado. Só defina para abrir a todos (`1`) numa prévia, ou para tirar o produto do ar (`fechado`). |
+| `GEMINI_API_KEY`       | Recomendada | O copiloto do Inbox e a redação de e-mail fazem parte do que se demonstra. Sem ela, o painel do copiloto aparece desligado — que é honesto, mas menos convincente numa apresentação. |
 
 `NODE_ENV` não entra na lista: a plataforma já define `production` no build e na
 função. Defini-la à mão só cria uma segunda verdade a divergir.
@@ -128,9 +155,14 @@ No Netlify, adicione `eloraintelligence.com.br` como domínio principal e
 nslookup eloraintelligence.com.br
 curl -I https://eloraintelligence.com.br                  # 200
 curl -I https://www.eloraintelligence.com.br              # redireciona para a raiz
-curl -I https://eloraintelligence.com.br/inbox            # 307 para /
-curl -I https://eloraintelligence.com.br/api/ai/copilot   # 404
+curl -I https://eloraintelligence.com.br/inbox            # 307 para /entrar
+curl -I https://eloraintelligence.com.br/api/ai/copilot   # 401
 ```
+
+Depois, entre em `/entrar` com a conta de administrador e confirme que `/inicio`
+abre. É o teste que prova a cadeia inteira: a variável de segredo, a semeadura da
+conta no login e a leitura do cookie pelo middleware — três coisas que falham de
+formas parecidas e cuja diferença não aparece na tela.
 
 Confira também que o e-mail do domínio continua entrando — é o teste que ninguém
 lembra de fazer e o único cujo defeito aparece dias depois.

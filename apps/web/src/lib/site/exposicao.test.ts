@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { PREFIXOS_DO_PRODUTO, ehDoProduto, produtoExposto } from "./exposicao";
+import { PREFIXOS_DO_PRODUTO, ehDoProduto, modoDeExposicao, produtoExposto } from "./exposicao";
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const APP = resolve(aqui, "..", "..", "app");
@@ -86,20 +86,59 @@ describe("prefixos do produto", () => {
   });
 });
 
-describe("chave de exposição", () => {
+describe("modo de exposição", () => {
   it("libera tudo fora de produção", () => {
-    expect(produtoExposto({ NODE_ENV: "development" })).toBe(true);
-    expect(produtoExposto({ NODE_ENV: "test" })).toBe(true);
+    expect(modoDeExposicao({ NODE_ENV: "development" })).toBe("aberto");
+    expect(modoDeExposicao({ NODE_ENV: "test" })).toBe("aberto");
+    // Nem a chave de fechar vale fora de produção: trancar o ambiente local
+    // travaria quem desenvolve as telas do produto.
+    expect(modoDeExposicao({ NODE_ENV: "development", ELORA_EXPOR_PRODUTO: "fechado" })).toBe(
+      "aberto",
+    );
   });
 
-  it("fecha por omissão em produção", () => {
-    expect(produtoExposto({ NODE_ENV: "production" })).toBe(false);
-    expect(produtoExposto({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: "" })).toBe(false);
-    expect(produtoExposto({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: "sim" })).toBe(false);
+  it("exige administrador por omissão em produção", () => {
+    expect(modoDeExposicao({ NODE_ENV: "production" })).toBe("somente_admin");
+    expect(modoDeExposicao({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: "" })).toBe(
+      "somente_admin",
+    );
   });
 
-  it("aceita 1 e true, com espaço e maiúscula", () => {
+  /**
+   * O valor que ninguém reconhece cai no modo que **pede credencial**. Se
+   * caísse em `aberto`, um erro de digitação na variável publicaria o produto
+   * inteiro sem nada na tela indicando isso.
+   */
+  it("trata valor desconhecido como somente_admin", () => {
+    for (const valor of ["sim", "yes", "publico", "on", "-1"]) {
+      expect(modoDeExposicao({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: valor })).toBe(
+        "somente_admin",
+      );
+    }
+  });
+
+  it("abre com 1, true e aberto — com espaço e maiúscula", () => {
+    for (const valor of ["1", " TRUE ", "aberto"]) {
+      expect(modoDeExposicao({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: valor })).toBe("aberto");
+    }
+  });
+
+  it("fecha com 0, false, nao e fechado", () => {
+    for (const valor of ["0", "false", "nao", "FECHADO"]) {
+      expect(modoDeExposicao({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: valor })).toBe(
+        "fechado",
+      );
+    }
+  });
+
+  /**
+   * `produtoExposto` decide se a peça é desenhada, não se a pessoa entra. Com o
+   * produto atrás de login o botão continua valendo: quem está em `/admin` já
+   * passou pela credencial que o middleware vai exigir.
+   */
+  it("desenha a peça em aberto e em somente_admin, nunca em fechado", () => {
     expect(produtoExposto({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: "1" })).toBe(true);
-    expect(produtoExposto({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: " TRUE " })).toBe(true);
+    expect(produtoExposto({ NODE_ENV: "production" })).toBe(true);
+    expect(produtoExposto({ NODE_ENV: "production", ELORA_EXPOR_PRODUTO: "fechado" })).toBe(false);
   });
 });

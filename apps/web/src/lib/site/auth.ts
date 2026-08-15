@@ -96,18 +96,34 @@ function sign(payload: string): string {
  * carimbo assinado, um token vencido é recusado no servidor mesmo que volte
  * intacto.
  */
-function issueToken(accountId: string): string {
+/**
+ * O papel viaja **dentro** do token, e isso é o que permite conferi-lo no
+ * middleware.
+ *
+ * O middleware roda no runtime de borda: não tem `node:crypto`, não tem o
+ * repositório e não pode consultar o armazém — que, além de tudo, vive noutro
+ * processo. Sem o papel assinado aqui, a única checagem possível lá seria
+ * "existe alguma sessão", e qualquer visitante que se cadastrasse em
+ * `/cadastrar` entraria no produto.
+ *
+ * A contrapartida é conhecida: um papel revogado continua valendo até o token
+ * vencer. Vale por sete dias e é aceitável porque o administrador nasce das
+ * variáveis de ambiente e não é promovido nem rebaixado em tempo de execução —
+ * quando isso mudar, o token precisa encurtar ou passar a ser conferido contra
+ * uma lista de revogação.
+ */
+function issueToken(accountId: string, isAdmin: boolean): string {
   const expiresAt = Date.now() + SESSION_TTL_MS;
-  const payload = `${accountId}.${expiresAt}`;
+  const payload = `${accountId}.${expiresAt}.${isAdmin ? "1" : "0"}`;
   return `${payload}.${sign(payload)}`;
 }
 
 function readToken(token: string): string | null {
   const parts = token.split(".");
-  if (parts.length !== 3) return null;
+  if (parts.length !== 4) return null;
 
-  const [accountId, expiresRaw, signature] = parts;
-  const payload = `${accountId}.${expiresRaw}`;
+  const [accountId, expiresRaw, adminRaw, signature] = parts;
+  const payload = `${accountId}.${expiresRaw}.${adminRaw}`;
 
   const expected = Buffer.from(sign(payload), "hex");
   const received = Buffer.from(signature, "hex");
@@ -120,9 +136,9 @@ function readToken(token: string): string | null {
   return accountId;
 }
 
-export async function startSession(accountId: string): Promise<void> {
+export async function startSession(accountId: string, isAdmin = false): Promise<void> {
   const jar = await cookies();
-  jar.set(COOKIE_NAME, issueToken(accountId), {
+  jar.set(COOKIE_NAME, issueToken(accountId, isAdmin), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

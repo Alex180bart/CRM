@@ -65,17 +65,57 @@ export interface AmbienteDeExposicao {
 }
 
 /**
+ * Quem alcança o produto neste domínio.
+ *
+ * São três estados porque o uso real tem três casos, e reduzi-los a um
+ * liga-desliga forçava escolher entre expor a demonstração ao mundo ou não poder
+ * demonstrar de lugar nenhum:
+ *
+ * - `aberto` — qualquer visitante. Serve para ambiente local e para uma prévia
+ *   descartável, nunca para o endereço da empresa.
+ * - `somente_admin` — exige sessão de administrador, a conta semeada pelas
+ *   variáveis de ambiente. É o padrão em produção: a equipe comercial abre o
+ *   produto na frente do cliente, e quem chega pela landing page não entra.
+ * - `fechado` — ninguém. Existe para o dia em que o produto precisar sumir do ar
+ *   sem esperar um deploy que remova código.
+ *
+ * O padrão em produção é `somente_admin`, e não `fechado`, porque já exige
+ * credencial: o padrão seguro aqui é "pedir login", não "não existir". Fechar
+ * por omissão custaria a cena em que tudo está configurado, o produto não abre e
+ * ninguém sabe por quê.
+ */
+export type ModoDeExposicao = "aberto" | "somente_admin" | "fechado";
+
+/**
  * Fora de produção nada é bloqueado.
  *
  * Trancar o produto no ambiente local travaria o trabalho de quem desenvolve as
  * telas — e a variável precisaria ser lembrada em cada máquina nova, o que a
  * transformaria em cerimônia esquecida em vez de proteção.
  */
-export function produtoExposto(env: AmbienteDeExposicao): boolean {
-  if (env.NODE_ENV !== "production") return true;
+export function modoDeExposicao(env: AmbienteDeExposicao): ModoDeExposicao {
+  if (env.NODE_ENV !== "production") return "aberto";
 
   const valor = env.ELORA_EXPOR_PRODUTO?.trim().toLowerCase();
-  return valor === "1" || valor === "true";
+
+  if (valor === "1" || valor === "true" || valor === "aberto") return "aberto";
+  if (valor === "0" || valor === "false" || valor === "nao" || valor === "fechado") return "fechado";
+
+  // Inclui o valor ausente e o valor digitado errado. Um valor que ninguém
+  // reconhece não pode significar "abra para todos": o erro de digitação viraria
+  // exposição, sem nada na tela indicando isso.
+  return "somente_admin";
+}
+
+/**
+ * Atalho para quem só precisa saber se a peça deve ser desenhada.
+ *
+ * A galeria de verticais usa isto: com o produto atrás de login, o botão
+ * continua valendo — quem está em `/admin` já é administrador, e o clique vai
+ * funcionar.
+ */
+export function produtoExposto(env: AmbienteDeExposicao): boolean {
+  return modoDeExposicao(env) !== "fechado";
 }
 
 /** Diz se o caminho pedido pertence ao produto — comparação por segmento. */

@@ -129,7 +129,9 @@ export async function signInAction(_prev: FormState = EMPTY, data: FormData): Pr
   if (!verifyPassword(password, account)) return invalid;
 
   await repositories.site.registerLogin(account.id);
-  await startSession(account.id);
+  // O papel entra no token porque o middleware não tem como consultar o
+  // repositório para descobri-lo — ver `issueToken` em `lib/site/auth.ts`.
+  await startSession(account.id, Boolean(account.isAdmin));
 
   /**
    * Quem vende cai direto no material de venda; quem pede orçamento, nos

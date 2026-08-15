@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ehDoProduto, produtoExposto } from "@/lib/site/exposicao";
+import { ehDoProduto, modoDeExposicao } from "@/lib/site/exposicao";
+import { COOKIE_DA_SESSAO, lerSessao } from "@/lib/site/sessao-edge";
 
 /**
  * Duas responsabilidades, e a ordem entre elas importa.
@@ -20,24 +21,62 @@ import { ehDoProduto, produtoExposto } from "@/lib/site/exposicao";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (ehDoProduto(pathname) && !produtoExposto(process.env)) {
-    /**
-     * API responde 404; página redireciona.
-     *
-     * Redirecionar uma chamada de API devolveria o HTML da landing page para
-     * quem esperava JSON, e o erro chegaria ao chamador como falha de parse —
-     * mensagem que não diz nada sobre a causa. A página, ao contrário, tem para
-     * onde ir: quem abriu `/inbox` neste domínio veio de link antigo, e a home é
-     * a resposta útil.
-     */
-    if (pathname === "/api" || pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { erro: "indisponivel", detalhe: "Esta superfície não está publicada neste domínio." },
-        { status: 404 },
-      );
+  if (ehDoProduto(pathname)) {
+    const modo = modoDeExposicao(process.env);
+    const ehApi = pathname === "/api" || pathname.startsWith("/api/");
+
+    if (modo === "fechado") {
+      /**
+       * API responde 404; página redireciona.
+       *
+       * Redirecionar uma chamada de API devolveria o HTML da landing page para
+       * quem esperava JSON, e o erro chegaria ao chamador como falha de parse —
+       * mensagem que não diz nada sobre a causa. A página, ao contrário, tem
+       * para onde ir: quem abriu `/inbox` neste domínio veio de link antigo, e a
+       * home é a resposta útil.
+       */
+      if (ehApi) {
+        return NextResponse.json(
+          { erro: "indisponivel", detalhe: "Esta superfície não está publicada neste domínio." },
+          { status: 404 },
+        );
+      }
+
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
-    return NextResponse.redirect(new URL("/", request.url));
+    if (modo === "somente_admin") {
+      const sessao = await lerSessao(request.cookies.get(COOKIE_DA_SESSAO)?.value, process.env);
+
+      if (!sessao?.isAdmin) {
+        /**
+         * Aqui a API responde **401**, não 404.
+         *
+         * A distinção é deliberada e diz coisas diferentes a quem chama: com o
+         * produto fechado, aquela superfície não existe neste domínio; com o
+         * produto atrás de login, ela existe e falta credencial. Devolver 404
+         * neste caso faria uma chamada legítima do próprio produto — feita por
+         * quem está com a sessão vencida — parecer rota inexistente, e o
+         * diagnóstico começaria pelo lugar errado.
+         */
+        if (ehApi) {
+          return NextResponse.json(
+            { erro: "nao_autenticado", detalhe: "Entre com a conta da equipe para usar o produto." },
+            { status: 401 },
+          );
+        }
+
+        /**
+         * O destino volta no `proximo`, e é por isso que ele aceita só caminho
+         * interno — a validação está em `signInAction`. Sem ele, quem clica num
+         * link direto para o Pipeline cai na área da conta depois de entrar e
+         * precisa navegar de novo até onde já queria estar.
+         */
+        const destino = new URL("/entrar", request.url);
+        destino.searchParams.set("proximo", `${pathname}${request.nextUrl.search}`);
+        return NextResponse.redirect(destino);
+      }
+    }
   }
 
   if (pathname === "/webchat/frame") {

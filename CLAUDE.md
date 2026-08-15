@@ -847,6 +847,40 @@ o **orçamento**, e existe embalagem padrão que sempre serve.
 a conversa. Aqui a regra pesa mais que no copiloto: o texto carrega preço, e
 preço enviado não se desdiz.
 
+## Publicação: o site é aberto, o produto pede administrador
+
+**Em produção o middleware separa as duas coisas.** `lib/site/exposicao.ts`
+nomeia os prefixos do produto — os segmentos de `(workspace)`, mais `/login`,
+`/webchat` e `/api` inteiro — e um teste lê os diretórios do grupo para impedir a
+lista de envelhecer: tela nova sem entrada ali nasceria pública, sem erro e sem
+aviso. Exigir **administrador**, e não só login, é o que impede alguém de se
+cadastrar em `/cadastrar` e entrar: o armazém é único por instância, e quem troca
+a vertical troca a base debaixo de quem está apresentando.
+
+**O papel viaja dentro do cookie porque o middleware não tem como perguntar.** Na
+borda não há `node:crypto` nem repositório, então `issueToken` assina
+`id.vencimento.papel` e `lib/site/sessao-edge.ts` confere com a Web Crypto API.
+São dois códigos para o mesmo formato, e a divergência entre eles não produziria
+erro — produziria porta destrancada ou sessão válida recusada. Daí o teste que
+emite com `node:crypto` e lê com o módulo da borda.
+
+**O pedido de proposta sai por e-mail, e isso não é enfeite.** Em serverless o
+armazém não é compartilhado entre instâncias: gravar sem notificar significa lead
+perdido com a tela prometendo retorno em um dia útil. `lib/site/notificacao.ts`
+nunca lança — falha de envio é dado, e a tela avisa quem preencheu.
+
+**`outputFileTracingIncludes` carrega `content/site-content.json` para todas as
+rotas.** O arquivo é lido por caminho montado em tempo de execução, e o
+rastreamento só o enxergava nas páginas que chamam `readSiteContent` diretamente:
+`/orcamento`, `/entrar`, `/cadastrar` e `/conta` sairiam com cabeçalho e rodapé
+padrão enquanto a home mostrava o texto editado.
+
+**A hospedagem é o Netlify, e a razão de não ser a alternativa óbvia está
+registrada em `docs/publicacao.md`** — junto com o erro que quase custou uma
+implantação quebrada: `passengerapps: 1` na lista de features do cPanel é
+permissão de interface, não runtime instalado. Verificação de runtime se faz
+executando `node -v`, não lendo lista de features.
+
 ## Regras que não se negociam
 
 **Acesso a dados passa por repositório.** A aplicação consome as interfaces de
