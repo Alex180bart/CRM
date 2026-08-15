@@ -2,14 +2,21 @@
   <!--
     Ícone da aba, servido pelo App Router a partir deste arquivo.
 
-    É o único lugar do produto onde a cor da marca aparece literal, e a razão é
-    que não existe alternativa: o ícone é lido pelo navegador fora do documento,
-    sem folha de estilo, sem `tokens.css` e sem tema. Os dois valores são os
-    mesmos de `--primary` e `--accent` da paleta padrão (índigo #1E1B4B e âmbar
-    #F59E0B); ao trocar a paleta padrão, este arquivo acompanha à mão.
+    A cor da marca aparece literal aqui porque não existe alternativa: o ícone é
+    lido pelo navegador fora do documento, sem folha de estilo, sem `tokens.css`
+    e sem tema. Os dois valores são os de `--primary` e `--accent` da paleta
+    padrão — índigo #1E1B4B (244 47% 20%) e âmbar #DC8F09 (38 92% 45%). Ao trocar
+    a paleta padrão, este arquivo acompanha à mão.
+
+    O âmbar já esteve errado aqui: ficou em #F59E0B, que é `38 92% 50%`, cinco
+    pontos mais claro que o token — e o comentário afirmava que os dois batiam.
+    É a deriva que um valor literal produz quando ninguém tem como conferi-lo
+    contra a origem. Ao mexer, converta o HSL do token em vez de copiar de outro
+    arquivo.
 
     O desenho é o mesmo de `components/shell/logo.tsx`, transportado do quadro de
-    24 para o de 32 com folga de 4 px em volta.
+    24 para o de 32 com folga de 4 px em volta. Os arquivos soltos da marca
+    (`public/marca/`) saem do mesmo traçado, por script.
   -->
   <rect width="32" height="32" rx="7" fill="#1E1B4B" />
   <g
@@ -22,6 +29,6 @@
     <path d="M17.79 5.11A9 9 0 1 0 17.79 18.89" />
     <path d="M6.4 6.6H18.2" />
     <path d="M6.4 17.4H18.2" />
-    <path d="M4.7 12H14.4" stroke="#F59E0B" />
+    <path d="M4.7 12H14.4" stroke="#DC8F09" />
   </g>
 </svg>

@@ -4,3 +4,11 @@ node_modules
 dist
 pnpm-lock.yaml
 docs/referencia
+
+# Conteúdo do site, escrito pelo editor de /admin.
+#
+# É gerado por `JSON.stringify(content, null, 2)` em `lib/site/content-store.ts`,
+# não digitado. Cobrá-lo no `format:check` faria toda publicação pela tela deixar
+# o repositório reprovado até alguém lembrar de rodar o formatador — e quem
+# publica texto de marketing não roda formatador.
+apps/web/content/site-content.json

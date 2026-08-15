@@ -18,3 +18,4 @@ export * from "./catalog";
 export * from "./appearance";
 export * from "./commerce";
 export * from "./site";
+export * from "./content";

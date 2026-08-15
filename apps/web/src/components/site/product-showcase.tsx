@@ -10,12 +10,14 @@ import {
   Inbox,
   Megaphone,
   Sparkles,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 
 import {
   AgentPreview,
   AnalyticsPreview,
+  AutomationPreview,
   CampaignPreview,
   ChatbotPreview,
   ContactPreview,
@@ -28,7 +30,7 @@ import { ProductPreview } from "./product-preview";
  *
  * ## Por que abas, e não uma pilha de imagens
  *
- * Sete telas empilhadas viram cinco rolagens de página que ninguém percorre até
+ * Oito telas empilhadas viram seis rolagens de página que ninguém percorre até
  * o fim — e as últimas, que costumam ser as mais decisivas na venda (campanha e
  * agente), nunca são vistas. Em abas, todas ficam a um clique da primeira dobra
  * da seção, e quem quer só o Inbox não paga o pedágio das outras.
@@ -41,10 +43,15 @@ import { ProductPreview } from "./product-preview";
  *
  * ## Nenhuma aba é montada antes de ser aberta
  *
- * O Radix desmonta o painel inativo, então as seis prévias não abertas não
+ * O Radix desmonta o painel inativo, então as sete prévias não abertas não
  * custam DOM nem estilo. Isso importa aqui mais que no produto: esta é a página
  * que abre em rede de celular, e o recálculo de estilo é o gargalo medido deste
  * front — não o JavaScript.
+ *
+ * A desmontagem tem um efeito colateral que aqui é **desejado**: as animações de
+ * entrada de cada prévia rodam de novo a cada vez que a aba é aberta. Quem volta
+ * ao Pipeline vê o negócio mudar de etapa outra vez, em vez de encontrar uma
+ * tela parada que já animou uma vez e nunca mais.
  */
 
 interface Module {
@@ -109,6 +116,19 @@ const MODULES: Module[] = [
       "Transferência para humano leva o resumo do que já foi dito",
     ],
     preview: <ChatbotPreview />,
+  },
+  {
+    key: "automacoes",
+    label: "Automações",
+    icon: Workflow,
+    headline: "Aconteceu isto, confira aquilo, faça isso — e acabou",
+    body: "Regra com gatilho por evento de domínio, condição sobre o cadastro e ações com atraso opcional. Cada execução fica registrada com o que disparou, o que bateu e o que rodou — inclusive quando a condição não bateu e nada aconteceu.",
+    facts: [
+      "Gatilho é evento de domínio, não varredura periódica da base",
+      "Histórico por execução: dá para responder 'por que ele recebeu isso?'",
+      "Acompanhamento por semanas é jornada, com estado próprio por participante",
+    ],
+    preview: <AutomationPreview />,
   },
   {
     key: "campanhas",

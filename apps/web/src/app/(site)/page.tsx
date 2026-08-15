@@ -1,234 +1,167 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AnimatedNumber, Badge, Button, Card, CardContent, Reveal } from "@elora/ui";
-import {
-  ArrowRight,
-  BarChart3,
-  Bot,
-  Building2,
-  CalendarClock,
-  Check,
-  Fingerprint,
-  GitBranch,
-  Inbox,
-  Layers,
-  Lock,
-  Mail,
-  MessagesSquare,
-  PlugZap,
-  Route,
-  Rocket,
-  ScrollText,
-  ShieldCheck,
-  Sparkles,
-  Target,
-  Timer,
-  Workflow,
-} from "lucide-react";
+import { ArrowRight, Bot, Check, Sparkles } from "lucide-react";
 
 import { Faq } from "@/components/site/faq";
-import { PlanCards } from "@/components/site/plan-cards";
+import { PricingSection } from "@/components/site/pricing-section";
 import { ProductPreview } from "@/components/site/product-preview";
 import { ProductShowcase } from "@/components/site/product-showcase";
+import { RichLine, RichText } from "@/components/site/rich-text";
+import { TextRoll } from "@/components/site/text-roll";
+import { contentIcon } from "@/lib/site/icons";
+import { readSiteContent } from "@/lib/site/content-store";
 
-export const metadata: Metadata = {
-  title: "Elora — atendimento, CRM e IA numa plataforma só",
-  description:
-    "Plataforma omnichannel brasileira: WhatsApp, e-mail, Instagram e webchat numa linha do tempo, " +
-    "com CRM 360º, automação auditável, agentes de IA sob controle humano e tabela de preço aberta.",
-};
+/**
+ * A landing page.
+ *
+ * ## O texto saiu daqui, o desenho ficou
+ *
+ * Cada frase desta página vinha de um literal no JSX, e trocar o título do herói
+ * exigia editar este arquivo. Hoje o conteúdo vem de `readSiteContent()` — do
+ * arquivo em disco quando existe, do padrão do código quando não —, e o que
+ * restou aqui é composição: qual peça vai onde, com que espaçamento, em que
+ * ordem de animação.
+ *
+ * A divisão tem uma consequência prática que vale enunciar: **lista vazia
+ * esconde a seção inteira**. Quem apagar todos os cartões de segurança no editor
+ * não fica com um título órfão sobre espaço em branco — a seção some, com a
+ * sobrelinha e o cabeçalho junto.
+ *
+ * ## `generateMetadata`, e não `metadata`
+ *
+ * O título e a descrição também são editáveis, e um `export const metadata`
+ * estático não consegue lê-los: ele é avaliado na carga do módulo, antes de
+ * qualquer leitura de arquivo.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const { landing } = await readSiteContent();
+  return { title: landing.meta.title, description: landing.meta.description };
+}
 
-/* Conteúdo ------------------------------------------------------------------------ */
+export default async function LandingPage() {
+  const content = await readSiteContent();
+  const { landing } = content;
+  const { hero, ai, plans, cta } = landing;
+  const CtaIcon = contentIcon(cta.icon);
 
-const SEGMENTS = [
-  "Contabilidade",
-  "E-commerce",
-  "Clínicas e saúde",
-  "Imobiliárias",
-  "Educação",
-  "Serviços B2B",
-  "Franquias",
-  "Escritórios de advocacia",
-];
-
-const MODULES = [
-  {
-    icon: Inbox,
-    title: "Inbox omnichannel",
-    body: "WhatsApp, e-mail, Instagram, Messenger e webchat na mesma fila, com SLA por política, notas internas, respostas rápidas e transferência com contexto.",
-  },
-  {
-    icon: Building2,
-    title: "CRM 360º",
-    body: "Uma linha do tempo por contato: mensagem, negócio, campanha, consentimento e automação. Resolução de identidade por telefone, e-mail e identificador de canal.",
-  },
-  {
-    icon: Target,
-    title: "Funis de venda",
-    body: "Vários pipelines por processo, com etapa, probabilidade, tempo parado e motivo de perda. Tarefa vinculada a contato e a negócio.",
-  },
-  {
-    icon: Workflow,
-    title: "Automações",
-    body: "Aconteceu isto, confira aquilo, faça isso. Gatilho por evento de domínio, com histórico de execução — não é caixa-preta.",
-  },
-  {
-    icon: Route,
-    title: "Jornadas",
-    body: "Acompanhamento por dias ou meses, com estado próprio por participante, espera, ramificação e versão publicada imutável.",
-  },
-  {
-    icon: GitBranch,
-    title: "Chatbot Builder",
-    body: "Fluxo visual com o mesmo motor no simulador e em produção. O que você aprovou no editor é o que o visitante vê.",
-  },
-  {
-    icon: Mail,
-    title: "Campanhas e E-mail Studio",
-    body: "Segmentação dinâmica, limite de frequência, janela silenciosa, lote e aprovação por tamanho de público. Disparo em massa com freio.",
-  },
-  {
-    icon: BarChart3,
-    title: "Analytics",
-    body: "Dicionário de métricas, SLA por fila, custo por atendimento e volume por canal. Métrica com definição escrita, não número solto.",
-  },
-];
-
-const PROBLEMS = [
-  {
-    icon: Layers,
-    title: "Cinco ferramentas, nenhuma conversa inteira",
-    body: "O WhatsApp num aplicativo, o e-mail em outro, o funil numa planilha. Ninguém consegue responder 'o que já falamos com este cliente?' sem abrir quatro abas.",
-  },
-  {
-    icon: Timer,
-    title: "SLA que ninguém mede porque ninguém consegue",
-    body: "Sem fila, sem distribuição e sem relógio, o atendimento bom depende de quem está de bom humor naquele dia — e o ruim só aparece na reclamação.",
-  },
-  {
-    icon: ScrollText,
-    title: "Automação que ninguém audita",
-    body: "A régua dispara, o cliente reclama, e a pergunta 'por que ele recebeu isso?' fica sem resposta. Sem rastro, ajustar automação vira adivinhação.",
-  },
-];
-
-const STEPS = [
-  {
-    icon: PlugZap,
-    title: "Conecte os canais",
-    body: "Número de WhatsApp oficial, caixa de e-mail, Instagram e o widget de webchat no seu site. A configuração é guiada, etapa por etapa, com o que é seu e o que é nosso separado.",
-    detail: "1 a 3 dias",
-  },
-  {
-    icon: Layers,
-    title: "Desenhe filas e regras",
-    body: "Times, escalas, habilidades e a política de distribuição de cada fila. A prévia mostra quem receberia a próxima conversa e por quê — antes de valer para o cliente.",
-    detail: "1 a 2 semanas",
-  },
-  {
-    icon: Rocket,
-    title: "Ligue a automação e a IA",
-    body: "Chatbot no site, régua de campanha e o agente de IA com base de conhecimento. Começa em leitura, e a escrita entra quando o time confia no rastro.",
-    detail: "a partir da 3ª semana",
-  },
-];
-
-const SECURITY = [
-  {
-    icon: Fingerprint,
-    title: "Multiempresa desde o tipo",
-    body: "Toda entidade carrega a organização a que pertence. Não é filtro na consulta: é a chave que a política de acesso valida em cada linha.",
-  },
-  {
-    icon: Lock,
-    title: "Segredo não volta pela API",
-    body: "Token de canal é gravado no cofre do servidor e nunca devolvido. A tela pergunta se o segredo existe, por nome — nunca o valor.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Consentimento por finalidade",
-    body: "Atendimento, marketing e cobrança são consentimentos distintos, com base legal, versão do texto e data. Revogação para o disparo, não a conversa.",
-  },
-  {
-    icon: CalendarClock,
-    title: "Retenção com prazo escrito",
-    body: "Cada categoria de dado tem política de retenção e anonimização declarada, e toda escrita administrativa deixa registro de auditoria.",
-  },
-];
-
-export default function LandingPage() {
   return (
     <>
       {/* Herói ------------------------------------------------------------- */}
       <section className="aurora bg-primary text-primary-foreground relative overflow-hidden">
         <div className="mx-auto w-full max-w-6xl px-5 pb-20 pt-16 md:pb-28 md:pt-24">
-          <Reveal index={0}>
-            <span className="glass-card text-primary-foreground/85 inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium">
-              <Sparkles className="size-3.5" aria-hidden />
-              Plataforma brasileira · WhatsApp oficial · IA sob controle humano
-            </span>
-          </Reveal>
+          {hero.eyebrow ? (
+            <Reveal index={0}>
+              <span className="glass-card text-primary-foreground/85 inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium">
+                <Sparkles className="size-3.5" aria-hidden />
+                <RichLine>{hero.eyebrow}</RichLine>
+              </span>
+            </Reveal>
+          ) : null}
 
+          {/*
+            Duas formas de título, e a lista de palavras decide qual.
+
+            Sem palavras, é o título de duas partes de sempre. Com palavras, a
+            primeira frase termina na palavra que rola, e a segunda **flui logo
+            depois** em vez de ser empurrada para uma linha própria por uma
+            quebra forçada.
+
+            A quebra existiu e foi removida: com ela, a palavra que rola caía
+            sozinha numa linha e o restante do título deixava um vão à direita —
+            espaço morto no meio da peça que mais precisa de densidade. Quem
+            quebra a linha agora é o texto, quando acabar a largura.
+
+            O ponto final fica aqui e não no conteúdo: é pontuação da composição,
+            e a condicional garante que esvaziar a lista no editor não deixe um
+            ponto órfão no meio da frase.
+          */}
           <Reveal index={1}>
-            <h1 className="font-display mt-6 max-w-3xl text-4xl font-semibold leading-[1.08] tracking-tight md:text-6xl">
-              Adquirir, atender, qualificar, vender e reter.
-              <span className="text-accent"> Numa plataforma só.</span>
+            <h1 className="font-display mt-6 max-w-4xl text-4xl font-semibold leading-[1.12] tracking-tight md:text-[3.4rem]">
+              <RichLine>{hero.titleLead}</RichLine>
+              {hero.titleRoll.length > 0 ? (
+                <>
+                  {" "}
+                  <TextRoll words={hero.titleRoll} charClassName="text-accent" />.{" "}
+                </>
+              ) : null}
+              {hero.titleAccent ? (
+                <span className="text-accent">
+                  {hero.titleRoll.length > 0 ? null : " "}
+                  <RichLine>{hero.titleAccent}</RichLine>
+                </span>
+              ) : null}
             </h1>
           </Reveal>
 
           <Reveal index={2}>
-            <p className="text-primary-foreground/75 mt-5 max-w-2xl text-base leading-relaxed md:text-lg">
-              A Elora junta o atendimento omnichannel, o CRM 360º, a automação e os agentes de
-              inteligência artificial na mesma linha do tempo do contato — com SLA que se mede,
-              automação que se audita e IA que propõe sem gravar sozinha.
-            </p>
+            <RichText className="text-primary-foreground/75 mt-5 max-w-2xl text-base leading-relaxed md:text-lg">
+              {hero.subtitle}
+            </RichText>
           </Reveal>
 
+          {/*
+            A ordem dos botões segue a tese da própria página, escrita lá no
+            rodapé: "comece pelo número, não pela reunião". Com o orçamento em
+            primeiro e o preço num link discreto, a peça dizia o contrário do
+            texto — pedia a reunião antes de mostrar a conta.
+          */}
           <Reveal index={3}>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" variant="accent">
-                <Link href="/orcamento">
-                  Solicitar orçamento
-                  <ArrowRight />
+              {hero.primary.label ? (
+                <Button asChild size="lg" variant="accent">
+                  <Link href={hero.primary.href}>
+                    {hero.primary.label}
+                    <ArrowRight />
+                  </Link>
+                </Button>
+              ) : null}
+              {hero.secondary.label ? (
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent"
+                >
+                  <Link href={hero.secondary.href}>{hero.secondary.label}</Link>
+                </Button>
+              ) : null}
+              {hero.tertiary.label ? (
+                <Link
+                  href={hero.tertiary.href}
+                  className="text-primary-foreground/70 hover:text-primary-foreground text-sm underline underline-offset-4"
+                >
+                  {hero.tertiary.label}
                 </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent"
-              >
-                <Link href="#produto">Ver o produto por dentro</Link>
-              </Button>
-              <Link
-                href="/precos"
-                className="text-primary-foreground/70 hover:text-primary-foreground text-sm underline underline-offset-4"
-              >
-                ou veja a tabela de preços inteira
-              </Link>
+              ) : null}
             </div>
           </Reveal>
 
-          <Reveal index={4}>
-            <dl className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { value: 5, suffix: "", label: "canais numa fila" },
-                { value: 61, suffix: "%", label: "resolvido pela IA" },
-                { value: 40, suffix: "s", label: "primeira resposta" },
-                { value: 8, suffix: "", label: "módulos integrados" },
-              ].map((stat) => (
-                <div key={stat.label} className="glass-card p-3">
-                  <dd className="figure text-2xl font-semibold">
-                    <AnimatedNumber value={stat.value} />
-                    {stat.suffix}
-                  </dd>
-                  <dt className="text-primary-foreground/60 mt-0.5 text-[11px] leading-tight">
-                    {stat.label}
-                  </dt>
-                </div>
-              ))}
-            </dl>
-          </Reveal>
+          {/*
+            Estes números descrevem o **produto**, e é de propósito. Antes
+            traziam "61% resolvido pela IA" e "40 s de primeira resposta":
+            resultado de operação, apresentado como fato, sem um único cliente em
+            produção para sustentá-lo. Número de resultado inventado é a peça mais
+            cara de uma landing page — sobrevive à venda e reaparece na primeira
+            reunião de revisão de contrato.
+          */}
+          {hero.stats.length > 0 ? (
+            <Reveal index={4}>
+              <dl className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+                {hero.stats.map((stat) => (
+                  <div key={stat.id} className="glass-card p-3">
+                    <dd className="figure text-2xl font-semibold">
+                      <AnimatedNumber value={stat.value} />
+                      {stat.suffix}
+                    </dd>
+                    <dt className="text-primary-foreground/60 mt-0.5 text-[11px] leading-tight">
+                      {stat.label}
+                    </dt>
+                  </div>
+                ))}
+              </dl>
+            </Reveal>
+          ) : null}
 
           <Reveal index={5}>
             <div className="mt-12">
@@ -239,67 +172,80 @@ export default function LandingPage() {
       </section>
 
       {/* Segmentos ---------------------------------------------------------- */}
-      <section className="border-border bg-surface-sunken border-b py-6">
-        <p className="text-muted-foreground mb-4 text-center text-[11px] uppercase tracking-wide">
-          Desenhada para operação brasileira, em qualquer setor de alto contato
-        </p>
-        <div className="marquee">
-          <div className="marquee-track gap-10 pr-10">
-            {[...SEGMENTS, ...SEGMENTS].map((segment, index) => (
-              <span
-                key={`${segment}-${index}`}
-                className="text-muted-foreground/70 font-display whitespace-nowrap text-lg font-semibold"
-              >
-                {segment}
-              </span>
-            ))}
+      {landing.segments.length > 0 ? (
+        <section className="border-border bg-surface-sunken border-b py-6">
+          <p className="text-muted-foreground mb-4 text-center text-[11px] uppercase tracking-wide">
+            {landing.segmentsLabel}
+          </p>
+          <div className="marquee">
+            {/*
+              A lista é duplicada porque a marquise rola em laço: sem a segunda
+              cópia, o fim da faixa deixaria um vão branco atravessando a tela
+              antes de recomeçar.
+            */}
+            <div className="marquee-track gap-10 pr-10">
+              {[...landing.segments, ...landing.segments].map((segment, index) => (
+                <span
+                  key={`${segment}-${index}`}
+                  className="text-muted-foreground/70 font-display whitespace-nowrap text-lg font-semibold"
+                >
+                  {segment}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Problema ------------------------------------------------------------ */}
-      <section className="mx-auto w-full max-w-6xl px-5 py-20">
-        <Reveal index={0}>
-          <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
-            O problema
-          </p>
-          <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-            Não falta ferramenta. Falta a conversa inteira num lugar só.
-          </h2>
-        </Reveal>
+      {landing.problems.length > 0 ? (
+        <section className="mx-auto w-full max-w-6xl px-5 py-20">
+          <Reveal index={0}>
+            <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
+              {landing.problem.eyebrow}
+            </p>
+            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+              <RichLine>{landing.problem.title}</RichLine>
+            </h2>
+            <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+              {landing.problem.body}
+            </RichText>
+          </Reveal>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {PROBLEMS.map((problem, index) => (
-            <Reveal key={problem.title} index={index + 1}>
-              <Card className="h-full">
-                <CardContent className="p-5">
-                  <problem.icon className="text-accent size-6" aria-hidden />
-                  <h3 className="font-display mt-3 text-base font-semibold">{problem.title}</h3>
-                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                    {problem.body}
-                  </p>
-                </CardContent>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {landing.problems.map((problem, index) => {
+              const Icon = contentIcon(problem.icon);
+              return (
+                <Reveal key={problem.id} index={index + 1}>
+                  <Card className="h-full">
+                    <CardContent className="p-5">
+                      <Icon className="text-accent size-6" aria-hidden />
+                      <h3 className="font-display mt-3 text-base font-semibold">{problem.title}</h3>
+                      <RichText className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                        {problem.body}
+                      </RichText>
+                    </CardContent>
+                  </Card>
+                </Reveal>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       {/* Por dentro do produto -------------------------------------------------- */}
       <section id="produto" className="bg-surface-sunken scroll-mt-20 py-20">
         <div className="mx-auto w-full max-w-6xl px-5">
           <Reveal index={0}>
             <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
-              Por dentro
+              {landing.showcase.eyebrow}
             </p>
             <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-              Sete telas que mostram como a operação funciona no dia a dia.
+              <RichLine>{landing.showcase.title}</RichLine>
             </h2>
-            <p className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
-              Não é um pacote de produtos integrados por API: é um modelo de dados só. Quando o
-              chatbot qualifica um lead, o funil sabe; quando a campanha é suprimida, a linha do
-              tempo do contato registra o motivo.
-            </p>
+            <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+              {landing.showcase.body}
+            </RichText>
           </Reveal>
 
           <Reveal index={1}>
@@ -311,72 +257,103 @@ export default function LandingPage() {
       </section>
 
       {/* Módulos ---------------------------------------------------------------- */}
-      <section className="mx-auto w-full max-w-6xl px-5 py-20">
-        <Reveal index={0}>
-          <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
-            A plataforma
-          </p>
-          <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-            Oito módulos que compartilham o mesmo contato, o mesmo evento e o mesmo rastro.
-          </h2>
-        </Reveal>
+      {landing.moduleCards.length > 0 ? (
+        <section className="mx-auto w-full max-w-6xl px-5 py-20">
+          <Reveal index={0}>
+            <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
+              {landing.modules.eyebrow}
+            </p>
+            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+              <RichLine>{landing.modules.title}</RichLine>
+            </h2>
+            <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+              {landing.modules.body}
+            </RichText>
+          </Reveal>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {MODULES.map((module, index) => (
-            <Reveal key={module.title} index={Math.min(index + 1, 6)}>
-              <Card className="lift h-full">
-                <CardContent className="p-5">
-                  <span className="bg-accent-soft text-accent-ink inline-flex size-9 items-center justify-center rounded-lg">
-                    <module.icon className="size-4" aria-hidden />
-                  </span>
-                  <h3 className="font-display mt-3 text-sm font-semibold">{module.title}</h3>
-                  <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
-                    {module.body}
-                  </p>
-                </CardContent>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {landing.moduleCards.map((module, index) => {
+              const Icon = contentIcon(module.icon);
+              return (
+                <Reveal key={module.id} index={Math.min(index + 1, 6)}>
+                  <Card className="lift h-full">
+                    <CardContent className="p-5">
+                      <span className="bg-accent-soft text-accent-ink inline-flex size-9 items-center justify-center rounded-lg">
+                        <Icon className="size-4" aria-hidden />
+                      </span>
+                      <h3 className="font-display mt-3 text-sm font-semibold">{module.title}</h3>
+                      <RichText className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                        {module.body}
+                      </RichText>
+                    </CardContent>
+                  </Card>
+                </Reveal>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
-      {/* Implantação ------------------------------------------------------------- */}
-      <section className="bg-surface-sunken py-20">
+      {/* Planos ------------------------------------------------------------------
+          O preço vem aqui, logo depois do que o produto faz — e não no oitavo
+          lugar de onze, que era onde estava. Quem chegou por busca de preço não
+          rola quatro seções para encontrá-lo; e quem gostou do produto quer a
+          conta antes de ler sobre implantação e governança. */}
+      <section id="planos" className="bg-surface-sunken scroll-mt-20 py-20">
         <div className="mx-auto w-full max-w-6xl px-5">
           <Reveal index={0}>
             <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
-              Implantação
+              {plans.eyebrow}
             </p>
             <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-              No ar em três movimentos — e nenhum deles é "migrar tudo de uma vez".
+              <RichLine>{plans.title}</RichLine>
             </h2>
+            <RichText className="text-muted-foreground mt-3 max-w-3xl text-base leading-relaxed">
+              {plans.body}
+            </RichText>
           </Reveal>
 
-          <ol className="mt-10 grid gap-5 md:grid-cols-3">
-            {STEPS.map((step, index) => (
-              <Reveal key={step.title} index={index + 1} as="li">
-                <Card className="lift-3d h-full">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between">
-                      <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
-                        <step.icon className="size-4" aria-hidden />
-                      </span>
-                      <span className="figure text-muted-foreground/40 text-3xl font-semibold">
-                        {index + 1}
-                      </span>
-                    </div>
-                    <h3 className="font-display mt-3 text-base font-semibold">{step.title}</h3>
-                    <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                      {step.body}
-                    </p>
-                    <p className="text-accent-ink border-border mt-4 border-t pt-3 text-xs font-medium">
-                      {step.detail}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Reveal>
-            ))}
-          </ol>
+          {/*
+            `PricingSection` no lugar de `PlanCards`, e a diferença é o
+            alternador de ciclo. A página anunciava só o preço anual e explicava
+            o prêmio do mensal numa nota de rodapé — quem precisa do mensal
+            precisava fazer a conta de cabeça. Agora ele é um clique, e o preço
+            se move em vez de trocar de valor sem aviso.
+
+            `PlanCards` continua existindo: é o que `/precos` usa, onde não há
+            alternador porque a tabela de excedentes logo abaixo já é por edição.
+          */}
+          <div className="mt-10">
+            <PricingSection />
+          </div>
+
+          {/*
+            As notas abaixo são a resposta antecipada às perguntas que todo
+            orçamento de plataforma de mensagem recebe depois de assinado.
+            Deixá-las para a fatura é o que produz a conversa sobre confiança.
+          */}
+          {plans.notes.length > 0 ? (
+            <Reveal index={1}>
+              <div className="mt-8 grid gap-4 md:grid-cols-3">
+                {plans.notes.map((note) => {
+                  const Icon = contentIcon(note.icon);
+                  return (
+                    <Card key={note.id} className="h-full">
+                      <CardContent className="p-5">
+                        <Icon className="text-accent size-5" aria-hidden />
+                        <h3 className="font-display mt-3 text-sm font-semibold">{note.title}</h3>
+                        <RichText className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                          {note.body}
+                        </RichText>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </Reveal>
+          ) : null}
+
+          <RichText className="text-muted-foreground mt-6 text-xs">{plans.footnote}</RichText>
         </div>
       </section>
 
@@ -384,168 +361,168 @@ export default function LandingPage() {
       <section id="ia" className="bg-primary text-primary-foreground scroll-mt-20 py-20">
         <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 lg:grid-cols-[1fr_1fr]">
           <Reveal index={0}>
-            <Badge variant="accent">Inteligência artificial</Badge>
+            {ai.badge ? <Badge variant="accent">{ai.badge}</Badge> : null}
             <h2 className="font-display mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-              A IA propõe. A aplicação valida. A pessoa grava.
+              <RichLine>{ai.title}</RichLine>
             </h2>
-            <p className="text-primary-foreground/75 mt-4 text-base leading-relaxed">
-              É a mesma regra em todos os pontos onde há modelo: copiloto do atendente, agente de
-              autoatendimento, redação de e-mail e extração de dados da conversa. O agente executa o
-              que é leitura — consultar pedido, buscar na base, explicar política. O que é escrita
-              vira pendência com um botão, e o botão é de gente.
-            </p>
+            <RichText className="text-primary-foreground/75 mt-4 text-base leading-relaxed">
+              {ai.body}
+            </RichText>
 
-            <ul className="mt-6 space-y-3">
-              {[
-                "Piso de confiança que transfere para humano, conferido pela aplicação — não pedido ao modelo.",
-                "Teto de custo por conversa, verificado antes de gastar.",
-                "Fila de transferência validada contra o catálogo: fila inventada cai na padrão.",
-                "Rastro completo por passo: decisão, ferramenta, parâmetro, retorno, confiança e custo.",
-                "Conjunto de avaliação executável, com nota por dimensão e versão do prompt.",
-              ].map((item) => (
-                <li key={item} className="flex gap-3 text-sm leading-relaxed">
-                  <Check className="text-accent mt-0.5 size-4 shrink-0" aria-hidden />
-                  <span className="text-primary-foreground/85">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-
-          <Reveal index={1}>
-            <div className="glass-card p-5">
-              <p className="text-primary-foreground/60 flex items-center gap-2 text-[11px] uppercase tracking-wide">
-                <Bot className="size-3.5" aria-hidden />
-                Rastro de uma execução
-              </p>
-
-              <ol className="mt-4 space-y-3">
-                {[
-                  {
-                    step: "1",
-                    title: "Classificou a intenção",
-                    detail: "rastreio_pedido · confiança 0,94 · 320 ms",
-                  },
-                  {
-                    step: "2",
-                    title: "Chamou a ferramenta consultar_pedido",
-                    detail: "leitura permitida na allowlist da versão · executada",
-                  },
-                  {
-                    step: "3",
-                    title: "Respondeu ao cliente",
-                    detail: "gemini-2.5-flash · 812 tokens · R$ 0,004 · prompt v7",
-                  },
-                  {
-                    step: "4",
-                    title: "Propôs alterar endereço de entrega",
-                    detail: "escrita — aguardando confirmação humana no Inbox",
-                    pending: true,
-                  },
-                ].map((row) => (
-                  <li key={row.step} className="flex gap-3">
-                    <span className="border-primary-foreground/25 text-primary-foreground/70 figure flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px]">
-                      {row.step}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium">{row.title}</span>
-                      <span
-                        className={
-                          row.pending
-                            ? "text-accent block text-xs"
-                            : "text-primary-foreground/60 block text-xs"
-                        }
-                      >
-                        {row.detail}
-                      </span>
+            {ai.bullets.length > 0 ? (
+              <ul className="mt-6 space-y-3">
+                {ai.bullets.map((item) => (
+                  <li key={item} className="flex gap-3 text-sm leading-relaxed">
+                    <Check className="text-accent mt-0.5 size-4 shrink-0" aria-hidden />
+                    <span className="text-primary-foreground/85">
+                      <RichLine>{item}</RichLine>
                     </span>
                   </li>
                 ))}
-              </ol>
+              </ul>
+            ) : null}
+          </Reveal>
 
-              <p className="text-primary-foreground/60 border-primary-foreground/15 mt-5 border-t pt-4 text-xs leading-relaxed">
-                Sem esse rastro, depurar agente vira troca de adjetivos e o prompt passa a ser
-                ajustado no escuro.
+          {ai.trace.length > 0 ? (
+            <Reveal index={1}>
+              <div className="glass-card p-5">
+                <p className="text-primary-foreground/60 flex items-center gap-2 text-[11px] uppercase tracking-wide">
+                  <Bot className="size-3.5" aria-hidden />
+                  {ai.traceTitle}
+                </p>
+
+                <ol className="mt-4 space-y-3">
+                  {ai.trace.map((row, index) => (
+                    <li key={row.id} className="flex gap-3">
+                      <span className="border-primary-foreground/25 text-primary-foreground/70 figure flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px]">
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium">{row.title}</span>
+                        <span
+                          className={
+                            row.pending
+                              ? "text-accent block text-xs"
+                              : "text-primary-foreground/60 block text-xs"
+                          }
+                        >
+                          {row.detail}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+
+                {ai.traceFootnote ? (
+                  <RichText className="text-primary-foreground/60 border-primary-foreground/15 mt-5 border-t pt-4 text-xs leading-relaxed">
+                    {ai.traceFootnote}
+                  </RichText>
+                ) : null}
+              </div>
+            </Reveal>
+          ) : null}
+        </div>
+      </section>
+
+      {/* Implantação ------------------------------------------------------------- */}
+      {landing.stepCards.length > 0 ? (
+        <section className="py-20">
+          <div className="mx-auto w-full max-w-6xl px-5">
+            <Reveal index={0}>
+              <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
+                {landing.steps.eyebrow}
               </p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+              <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+                <RichLine>{landing.steps.title}</RichLine>
+              </h2>
+              <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+                {landing.steps.body}
+              </RichText>
+            </Reveal>
 
-      {/* Planos --------------------------------------------------------------------- */}
-      <section id="planos" className="bg-surface-sunken scroll-mt-20 py-20">
-        <div className="mx-auto w-full max-w-6xl px-5">
-          <Reveal index={0}>
-            <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">Edições</p>
-            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-              Dois eixos de preço: quantas pessoas usam e quanto a operação consome.
-            </h2>
-            <p className="text-muted-foreground mt-3 max-w-3xl text-base leading-relaxed">
-              Quem cresce em time paga no assento. Quem cresce em volume paga no consumo. Ninguém
-              paga pelo crescimento do outro — e, na edição de cima, o assento deixa de ser cobrado.
-            </p>
-            <p className="text-muted-foreground mt-3 max-w-3xl text-base leading-relaxed">
-              A tabela é pública e inteira: franquia, preço do excedente e o repasse da Meta em linha
-              própria, sem margem. O que a Elora cobra e o que o provedor cobra aparecem separados de
-              propósito — é o que permite conferir a fatura depois.
-            </p>
-          </Reveal>
-
-          <div className="mt-10">
-            <PlanCards />
+            <ol className="mt-10 grid gap-5 md:grid-cols-3">
+              {landing.stepCards.map((step, index) => {
+                const Icon = contentIcon(step.icon);
+                return (
+                  <Reveal key={step.id} index={index + 1} as="li">
+                    <Card className="lift-3d h-full">
+                      <CardContent className="p-5">
+                        <div className="flex items-center justify-between">
+                          <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
+                            <Icon className="size-4" aria-hidden />
+                          </span>
+                          <span className="figure text-muted-foreground/40 text-3xl font-semibold">
+                            {index + 1}
+                          </span>
+                        </div>
+                        <h3 className="font-display mt-3 text-base font-semibold">{step.title}</h3>
+                        <RichText className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                          {step.body}
+                        </RichText>
+                        {step.detail ? (
+                          <p className="text-accent-ink border-border mt-4 border-t pt-3 text-xs font-medium">
+                            {step.detail}
+                          </p>
+                        ) : null}
+                      </CardContent>
+                    </Card>
+                  </Reveal>
+                );
+              })}
+            </ol>
           </div>
-
-          <p className="text-muted-foreground mt-6 text-xs">
-            Valores no compromisso anual. Sem fidelidade, a assinatura e os assentos custam 25% a
-            mais.{" "}
-            <Link href="/precos" className="text-primary underline underline-offset-4">
-              Ver a tabela completa
-            </Link>
-            .
-          </p>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Segurança -------------------------------------------------------------------- */}
-      <section id="seguranca" className="scroll-mt-20 py-20">
-        <div className="mx-auto w-full max-w-6xl px-5">
-          <Reveal index={0}>
-            <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
-              Segurança e LGPD
-            </p>
-            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-              Governança que aparece no tipo, não só na política de privacidade.
-            </h2>
-          </Reveal>
+      {landing.securityCards.length > 0 ? (
+        <section id="seguranca" className="bg-surface-sunken scroll-mt-20 py-20">
+          <div className="mx-auto w-full max-w-6xl px-5">
+            <Reveal index={0}>
+              <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
+                {landing.security.eyebrow}
+              </p>
+              <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+                <RichLine>{landing.security.title}</RichLine>
+              </h2>
+              <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+                {landing.security.body}
+              </RichText>
+            </Reveal>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {SECURITY.map((item, index) => (
-              <Reveal key={item.title} index={index + 1}>
-                <Card className="h-full">
-                  <CardContent className="p-5">
-                    <item.icon className="text-primary size-5" aria-hidden />
-                    <h3 className="font-display mt-3 text-sm font-semibold">{item.title}</h3>
-                    <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
-                      {item.body}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Reveal>
-            ))}
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {landing.securityCards.map((item, index) => {
+                const Icon = contentIcon(item.icon);
+                return (
+                  <Reveal key={item.id} index={index + 1}>
+                    <Card className="h-full">
+                      <CardContent className="p-5">
+                        <Icon className="text-primary size-5" aria-hidden />
+                        <h3 className="font-display mt-3 text-sm font-semibold">{item.title}</h3>
+                        <RichText className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                          {item.body}
+                        </RichText>
+                      </CardContent>
+                    </Card>
+                  </Reveal>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* FAQ ------------------------------------------------------------------------- */}
-      <section className="bg-surface-sunken py-20">
+      <section className="py-20">
         <div className="mx-auto w-full max-w-4xl px-5">
           <Reveal index={0}>
             <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-              Perguntas que sempre aparecem
+              {landing.faqTitle}
             </h2>
           </Reveal>
           <Reveal index={1}>
             <div className="mt-8">
-              <Faq />
+              <Faq items={content.faq} />
             </div>
           </Reveal>
         </div>
@@ -554,30 +531,32 @@ export default function LandingPage() {
       {/* CTA final --------------------------------------------------------------------- */}
       <section className="bg-primary text-primary-foreground aurora">
         <div className="mx-auto w-full max-w-4xl px-5 py-20 text-center">
-          <MessagesSquare className="text-accent mx-auto size-8" aria-hidden />
+          <CtaIcon className="text-accent mx-auto size-8" aria-hidden />
           <h2 className="font-display mt-5 text-3xl font-semibold tracking-tight md:text-4xl">
-            Comece pelo número, não pela reunião.
+            <RichLine>{cta.title}</RichLine>
           </h2>
-          <p className="text-primary-foreground/75 mx-auto mt-4 max-w-2xl text-base leading-relaxed">
-            Veja a tabela inteira e, se fizer sentido, peça a proposta. O time comercial responde em
-            até um dia útil, com a conta já dimensionada para o seu volume — e leva a demonstração do
-            seu setor para a conversa.
-          </p>
+          <RichText className="text-primary-foreground/75 mx-auto mt-4 max-w-2xl text-base leading-relaxed">
+            {cta.body}
+          </RichText>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild size="lg" variant="accent">
-              <Link href="/orcamento">
-                Solicitar orçamento
-                <ArrowRight />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent"
-            >
-              <Link href="/cadastrar">Criar conta e salvar cenários</Link>
-            </Button>
+            {cta.primary.label ? (
+              <Button asChild size="lg" variant="accent">
+                <Link href={cta.primary.href}>
+                  {cta.primary.label}
+                  <ArrowRight />
+                </Link>
+              </Button>
+            ) : null}
+            {cta.secondary.label ? (
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent"
+              >
+                <Link href={cta.secondary.href}>{cta.secondary.label}</Link>
+              </Button>
+            ) : null}
           </div>
         </div>
       </section>

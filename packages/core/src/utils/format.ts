@@ -13,12 +13,40 @@ const currencyPreciseFormatter = new Intl.NumberFormat(APP_LOCALE, {
   maximumFractionDigits: 2,
 });
 
+/**
+ * Tarifa unitária, com as quatro casas que provedor de mensagem usa.
+ *
+ * Existe porque `currencyFormatter` corta as casas decimais, e para total de
+ * fatura isso é acerto — `R$ 1.480` se lê melhor que `R$ 1.480,00`. Para preço
+ * por mensagem é defeito grave: a tarifa de utilidade da Meta é `R$ 0,0350` e
+ * era exibida como **`R$ 0`**, o que fez o simulador parecer que não cobrava
+ * WhatsApp. O erro passou despercebido porque zero é um número plausível numa
+ * coluna de preço.
+ */
+const rateFormatter = new Intl.NumberFormat(APP_LOCALE, {
+  style: "currency",
+  currency: "BRL",
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
+});
+
 const numberFormatter = new Intl.NumberFormat(APP_LOCALE);
 
 /** Valores monetários trafegam em centavos para evitar erro de ponto flutuante. */
 export function formatCurrencyCents(cents: number, precise = false): string {
   const value = cents / 100;
   return precise ? currencyPreciseFormatter.format(value) : currencyFormatter.format(value);
+}
+
+/**
+ * Tarifa por unidade, recebida em **micros de real** (1 real = 1.000.000).
+ *
+ * A unidade é a de `pricing/meta-rates.ts`, e o parâmetro se chama `micros`
+ * justamente para não ser confundido com centavos por quem completa o nome no
+ * editor — passar centavos aqui divide o número por dez mil em silêncio.
+ */
+export function formatRateMicros(micros: number): string {
+  return rateFormatter.format(micros / 1_000_000);
 }
 
 export function formatNumber(value: number): string {

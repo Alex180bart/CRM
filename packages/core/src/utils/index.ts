@@ -23,3 +23,4 @@ export * from "./app-origin";
 export * from "./product-art";
 export * from "./product-search";
 export * from "./proposal-message";
+export * from "./markup";

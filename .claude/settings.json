@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"e:/Projetos pessoais/CRM-CF/packages/config\" && sed -n '1,124p' tailwind-preset.* 2>/dev/null | grep -n \"surface\\\\|card\\\\|muted\\\\|accent-soft\\\\|border\" | head -25)",
+      "Bash(agent-browser close *)",
+      "Bash(touch apps/web/content/site-content.json)",
+      "Bash(curl -s -o /tmp/adm2.html -w \"%{http_code}\" \"http://localhost:3200/admin\" --max-time 120)",
+      "Read(//tmp/**)",
+      "Bash(powershell -NoProfile -Command 'foreach \\($port in 3101,3102\\) { $c = Get-NetTCPConnection -LocalPort $port -State Listen -EA SilentlyContinue; if \\($c\\) { Stop-Process -Id $c.OwningProcess -Force -EA SilentlyContinue; Write-Output \\('\\\\''encerrado orfao na porta '\\\\'' + $port\\) } }')",
+      "Bash(rm -rf apps/web/.next-check apps/web/.next-perf)",
+      "Bash(powershell -NoProfile -Command '$c = Get-NetTCPConnection -LocalPort 3101 -State Listen -EA SilentlyContinue; if \\($c\\) { Stop-Process -Id $c.OwningProcess -Force -EA SilentlyContinue; '\\\\''orfao 3101 encerrado'\\\\'' } else { '\\\\''3101 livre'\\\\'' }')",
+      "Bash(rm -rf apps/web/.next-check heroi.png heroi2.png)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm lint *)",
+      "Bash(grep -Ev \"^$|^>\")",
+      "Bash(pnpm test *)",
+      "Bash(echo \"lint exit: $?\")",
+      "Bash(rm -rf apps/web/.next-check)",
+      "Bash(powershell -NoProfile -Command '$c = Get-NetTCPConnection -LocalPort 3103 -State Listen -EA SilentlyContinue; if \\($c\\) { Stop-Process -Id $c.OwningProcess -Force -EA SilentlyContinue }')",
+      "Bash(rm -rf apps/web/.next)",
+      "Bash(curl -s -o /dev/null -w \"raiz: %{http_code} em %{time_total}s\\\\n\" http://localhost:3200/)",
+      "Bash(curl -s http://localhost:3200/)",
+      "Bash(grep -oE '<footer[^>]*>.{0,170}')",
+      "Bash(mv \"apps/web/src/app/\\(site\\)/loading.tsx\" \"apps/web/src/app/\\(site\\)/loading.tsx.off\")",
+      "Bash(agent-browser open *)",
+      "Bash(agent-browser wait *)",
+      "Bash(agent-browser eval *)",
+      "Bash(mkdir -p __TRACKED_VAR__/marca)",
+      "Bash(npm init *)",
+      "Bash(timeout 240 npm i opentype.js@2)",
+      "Bash(rm -f final.png verificacao.png heroi.png heroi2.png)",
+      "Bash(echo \"exit $?\")",
+      "Bash(curl -s -o /dev/null -w \"3200 -> %{http_code}\\\\n\" http://localhost:3200/)"
+    ],
+    "additionalDirectories": [
+      "E:\\Projetos pessoais\\CRM-CF\\packages\\ui\\src",
+      "E:\\Projetos pessoais\\CRM-CF\\apps\\web\\.next-check"
+    ]
+  }
+}

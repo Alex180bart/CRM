@@ -20,6 +20,13 @@ import { ArrowRight, Check, Minus } from "lucide-react";
  * dois lados do que perder a venda hoje.
  */
 
+/**
+ * A edição em destaque.
+ *
+ * O selo diz "mais indicada", e não "mais contratada": não há base instalada
+ * para sustentar a segunda frase, e prova social inventada é a única coisa numa
+ * página de preço que continua valendo contra quem escreveu depois da venda.
+ */
 const HIGHLIGHT: string = "profissional";
 
 export function PlanCards({ compact = false }: { compact?: boolean }) {
@@ -39,7 +46,7 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
             <CardContent className="flex flex-1 flex-col p-5">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-display text-lg font-semibold">{plan.name}</h3>
-                {featured ? <Badge variant="accent">mais contratada</Badge> : null}
+                {featured ? <Badge variant="accent">mais indicada</Badge> : null}
                 {plan.seatPriceCents === 0 ? <Badge variant="primary">ilimitado</Badge> : null}
               </div>
 
@@ -53,16 +60,28 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
                 </span>
                 <span className="text-muted-foreground text-sm"> / mês</span>
               </p>
+              {/*
+                A conta aparece somada e aberta.
+
+                "A partir de" sozinho é um número que o cliente não consegue
+                reproduzir, e número irreproduzível numa página de preço tem o
+                mesmo efeito de não publicar preço nenhum: ele pergunta na
+                reunião de qualquer jeito, agora com desconfiança.
+              */}
               <p className="text-muted-foreground mt-1 text-xs leading-snug">
                 {plan.seatPriceCents === 0
                   ? "Assinatura fechada, colaboradores ilimitados"
-                  : `Assinatura + ${plan.minSeats} assentos · ${formatCurrencyCents(plan.seatPriceCents)} por pessoa/mês`}
+                  : `${formatCurrencyCents(plan.platformFeeCents)} de assinatura + ${plan.minSeats} × ${formatCurrencyCents(plan.seatPriceCents)} por pessoa/mês`}
+              </p>
+              <p className="text-muted-foreground/80 mt-1 text-[11px] leading-snug">
+                Fora disso: o que a Meta cobra por mensagem, repassado sem margem.
               </p>
 
               <dl className="border-border mt-4 space-y-1.5 border-t pt-4 text-xs">
                 {[
                   ["Contatos", formatNumber(plan.includedContacts)],
                   ["Conversas / mês", formatNumber(plan.includedConversations)],
+                  ["Mensagens de modelo / mês", formatNumber(plan.includedWhatsappTemplates)],
                   ["E-mails / mês", formatNumber(plan.includedEmails)],
                   ["Respostas de IA / mês", formatNumber(plan.includedAiReplies)],
                   ["Números de WhatsApp", formatNumber(plan.includedWhatsappNumbers)],

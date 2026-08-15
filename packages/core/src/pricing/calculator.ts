@@ -16,8 +16,17 @@
 import type { AddonKey, BillingCycle, PlanDefinition, PlanKey, WhatsappCategory } from "./catalog";
 import type { CostBreakdown, MarginAnalysis } from "./costs";
 import { MARGIN_BY_PLAN, analyzeMargin, estimateMonthlyCost } from "./costs";
+import {
+  CURRENT_META_RATES,
+  MICROS_PER_BRL,
+  metaCostMicros,
+  metaEffectiveRateMicros,
+  microsToCents,
+} from "./meta-rates";
 import type { SetupInput, SetupResult } from "./setup";
 import { DEFAULT_SETUP_INPUT, calculateSetup } from "./setup";
+import type { TaxBreakdown, TaxRegime } from "./taxes";
+import { passthroughTaxDrag, resolveRegime, taxOnSale } from "./taxes";
 import {
   ADDON_BY_KEY,
   MAX_SELF_SERVICE_DISCOUNT_PCT,
@@ -63,7 +72,39 @@ export interface QuoteInput {
   setup?: Omit<SetupInput, "planKey">;
   /** Desconto comercial, em porcentagem. Limitado por `MAX_SELF_SERVICE_DISCOUNT_PCT`. */
   discountPct: number;
+  /**
+   * Contexto tributário **da Elora**, não do cliente.
+   *
+   * Define a alíquota efetiva do Simples desta venda. Fica em `QuoteInput` — e
+   * não numa constante de módulo — porque a alíquota muda com a receita
+   * acumulada da empresa, e a pergunta "o que acontece com a minha margem quando
+   * eu dobrar de tamanho?" é a que a Administração precisa responder arrastando
+   * um controle. Ausente, vale `DEFAULT_TAX_CONTEXT`.
+   */
+  taxContext?: TaxContext;
 }
+
+export interface TaxContext {
+  /** Receita bruta da Elora nos últimos doze meses, em centavos. */
+  rbt12Cents: number;
+  /** Folha dos últimos doze meses, em centavos. Decide o Fator R. */
+  payroll12Cents: number;
+}
+
+/**
+ * O contexto tributário padrão.
+ *
+ * Estimativa declarada, não medição: R$ 1,2 milhão de receita acumulada com
+ * R$ 400 mil de folha dão Fator R de 33% — acima dos 28% —, o que coloca a
+ * empresa no Anexo III, quarta faixa, com alíquota efetiva de cerca de 13%.
+ *
+ * Está aqui, e não escondido no cálculo, para que trocá-lo seja editar um objeto
+ * em vez de caçar um número solto.
+ */
+export const DEFAULT_TAX_CONTEXT: TaxContext = {
+  rbt12Cents: 120_000_000,
+  payroll12Cents: 40_000_000,
+};
 
 export const DEFAULT_QUOTE_INPUT: QuoteInput = {
   planKey: "profissional",
@@ -78,6 +119,7 @@ export const DEFAULT_QUOTE_INPUT: QuoteInput = {
   includeSetup: true,
   setup: DEFAULT_SETUP_INPUT,
   discountPct: 0,
+  taxContext: DEFAULT_TAX_CONTEXT,
 };
 
 /* Saída -------------------------------------------------------------------------- */
@@ -132,6 +174,16 @@ export interface QuoteResult {
   /** Quanto do total é repasse de provedor. */
   passthroughCents: number;
   /**
+   * Mensagens de modelo no mês — marketing, utilidade e autenticação somadas.
+   *
+   * Serviço fica de fora porque não é cobrada por ninguém: nem pela Meta, nem
+   * por nós. Somá-la aqui faria a franquia da edição parecer consumida por
+   * mensagens que nunca custaram nada.
+   */
+  whatsappTemplateMessages: number;
+  /** Nossa receita sobre envio de WhatsApp, já com a franquia da edição descontada. */
+  whatsappPlatformFeeCents: number;
+  /**
    * Composição da implantação, quando pedida.
    *
    * Sai separada das `lines` porque tem outra pergunta por trás: `lines`
@@ -148,6 +200,16 @@ export interface QuoteResult {
    */
   cost: CostBreakdown;
   margin: MarginAnalysis;
+  /**
+   * Imposto desta venda, com o regime e a alíquota que o produziram.
+   *
+   * **Nunca exiba em página pública**, pela mesma razão de `cost` e `margin`: é
+   * a estrutura financeira da empresa. Viaja junto porque a margem sem o imposto
+   * ao lado é um número que ninguém consegue conferir contra a apuração.
+   */
+  tax: TaxBreakdown;
+  /** Regime apurado pelo Fator R do contexto informado. */
+  taxRegime: TaxRegime;
   /** O que impede o orçamento de valer como está. */
   warnings: QuoteWarning[];
 }
@@ -182,6 +244,23 @@ function formatUnits(value: number): string {
 
 function reais(cents: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+}
+
+/**
+ * Tarifa unitária, em micros, escrita com as quatro casas que a Meta publica.
+ *
+ * Existe separada de `reais` porque as duas respondem coisas diferentes: total
+ * de linha se lê com dois decimais, tarifa por mensagem não — `R$ 0,04` no lugar
+ * de `R$ 0,0350` é 14% de erro num número que o cliente vai conferir contra a
+ * fatura da Meta.
+ */
+function tarifa(micros: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  }).format(micros / MICROS_PER_BRL);
 }
 
 /**
@@ -367,27 +446,74 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
   /* Repasse da Meta -------------------------------------------------------------- */
 
   let passthroughCents = 0;
+  /** Mensagens de modelo — as que a nossa taxa alcança. Serviço nunca entra. */
+  let templateMessages = 0;
+
   for (const price of WHATSAPP_PRICES) {
     const volume = Math.max(0, Math.floor(input.whatsapp[price.category] ?? 0));
+    if (price.billableTemplate) templateMessages += volume;
     if (volume === 0) continue;
 
-    const total = volume * price.metaCostCents;
+    const costMicros = metaCostMicros(CURRENT_META_RATES, price.category, volume);
+    const total = microsToCents(costMicros);
     passthroughCents += total;
+
+    /**
+     * Acima da primeira faixa, a tarifa listada deixa de descrever a linha.
+     *
+     * Escrever "10.000.000 × R$ 0,0350" ao lado de um total que sai da escada
+     * produz a conta que o cliente refaz na calculadora e não fecha — e a
+     * primeira conclusão dele não é "existe desconto por volume", é "o número
+     * está errado".
+     */
+    const effectiveMicros = metaEffectiveRateMicros(CURRENT_META_RATES, price.category, volume);
+    const escalonado = Math.abs(effectiveMicros - price.metaCostMicros) > 0.5;
 
     lines.push({
       key: `whatsapp_${price.category}`,
-      label: `WhatsApp — ${price.label}`,
+      label: `WhatsApp ${price.label} — repasse da Meta`,
       detail:
-        price.metaCostCents === 0
+        costMicros === 0
           ? `${formatUnits(volume)} mensagens — a Meta não cobra por esta categoria`
-          : `${formatUnits(volume)} × ${reais(price.metaCostCents)} por mensagem, repassado sem margem`,
+          : escalonado
+            ? `${formatUnits(volume)} mensagens a ${tarifa(effectiveMicros)} em média, já na escada de volume da Meta — repassado sem margem`
+            : `${formatUnits(volume)} × ${tarifa(price.metaCostMicros)} por mensagem, repassado sem margem`,
       kind: "repasse",
       quantity: volume,
       unitLabel: "mensagem",
       totalCents: total,
-      included: price.metaCostCents === 0,
+      included: costMicros === 0,
     });
   }
+
+  /* Taxa da plataforma sobre envio ------------------------------------------------ */
+
+  /**
+   * A nossa margem sobre WhatsApp, em linha própria.
+   *
+   * Separada do repasse de propósito: somadas, a linha única reprecificaria
+   * sozinha a cada reajuste da Meta e o cliente perderia o número que confere
+   * contra a fatura dela. Ver o cabeçalho de `catalog.ts`.
+   */
+  const billableTemplates = Math.max(0, templateMessages - plan.includedWhatsappTemplates);
+  const whatsappFeeCents = applyBilling(
+    microsToCents(billableTemplates * plan.whatsappTemplateFeeMicros),
+    input.billing,
+  );
+
+  lines.push({
+    key: "whatsapp_plataforma",
+    label: "Envio de mensagens — taxa da plataforma",
+    detail:
+      billableTemplates === 0
+        ? `${formatUnits(templateMessages)} mensagens de modelo — dentro das ${formatUnits(plan.includedWhatsappTemplates)} inclusas`
+        : `${formatUnits(billableTemplates)} mensagens × ${tarifa(plan.whatsappTemplateFeeMicros)} além das ${formatUnits(plan.includedWhatsappTemplates)} inclusas`,
+    kind: "consumo",
+    quantity: templateMessages,
+    unitLabel: "mensagem",
+    totalCents: whatsappFeeCents,
+    included: billableTemplates === 0,
+  });
 
   /* Add-ons ---------------------------------------------------------------------- */
 
@@ -544,6 +670,23 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
     emails: input.emails,
     aiReplies: input.aiReplies,
     whatsappNumbers,
+    whatsappTemplates: templateMessages,
+  });
+
+  /**
+   * O imposto incide sobre a nota inteira, repasse incluído.
+   *
+   * O Simples tributa faturamento, sem deduzir custo — então o repasse da Meta
+   * é receita tributada com margem zero. Excluí-lo desta base produziria a
+   * margem otimista pelo valor exato do prejuízo que ele causa.
+   */
+  const taxContext = input.taxContext ?? DEFAULT_TAX_CONTEXT;
+  const regime = resolveRegime(taxContext.payroll12Cents, taxContext.rbt12Cents);
+  const tax = taxOnSale({
+    grossRevenueCents: monthlyTotalCents,
+    passthroughCents,
+    rbt12Cents: taxContext.rbt12Cents,
+    regime,
   });
 
   const margin = analyzeMargin({
@@ -551,7 +694,24 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
     revenueCents: monthlyTotalCents - passthroughCents,
     discountPct,
     policy: MARGIN_BY_PLAN[plan.key],
+    taxRatePct: tax.effectiveRatePct,
+    passthroughTaxCents: tax.passthroughTaxCents,
   });
+
+  /**
+   * O repasse dentro da nossa nota tem um custo anual, e ele é anunciado.
+   *
+   * Sem este aviso o número some: ninguém procura por um prejuízo que não tem
+   * linha. Só aparece quando passa de R$ 1.000 por ano — abaixo disso é ruído
+   * num painel que já tem muita informação.
+   */
+  const passthroughDragCents = passthroughTaxDrag(passthroughCents, tax.effectiveRatePct);
+  if (passthroughDragCents >= 100_000) {
+    warnings.push({
+      severity: "informacao",
+      message: `Faturar o repasse da Meta pela nossa nota custa ${reais(passthroughDragCents)} por ano de imposto sobre dinheiro que não é nosso. Avalie deixar a conta da Meta no nome do cliente.`,
+    });
+  }
 
   if (margin.status === "prejuizo") {
     warnings.push({
@@ -582,9 +742,13 @@ export function calculateQuote(input: QuoteInput): QuoteResult {
     costPerSeatCents: requestedSeats > 0 ? Math.round(monthlyTotalCents / requestedSeats) : 0,
     costPerConversationCents: conversations > 0 ? Math.round(monthlyTotalCents / conversations) : 0,
     passthroughCents,
+    whatsappTemplateMessages: templateMessages,
+    whatsappPlatformFeeCents: whatsappFeeCents,
     setup,
     cost,
     margin,
+    tax,
+    taxRegime: regime,
     warnings,
   };
 }

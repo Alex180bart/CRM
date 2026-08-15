@@ -6,19 +6,20 @@ import {
   WHATSAPP_PRICES,
   formatCurrencyCents,
   formatNumber,
+  formatRateMicros,
 } from "@elora/core";
 import { Button, Card, CardContent, Reveal } from "@elora/ui";
 import { ArrowRight } from "lucide-react";
 
 import { Faq } from "@/components/site/faq";
 import { PlanCards } from "@/components/site/plan-cards";
+import { RichLine, RichText } from "@/components/site/rich-text";
+import { readSiteContent } from "@/lib/site/content-store";
 
-export const metadata: Metadata = {
-  title: "Preços",
-  description:
-    "Edições, franquias, preço por excedente e o repasse da Meta — a tabela inteira, aberta, " +
-    "antes de falar com vendedor.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { pricing } = await readSiteContent();
+  return { title: pricing.meta.title, description: pricing.meta.description };
+}
 
 /**
  * Página de preços.
@@ -26,6 +27,15 @@ export const metadata: Metadata = {
  * A tabela de excedente vem depois dos cartões, e não escondida atrás de um
  * "consulte-nos". O preço do excedente é o que decide a conta de quem cresce, e
  * é exatamente o número que costuma aparecer só na terceira fatura.
+ *
+ * ## O texto é editável; os números, não
+ *
+ * Título, chamada e nota de rodapé vêm do conteúdo editável. As sete tabelas
+ * continuam sendo geradas a partir de `PLANS`, `ADDONS` e `WHATSAPP_PRICES` —
+ * duplicar um preço num campo de texto criaria a divergência que aparece na pior
+ * hora: o site anunciando um valor que a proposta não confirma. Onde o texto
+ * precisa citar um número, ele usa marcador (`{vigencia}`), resolvido contra o
+ * catálogo na renderização.
  *
  * ## Por que não há simulador aqui
  *
@@ -35,19 +45,20 @@ export const metadata: Metadata = {
  * cliente é o oposto de um "consulte-nos", que esconde os números.
  */
 export default async function PrecosPage() {
+  const content = await readSiteContent();
+  const { pricing } = content;
+
   return (
     <>
       <section className="bg-primary text-primary-foreground aurora">
         <div className="mx-auto w-full max-w-6xl px-5 py-16 md:py-20">
           <Reveal index={0}>
             <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-              Preço em dois eixos: quantas pessoas usam e quanto a operação consome.
+              <RichLine>{pricing.hero.title}</RichLine>
             </h1>
-            <p className="text-primary-foreground/75 mt-4 max-w-2xl text-base leading-relaxed">
-              Assinatura da plataforma, assento e consumo medido — separados, para que o
-              crescimento de um não pague pelo do outro. O que o provedor cobra viaja como repasse,
-              sem margem e em linha própria.
-            </p>
+            <RichText className="text-primary-foreground/75 mt-4 max-w-2xl text-base leading-relaxed">
+              {pricing.hero.subtitle}
+            </RichText>
           </Reveal>
         </div>
       </section>
@@ -61,13 +72,11 @@ export default async function PrecosPage() {
         <div className="mx-auto w-full max-w-6xl px-5">
           <Reveal index={0}>
             <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
-              O que custa passar da franquia
+              <RichLine>{pricing.overage.title}</RichLine>
             </h2>
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-              Contato é cobrado em faixas <strong>progressivas</strong>: cada fatia paga o preço da
-              própria faixa. Aplicar o preço da faixa final ao total produziria o salto em que
-              cadastrar mil contatos a mais reduz a fatura.
-            </p>
+            <RichText className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+              {pricing.overage.body}
+            </RichText>
           </Reveal>
 
           <div className="mt-8 overflow-x-auto">
@@ -79,6 +88,7 @@ export default async function PrecosPage() {
                   <th className="py-2.5 pr-4 font-semibold">Conversa extra</th>
                   <th className="py-2.5 pr-4 font-semibold">E-mail extra (por mil)</th>
                   <th className="py-2.5 pr-4 font-semibold">Resposta de IA (por mil)</th>
+                  <th className="py-2.5 pr-4 font-semibold">Envio de WhatsApp (por msg)</th>
                   <th className="py-2.5 font-semibold">Implantação</th>
                 </tr>
               </thead>
@@ -100,6 +110,9 @@ export default async function PrecosPage() {
                     <td className="figure py-3 pr-4">
                       {formatCurrencyCents(plan.aiOveragePerThousandCents)}
                     </td>
+                    <td className="figure py-3 pr-4">
+                      {formatRateMicros(plan.whatsappTemplateFeeMicros)}
+                    </td>
                     <td className="figure py-3">{formatCurrencyCents(plan.setupCents)}</td>
                   </tr>
                 ))}
@@ -107,49 +120,78 @@ export default async function PrecosPage() {
             </table>
           </div>
 
-          <p className="text-muted-foreground mt-3 text-xs">
-            A seta indica a progressão entre faixas — a franquia da edição vale até o teto declarado,
-            e o excedente cai na faixa seguinte, pelo preço dela.
-          </p>
+          <RichText className="text-muted-foreground mt-3 text-xs">
+            {pricing.overage.footnote}
+          </RichText>
 
           {/* WhatsApp */}
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
+            {/*
+              Duas colunas de preço, e não uma soma.
+
+              O cliente recebe fatura da Meta e fatura nossa. Publicar só o total
+              deixaria ele sem como conferir nem uma nem outra — e a primeira
+              conclusão de quem não consegue conferir é que está pagando a mais.
+            */}
             <Card>
               <CardContent className="p-5">
-                <h3 className="font-display text-base font-semibold">Repasse do WhatsApp</h3>
-                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                  Valores cobrados pela Meta, referência de agosto de 2026 para o Brasil. Repassados
-                  sem margem — o desconto comercial não incide sobre eles.
-                </p>
+                <h3 className="font-display text-base font-semibold">
+                  <RichLine>{pricing.whatsapp.title}</RichLine>
+                </h3>
+                <RichText className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  {pricing.whatsapp.body}
+                </RichText>
                 <ul className="divide-border mt-4 divide-y">
                   {WHATSAPP_PRICES.map((price) => (
-                    <li key={price.category} className="flex items-baseline justify-between gap-4 py-2.5">
+                    <li
+                      key={price.category}
+                      className="flex items-baseline justify-between gap-4 py-2.5"
+                    >
                       <span>
                         <span className="text-sm font-medium">{price.label}</span>
                         <span className="text-muted-foreground block text-xs leading-snug">
                           {price.description}
                         </span>
                       </span>
-                      <span className="figure shrink-0 text-sm font-semibold">
-                        {price.metaCostCents === 0
-                          ? "grátis"
-                          : `${formatCurrencyCents(price.metaCostCents)} / msg`}
+                      <span className="shrink-0 text-right">
+                        <span className="figure block text-sm font-semibold">
+                          {price.metaCostMicros === 0
+                            ? "grátis"
+                            : `${formatRateMicros(price.metaCostMicros)} / msg`}
+                        </span>
+                        <span className="text-muted-foreground block text-[10px] font-normal">
+                          {price.billableTemplate ? "repasse da Meta" : "não é cobrada"}
+                        </span>
                       </span>
                     </li>
                   ))}
                 </ul>
+                {/*
+                  As duas datas viajam como marcador (`{vigencia}`, `{conferencia}`)
+                  e são resolvidas contra `CURRENT_META_RATES` na renderização. É o
+                  que permite editar a frase sem que a data possa ficar para trás
+                  da tabela que ela descreve.
+                */}
+                <RichText className="text-muted-foreground mt-3 text-xs leading-relaxed">
+                  {pricing.whatsapp.footnote}
+                </RichText>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-5">
-                <h3 className="font-display text-base font-semibold">Complementos</h3>
-                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                  Contratáveis por edição. Alguns já vêm inclusos nas edições superiores.
-                </p>
+                <h3 className="font-display text-base font-semibold">
+                  <RichLine>{pricing.addons.title}</RichLine>
+                </h3>
+                <RichText className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  {pricing.addons.body}
+                </RichText>
                 <ul className="divide-border mt-4 divide-y">
                   {ADDONS.map((addon) => (
-                    <li key={addon.key} className="flex items-baseline justify-between gap-4 py-2.5">
+                    <li
+                      key={addon.key}
+                      className="flex items-baseline justify-between gap-4 py-2.5"
+                    >
                       <span>
                         <span className="text-sm font-medium">{addon.name}</span>
                         <span className="text-muted-foreground block text-xs leading-snug">
@@ -171,7 +213,7 @@ export default async function PrecosPage() {
 
           {/* Franquias comparadas */}
           <div className="mt-12 overflow-x-auto">
-            <h3 className="font-display text-base font-semibold">O que está incluído</h3>
+            <h3 className="font-display text-base font-semibold">{pricing.included.title}</h3>
             <table className="mt-4 w-full min-w-[720px] border-collapse text-sm">
               <thead>
                 <tr className="border-border border-b text-left">
@@ -187,9 +229,19 @@ export default async function PrecosPage() {
                 {(
                   [
                     ["Contatos", (p: (typeof PLANS)[number]) => formatNumber(p.includedContacts)],
-                    ["Conversas", (p: (typeof PLANS)[number]) => formatNumber(p.includedConversations)],
+                    [
+                      "Conversas",
+                      (p: (typeof PLANS)[number]) => formatNumber(p.includedConversations),
+                    ],
                     ["E-mails", (p: (typeof PLANS)[number]) => formatNumber(p.includedEmails)],
-                    ["Respostas de IA", (p: (typeof PLANS)[number]) => formatNumber(p.includedAiReplies)],
+                    [
+                      "Respostas de IA",
+                      (p: (typeof PLANS)[number]) => formatNumber(p.includedAiReplies),
+                    ],
+                    [
+                      "Mensagens de modelo",
+                      (p: (typeof PLANS)[number]) => formatNumber(p.includedWhatsappTemplates),
+                    ],
                     [
                       "Números de WhatsApp",
                       (p: (typeof PLANS)[number]) => formatNumber(p.includedWhatsappNumbers),
@@ -222,29 +274,26 @@ export default async function PrecosPage() {
           <Card>
             <CardContent className="p-8 md:p-10">
               <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
-                A conta do seu caso, feita com você
+                <RichLine>{pricing.close.title}</RichLine>
               </h2>
-              <p className="text-muted-foreground mt-3 max-w-2xl text-sm leading-relaxed">
-                Tudo o que entra no preço está nesta página: assinatura, assento, franquia, preço do
-                excedente e o repasse da Meta linha a linha. O que falta é o seu volume — e aí a
-                conversa vale mais que um formulário, porque metade das operações descobre no meio
-                dela que precisa de menos do que imaginava.
-              </p>
-              <p className="text-muted-foreground mt-3 max-w-2xl text-sm leading-relaxed">
-                O time comercial monta o cenário com os seus números na primeira ligação e manda a
-                planilha aberta, com cada linha separada. Resposta em até um dia útil.
-              </p>
+              <RichText className="text-muted-foreground mt-3 max-w-2xl text-sm leading-relaxed">
+                {pricing.close.body}
+              </RichText>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Button asChild size="lg" variant="accent">
-                  <Link href="/orcamento">
-                    Solicitar proposta
-                    <ArrowRight />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/cadastrar">Criar conta e acompanhar</Link>
-                </Button>
+                {pricing.close.primary.label ? (
+                  <Button asChild size="lg" variant="accent">
+                    <Link href={pricing.close.primary.href}>
+                      {pricing.close.primary.label}
+                      <ArrowRight />
+                    </Link>
+                  </Button>
+                ) : null}
+                {pricing.close.secondary.label ? (
+                  <Button asChild size="lg" variant="outline">
+                    <Link href={pricing.close.secondary.href}>{pricing.close.secondary.label}</Link>
+                  </Button>
+                ) : null}
               </div>
             </CardContent>
           </Card>
@@ -253,17 +302,13 @@ export default async function PrecosPage() {
 
       <section id="faq" className="bg-surface-sunken scroll-mt-20 py-16">
         <div className="mx-auto w-full max-w-4xl px-5">
-          <h2 className="font-display text-2xl font-semibold tracking-tight">Dúvidas de preço</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight">
+            {pricing.faq.title}
+          </h2>
           <div className="mt-6">
-            <Faq />
+            <Faq items={content.faq} />
           </div>
-          <p className="text-muted-foreground mt-8 text-sm">
-            Ficou algo de fora?{" "}
-            <Link href="/orcamento" className="text-primary font-medium underline underline-offset-4">
-              Peça um orçamento
-            </Link>{" "}
-            e escreva a pergunta no campo aberto — ela vai junto com o cenário.
-          </p>
+          <RichText className="text-muted-foreground mt-8 text-sm">{pricing.faq.footnote}</RichText>
         </div>
       </section>
     </>

@@ -1,8 +1,9 @@
 import { DEMO_VERTICALS, type DemoVerticalMeta } from "@elora/core";
 import { Badge, Button, Card, CardContent, cn } from "@elora/ui";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Lock } from "lucide-react";
 
 import { openVerticalAction } from "@/app/(site)/actions";
+import { produtoExposto } from "@/lib/site/exposicao";
 
 /**
  * Vitrine das bases de demonstração.
@@ -29,10 +30,13 @@ export function VerticalCard({
   vertical,
   index,
   compact = false,
+  disponivel = true,
 }: {
   vertical: DemoVerticalMeta;
   index: number;
   compact?: boolean;
+  /** Falso quando o produto não está publicado neste domínio — ver `VerticalGallery`. */
+  disponivel?: boolean;
 }) {
   return (
     <Card
@@ -88,24 +92,71 @@ export function VerticalCard({
           ))}
         </div>
 
-        <form action={openVerticalAction} className="mt-5 pt-1">
-          <input type="hidden" name="vertical" value={vertical.id} />
-          <Button type="submit" className="w-full" variant="outline">
-            Abrir esta demonstração
-            <ArrowRight />
-          </Button>
-        </form>
+        {disponivel ? (
+          <form action={openVerticalAction} className="mt-5 pt-1">
+            <input type="hidden" name="vertical" value={vertical.id} />
+            <Button type="submit" className="w-full" variant="outline">
+              Abrir esta demonstração
+              <ArrowRight />
+            </Button>
+          </form>
+        ) : (
+          /**
+           * Botão desabilitado, e não botão que redireciona.
+           *
+           * Sem a guarda, o clique levava a `/inicio` — que o middleware devolve
+           * para a home. O efeito era o pior: parecia que o sistema tinha
+           * engolido o clique, e a pessoa clicava de novo esperando outro
+           * resultado. Dizer que a base não abre aqui custa uma linha e encerra a
+           * dúvida.
+           */
+          <div className="mt-5 pt-1">
+            <Button type="button" className="w-full" variant="outline" disabled>
+              <Lock />
+              Indisponível neste domínio
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
+/**
+ * A galeria pergunta ao ambiente, e não a quem a desenha.
+ *
+ * Ela aparece em dois lugares (`/admin` e `/conta`), e um terceiro chegará. Uma
+ * propriedade obrigatória faria a próxima tela nascer com o botão que não abre
+ * nada — o mesmo raciocínio do teste que impede a lista de prefixos de envelhecer.
+ */
 export function VerticalGallery({ compact = false }: { compact?: boolean }) {
+  const disponivel = produtoExposto(process.env);
+
   return (
-    <div className="grid gap-5 md:grid-cols-2">
-      {DEMO_VERTICALS.map((vertical, index) => (
-        <VerticalCard key={vertical.id} vertical={vertical} index={index} compact={compact} />
-      ))}
+    <div className="space-y-4">
+      {!disponivel ? (
+        <p className="border-border bg-surface-sunken text-muted-foreground rounded-lg border p-3 text-sm leading-relaxed">
+          <strong className="text-foreground font-medium">
+            O produto não está publicado neste domínio.
+          </strong>{" "}
+          Só o site público vai ao ar aqui — o workspace não verifica sessão e a base de demonstração
+          é única para toda a instalação, então carregar uma vertical trocaria os dados de quem
+          estivesse apresentando no mesmo instante. As bases abaixo continuam disponíveis no ambiente
+          local e em deploy de prévia.
+        </p>
+      ) : null}
+
+      <div className="grid gap-5 md:grid-cols-2">
+        {DEMO_VERTICALS.map((vertical, index) => (
+          <VerticalCard
+            key={vertical.id}
+            vertical={vertical}
+            index={index}
+            compact={compact}
+            disponivel={disponivel}
+          />
+        ))}
+      </div>
     </div>
   );
 }

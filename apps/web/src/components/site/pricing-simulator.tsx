@@ -12,6 +12,7 @@ import {
   WHATSAPP_PRICES,
   calculateQuote,
   formatCurrencyCents,
+  formatRateMicros,
   recommendPlan,
   type AddonKey,
   type PlanKey,
@@ -46,10 +47,41 @@ import { AlertTriangle, Info, Lightbulb, Users } from "lucide-react";
  */
 
 const CURRENCY = (cents: number) => formatCurrencyCents(cents);
+const units = (value: number) => new Intl.NumberFormat("pt-BR").format(value);
+
+/**
+ * Faixas de faturamento, e não campo aberto.
+ *
+ * Ninguém do outro lado da mesa sabe o faturamento exato da empresa dele de
+ * cabeça, e um campo aberto pede exatamente isso — o resultado é o vendedor
+ * chutando um número redondo que cai na faixa errada. A faixa é o que ele sabe
+ * responder, e é tudo que o cálculo precisa.
+ *
+ * Os cortes acompanham os de `COMPANY_SIZE_BANDS`: cada opção é um valor
+ * representativo **dentro** da faixa, não o teto dela — o teto na fronteira
+ * enquadraria por um centavo de diferença.
+ */
+const REVENUE_OPTIONS = [
+  { value: 20_000_000, label: "Até R$ 360 mil" },
+  { value: 300_000_000, label: "R$ 360 mil a R$ 4,8 mi" },
+  { value: 2_000_000_000, label: "R$ 4,8 mi a R$ 30 mi" },
+  { value: 20_000_000_000, label: "R$ 30 mi a R$ 300 mi" },
+  { value: 50_000_000_000, label: "Acima de R$ 300 mi" },
+];
 
 interface FieldProps {
   label: string;
   hint?: string;
+  /**
+   * A franquia da edição e o preço de quem passa dela.
+   *
+   * Existe porque a versão anterior só anotava preço nos campos de WhatsApp: em
+   * "Respostas geradas por IA por mês" não havia valor nenhum, e o campo parecia
+   * ser só um dimensionador sem custo. Num simulador de preço, campo sem preço é
+   * lido como campo grátis — e a linha correspondente só aparecia lá embaixo, no
+   * resultado, depois que a pessoa já tinha escolhido o número.
+   */
+  price?: string;
   value: number;
   min: number;
   max: number;
@@ -58,14 +90,19 @@ interface FieldProps {
   onChange: (value: number) => void;
 }
 
-function NumberField({ label, hint, value, min, max, step, suffix, onChange }: FieldProps) {
+function NumberField({ label, hint, price, value, min, max, step, suffix, onChange }: FieldProps) {
   const id = React.useId();
 
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={id} className="text-sm font-medium">
+        <label htmlFor={id} className="min-w-0 text-sm font-medium">
           {label}
+          {price ? (
+            <span className="text-accent-ink block text-[11px] font-normal leading-tight">
+              {price}
+            </span>
+          ) : null}
         </label>
         <div className="flex items-baseline gap-1">
           <input
@@ -139,7 +176,7 @@ function SetupField({
         onChange={(event) =>
           onChange(Math.min(max, Math.max(min, Number(event.target.value) || 0)))
         }
-        className="border-input bg-surface focus-visible:ring-ring figure h-8 w-20 shrink-0 rounded-md border px-2 text-right text-sm focus-visible:outline-none focus-visible:ring-2"
+        className="border-input bg-surface focus-visible:ring-ring figure h-8 w-24 shrink-0 rounded-md border px-2 text-right text-sm focus-visible:outline-none focus-visible:ring-2"
       />
     </div>
   );
@@ -225,6 +262,7 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
     }));
   }, []);
 
+  const plan = PLAN_BY_KEY[input.planKey];
   const result = React.useMemo(() => calculateQuote(input), [input]);
   const suggestion = React.useMemo(() => recommendPlan(input), [input]);
   const maxLineCents = Math.max(...result.lines.map((line) => line.totalCents), 1);
@@ -300,10 +338,15 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
 
           <NumberField
             label="Colaboradores com acesso"
+            price={
+              plan.seatPriceCents === 0
+                ? "Sem cobrança por assento nesta edição"
+                : `${CURRENCY(plan.seatPriceCents)} por pessoa/mês · mínimo de ${plan.minSeats}`
+            }
             hint={
-              PLAN_BY_KEY[input.planKey].seatPriceCents === 0
+              plan.seatPriceCents === 0
                 ? "Nesta edição o assento não é cobrado — cadastre a operação inteira."
-                : `A edição ${PLAN_BY_KEY[input.planKey].name} vai de ${PLAN_BY_KEY[input.planKey].minSeats} a ${PLAN_BY_KEY[input.planKey].maxSeats} pessoas.`
+                : `A edição ${plan.name} vai de ${plan.minSeats} a ${plan.maxSeats} pessoas.`
             }
             value={input.seats}
             min={1}
@@ -315,7 +358,8 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
 
           <NumberField
             label="Contatos na base"
-            hint="Contatos ativos, não histórico arquivado. A cobrança extra é progressiva por faixa."
+            price={`${units(plan.includedContacts)} inclusos · depois ${CURRENCY(plan.contactTiers[0]!.pricePerThousandCents)} por mil, em faixas progressivas`}
+            hint="Contatos ativos, não histórico arquivado. Cada fatia paga o preço da própria faixa."
             value={input.contacts}
             min={0}
             max={500_000}
@@ -326,6 +370,7 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
 
           <NumberField
             label="Conversas tratadas por mês"
+            price={`${units(plan.includedConversations)} inclusas · depois ${formatCurrencyCents(plan.conversationOverageCents, true)} cada`}
             hint="Uma conversa é um atendimento, não uma mensagem — some todos os canais."
             value={input.conversations}
             min={0}
@@ -337,6 +382,7 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
 
           <NumberField
             label="E-mails enviados por mês"
+            price={`${units(plan.includedEmails)} inclusos · depois ${CURRENCY(plan.emailOveragePerThousandCents)} por mil`}
             hint="Campanha e transacional somados."
             value={input.emails}
             min={0}
@@ -348,6 +394,7 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
 
           <NumberField
             label="Respostas geradas por IA por mês"
+            price={`${units(plan.includedAiReplies)} inclusas · depois ${CURRENCY(plan.aiOveragePerThousandCents)} por mil`}
             hint="Copiloto do atendente, agente autônomo e redação de e-mail."
             value={input.aiReplies}
             min={0}
@@ -361,16 +408,29 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
         <div>
           <h3 className="font-display text-base font-semibold">3. Mensagens de WhatsApp</h3>
           <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-            A Meta cobra por mensagem, por categoria, e nós repassamos sem margem. Resposta dentro
-            da janela de 24 h aberta pelo cliente é gratuita — em atendimento, costuma ser a maior
-            fatia.
+            Cada mensagem de modelo tem dois preços: o que a Meta cobra, repassado sem margem, e a
+            taxa de envio da plataforma, que só aparece acima das{" "}
+            {new Intl.NumberFormat("pt-BR").format(plan.includedWhatsappTemplates)} inclusas nesta
+            edição. Resposta dentro da janela de 24 h é gratuita nos dois — em atendimento, costuma
+            ser a maior fatia.
           </p>
 
+          {/*
+            A tarifa aparece com quatro casas porque é assim que a Meta publica.
+            Com o formatador de moeda padrão, `R$ 0,0350` virava `R$ 0` e o
+            simulador dava a impressão de não cobrar WhatsApp nenhum — que é
+            exatamente o defeito que este bloco existia para não ter.
+          */}
           <div className="mt-3 space-y-4">
             {WHATSAPP_PRICES.map((price) => (
               <NumberField
                 key={price.category}
-                label={`${price.label} — ${price.metaCostCents === 0 ? "grátis" : `${CURRENCY(price.metaCostCents)} / msg`}`}
+                label={price.label}
+                price={
+                  price.metaCostMicros === 0
+                    ? "Não é cobrada — nem pela Meta, nem por nós"
+                    : `${formatRateMicros(price.metaCostMicros)} de repasse da Meta + ${formatRateMicros(plan.whatsappTemplateFeeMicros)} de taxa da plataforma acima da franquia`
+                }
                 hint={price.description}
                 value={input.whatsapp[price.category]}
                 min={0}
@@ -478,6 +538,80 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
 
               {input.includeSetup ? (
                 <div className="border-border mt-3 space-y-3 border-t pt-3">
+                  {/*
+                    O porte vem primeiro, e não junto das parcelas técnicas.
+
+                    As parcelas contam o que se instala; o porte conta o que se
+                    negocia — comitê, homologação em janela, parecer jurídico.
+                    Eram esses os projetos que estouravam hora sem ninguém saber
+                    explicar por quê, e agora eles têm campo e linha.
+                  */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <label htmlFor="faturamento" className="min-w-0 text-xs">
+                        Faturamento anual
+                        <span className="text-muted-foreground block text-[11px]">
+                          Da empresa do cliente
+                        </span>
+                      </label>
+                      <select
+                        id="faturamento"
+                        value={setup.annualRevenueCents}
+                        onChange={(event) =>
+                          patchSetup({ annualRevenueCents: Number(event.target.value) })
+                        }
+                        className="border-input bg-surface focus-visible:ring-ring h-8 w-36 shrink-0 rounded-md border px-2 text-xs focus-visible:outline-none focus-visible:ring-2"
+                      >
+                        {REVENUE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <SetupField
+                      label="Colaboradores da empresa"
+                      hint="Total, não só o time de atendimento"
+                      value={setup.employees}
+                      min={1}
+                      max={20_000}
+                      onChange={(value) => patchSetup({ employees: value })}
+                    />
+                    <SetupField
+                      label="Unidades, filiais ou CNPJs"
+                      value={setup.businessUnits}
+                      min={1}
+                      max={200}
+                      onChange={(value) => patchSetup({ businessUnits: value })}
+                    />
+
+                    <div className="flex items-center justify-between gap-2">
+                      <label htmlFor="regulado" className="min-w-0 text-xs">
+                        Setor regulado
+                        <span className="text-muted-foreground block text-[11px]">
+                          Saúde, financeiro ou jurídico
+                        </span>
+                      </label>
+                      <Switch
+                        id="regulado"
+                        checked={setup.regulatedSector}
+                        onCheckedChange={(checked) => patchSetup({ regulatedSector: checked })}
+                        aria-label="Setor regulado"
+                      />
+                    </div>
+                  </div>
+
+                  {result.setup ? (
+                    <p className="text-muted-foreground border-border border-t pt-3 text-[11px] leading-snug">
+                      Enquadrada como <strong>{result.setup.size.band.label}</strong>
+                      {result.setup.size.drivenBy === "ambos"
+                        ? " por faturamento e por colaboradores"
+                        : ` por ${result.setup.size.drivenBy}`}
+                      . {result.setup.size.band.rationale}
+                    </p>
+                  ) : null}
+
                   <div className="grid gap-3 sm:grid-cols-2">
                     <SetupField
                       label="Números de WhatsApp"
@@ -578,6 +712,12 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
                     : "—"}
                 </dd>
               </div>
+              {/*
+                Repasse e taxa de envio ficam lado a lado porque a pergunta na
+                reunião é comparativa: "quanto disso é da Meta e quanto é de
+                vocês?". Num número só, a resposta seria uma conta de cabeça
+                feita na frente do cliente.
+              */}
               <div className="glass-card p-2.5">
                 <dt className="text-primary-foreground/60 text-[10px] uppercase leading-tight">
                   Repasse Meta
@@ -586,6 +726,17 @@ export function PricingSimulator({ initial }: { initial?: QuoteInput }) {
                   {CURRENCY(result.passthroughCents)}
                 </dd>
               </div>
+            </dl>
+
+            <dl className="glass-card mt-2 flex items-baseline justify-between gap-2 p-2.5">
+              <dt className="text-primary-foreground/60 text-[10px] uppercase leading-tight">
+                Taxa de envio da plataforma
+              </dt>
+              <dd className="figure text-sm font-semibold">
+                {result.whatsappPlatformFeeCents > 0
+                  ? CURRENCY(result.whatsappPlatformFeeCents)
+                  : `${new Intl.NumberFormat("pt-BR").format(result.whatsappTemplateMessages)} de ${new Intl.NumberFormat("pt-BR").format(plan.includedWhatsappTemplates)} inclusas`}
+              </dd>
             </dl>
           </div>
 

@@ -5,15 +5,23 @@ import type { PlanKey, QuoteInput } from "@elora/core";
 import {
   CURRENT_META_RATES,
   DEFAULT_QUOTE_INPUT,
+  DEFAULT_TAX_CONTEXT,
+  FATOR_R_THRESHOLD_PCT,
   MARGIN_BY_PLAN,
   META_RATE_TABLES,
   PLANS,
+  PLAN_BY_KEY,
+  REGIME_LABEL,
   UNIT_COSTS,
   WHATSAPP_PRICES,
   calculateQuote,
+  effectiveRate,
+  fatorRPct,
   formatCurrencyCents,
+  formatRateMicros,
   maxDiscountKeepingMargin,
   offsetIso,
+  passthroughTaxDrag,
   rateStaleness,
 } from "@elora/core";
 import { Badge, Button, Callout, Eyebrow, Reveal, cn } from "@elora/ui";
@@ -52,6 +60,8 @@ export function PricingTab() {
   const [seats, setSeats] = useState(DEFAULT_QUOTE_INPUT.seats);
   const [contacts, setContacts] = useState(DEFAULT_QUOTE_INPUT.contacts);
   const [conversations, setConversations] = useState(DEFAULT_QUOTE_INPUT.conversations);
+  const [rbt12Cents, setRbt12Cents] = useState(DEFAULT_TAX_CONTEXT.rbt12Cents);
+  const [payrollCents, setPayrollCents] = useState(DEFAULT_TAX_CONTEXT.payroll12Cents);
 
   const input: QuoteInput = useMemo(
     () => ({
@@ -62,14 +72,20 @@ export function PricingTab() {
       conversations,
       discountPct,
       includeSetup: true,
+      taxContext: { rbt12Cents, payroll12Cents: payrollCents },
     }),
-    [planKey, seats, contacts, conversations, discountPct],
+    [planKey, seats, contacts, conversations, discountPct, rbt12Cents, payrollCents],
   );
 
   const quote = useMemo(() => calculateQuote(input), [input]);
+  const plan = PLAN_BY_KEY[planKey];
   const policy = MARGIN_BY_PLAN[planKey];
   const margin = quote.margin;
   const staleness = rateStaleness(CURRENT_META_RATES, offsetIso({}));
+
+  const fator = fatorRPct(payrollCents, rbt12Cents);
+  const rate = effectiveRate(rbt12Cents, quote.taxRegime);
+  const dragCents = passthroughTaxDrag(quote.passthroughCents, rate.effectiveRatePct);
 
   return (
     <div className="space-y-4">
@@ -172,12 +188,104 @@ export function PricingTab() {
             custo e receita pelo mesmo valor — somá-lo aos dois lados não muda o lucro em reais e
             derruba a margem percentual, fazendo uma operação com muito WhatsApp parecer menos
             rentável que uma idêntica sem.
+            <br />
+            <strong>A taxa de envio da plataforma entra</strong> (
+            {CURRENCY(quote.whatsappPlatformFeeCents)}, sobre{" "}
+            {quote.whatsappTemplateMessages.toLocaleString("pt-BR")} mensagens de modelo): aquilo é
+            preço nosso sobre custo nosso, e é justamente a margem que o repasse não tem. É por isso
+            que as duas viajam em linhas separadas desde o cálculo — somadas, não haveria como tirar
+            uma da margem sem tirar a outra.
           </Callout>
         </section>
       </Reveal>
 
-      {/* ------------------------------------------------------------ Custo */}
+      {/* ---------------------------------------------------------- Imposto */}
       <Reveal index={2}>
+        <section className="panel space-y-3 p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <Eyebrow>Imposto</Eyebrow>
+              <h3 className="mt-1 text-base font-semibold">{REGIME_LABEL[quote.taxRegime]}</h3>
+            </div>
+            <p className="figure text-lg font-semibold">{CURRENCY(quote.tax.taxCents)} / mês</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Slider
+              label="Receita acumulada (RBT12)"
+              value={Math.round(rbt12Cents / 100_000)}
+              min={1}
+              max={5_000}
+              step={50}
+              suffix=" mil"
+              onChange={(value) => setRbt12Cents(value * 100_000)}
+            />
+            <Slider
+              label="Folha acumulada (12 meses)"
+              value={Math.round(payrollCents / 100_000)}
+              min={0}
+              max={2_000}
+              step={25}
+              suffix=" mil"
+              onChange={(value) => setPayrollCents(value * 100_000)}
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Figure
+              tone={fator >= FATOR_R_THRESHOLD_PCT ? "saudavel" : "atencao"}
+              label="Fator R"
+              value={pct(fator)}
+              hint={
+                fator >= FATOR_R_THRESHOLD_PCT
+                  ? `Acima de ${FATOR_R_THRESHOLD_PCT}% — Anexo III`
+                  : `Abaixo de ${FATOR_R_THRESHOLD_PCT}% — cai no Anexo V`
+              }
+            />
+            <Figure
+              tone="saudavel"
+              label="Alíquota efetiva"
+              value={pct(quote.tax.effectiveRatePct)}
+              hint={`Nominal ${pct(rate.nominalRatePct)} menos a parcela a deduzir`}
+            />
+            <Figure
+              tone={dragCents >= 100_000 ? "atencao" : "saudavel"}
+              label="Imposto sobre o repasse"
+              value={CURRENCY(dragCents)}
+              hint="Por ano, sobre dinheiro que não é nosso"
+            />
+          </div>
+
+          {rate.issOutsideDasPct > 0 ? (
+            <Callout variant="warning" icon={<AlertTriangle className="size-4" />}>
+              <strong>Sexta faixa: o ISS saiu do DAS.</strong> O DAS caiu para{" "}
+              {pct(rate.dasRatePct)} e parece que crescer barateou o imposto — não barateou. O ISS
+              de {pct(rate.issOutsideDasPct)} passou a ser recolhido à parte, e a carga total é de{" "}
+              {pct(rate.effectiveRatePct)}. A alíquota de ISS varia entre 2% e 5% conforme o
+              município; a régua aqui usa o teto.
+            </Callout>
+          ) : null}
+
+          <Callout variant="warning" icon={<ShieldAlert className="size-4" />}>
+            <strong>O Simples tributa faturamento, não lucro.</strong> Cada real de repasse da Meta
+            que passa pela nossa nota paga imposto sem gerar margem — e ainda empurra a RBT12 para
+            cima, elevando a alíquota de toda a receita. Neste cenário isso custa{" "}
+            {CURRENCY(dragCents)} por ano. As duas saídas conhecidas são a conta da Meta ficar no
+            nome do cliente ou o imposto ser embutido na taxa de envio da plataforma.
+          </Callout>
+
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            O preço de tabela é com imposto embutido: o valor anunciado é o que sai na fatura, e o
+            imposto sai de dentro dele. A transição da reforma não está modelada — em 2026 o
+            optante pelo Simples recolhe IBS e CBS dentro do DAS, e a alíquota-teste de 1% não muda
+            o que ele paga. O que muda de verdade é a opção de recolher por fora para gerar crédito
+            cheio ao cliente em Lucro Real, e isso é decisão de nota, não de cálculo.
+          </p>
+        </section>
+      </Reveal>
+
+      {/* ------------------------------------------------------------ Custo */}
+      <Reveal index={3}>
         <section className="panel space-y-3 p-5">
           <div className="flex items-baseline justify-between">
             <div>
@@ -221,7 +329,7 @@ export function PricingTab() {
 
       {/* ------------------------------------------------------ Implantação */}
       {quote.setup ? (
-        <Reveal index={3}>
+        <Reveal index={4}>
           <section className="panel space-y-3 p-5">
             <div className="flex items-baseline justify-between">
               <div>
@@ -254,7 +362,7 @@ export function PricingTab() {
       ) : null}
 
       {/* ------------------------------------------------------- Tabela Meta */}
-      <Reveal index={4}>
+      <Reveal index={5}>
         <section className="panel space-y-3 p-5">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
@@ -279,7 +387,9 @@ export function PricingTab() {
               <thead>
                 <tr className="text-muted-foreground text-left text-xs">
                   <th className="pb-2 font-medium">Categoria</th>
-                  <th className="pb-2 text-right font-medium">Vigente</th>
+                  <th className="pb-2 text-right font-medium">Meta cobra</th>
+                  <th className="pb-2 text-right font-medium">Nossa taxa ({plan.name})</th>
+                  <th className="pb-2 text-right font-medium">Cliente paga</th>
                   {META_RATE_TABLES.slice(1).map((table) => (
                     <th key={table.effectiveFrom} className="pb-2 text-right font-medium">
                       {table.effectiveFrom.split("-").reverse().join("/")}
@@ -288,36 +398,53 @@ export function PricingTab() {
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
-                {WHATSAPP_PRICES.map((price) => (
-                  <tr key={price.category}>
-                    <td className="py-2">
-                      <p className="font-medium">{price.label}</p>
-                      <p className="text-muted-foreground text-xs">{price.description}</p>
-                    </td>
-                    <td className="figure py-2 text-right tabular-nums">
-                      {CURRENCY(price.metaCostCents)}
-                    </td>
-                    {META_RATE_TABLES.slice(1).map((table) => (
-                      <td
-                        key={table.effectiveFrom}
-                        className="text-muted-foreground py-2 text-right tabular-nums"
-                      >
-                        {CURRENCY(table.ratesCents[price.category])}
+                {WHATSAPP_PRICES.map((price) => {
+                  const fee = price.billableTemplate ? plan.whatsappTemplateFeeMicros : 0;
+                  return (
+                    <tr key={price.category}>
+                      <td className="py-2">
+                        <p className="font-medium">{price.label}</p>
+                        <p className="text-muted-foreground text-xs">{price.description}</p>
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      <td className="figure py-2 text-right tabular-nums">
+                        {formatRateMicros(price.metaCostMicros)}
+                      </td>
+                      <td className="figure py-2 text-right tabular-nums">
+                        {fee === 0 ? "—" : formatRateMicros(fee)}
+                      </td>
+                      <td className="figure py-2 text-right font-semibold tabular-nums">
+                        {formatRateMicros(price.metaCostMicros + fee)}
+                      </td>
+                      {META_RATE_TABLES.slice(1).map((table) => (
+                        <td
+                          key={table.effectiveFrom}
+                          className="text-muted-foreground py-2 text-right tabular-nums"
+                        >
+                          {formatRateMicros(table.ratesMicros[price.category])}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Acima da franquia de {plan.includedWhatsappTemplates.toLocaleString("pt-BR")} mensagens
+            de modelo desta edição. Dentro dela, a coluna do meio é zero e o cliente paga só o
+            repasse. Utilidade e autenticação ainda têm a escada de volume da própria Meta, que
+            reduz a primeira coluna a partir de 250 mil e 500 mil mensagens por mês.
+          </p>
+
           <Callout icon={<TrendingUp className="size-4" />}>
             <strong>Não existe API pública de tabela de preços da Meta.</strong> O que há é a página
-            de rate card e o <code className="font-mono">conversation_analytics</code>, que responde
-            quanto uma conta já gastou — não serve para cotar venda nova. Raspar a página pareceria
-            tempo real e falharia em silêncio, cotando com o preço da última leitura. Por isso a
-            tabela é dado versionado, com a data em que passou a valer visível acima. O histórico
-            fica para que orçamento antigo continue explicável.
+            de rate card — cujos valores só aparecem depois de escolher mercado e moeda num seletor
+            que roda no navegador — e o <code className="font-mono">conversation_analytics</code>,
+            que responde quanto uma conta já gastou e não serve para cotar venda nova. Raspar
+            pareceria tempo real e falharia em silêncio, cotando com o preço da última leitura. Por
+            isso a tabela é dado versionado, com a data em que passou a valer e a data em que alguém
+            conferiu, as duas visíveis acima.
           </Callout>
         </section>
       </Reveal>

@@ -35,11 +35,44 @@
  * reajusta — e a Meta reajusta. As duas linhas aparecem separadas no simulador
  * pelo mesmo motivo.
  *
- * ## Todo valor aqui é em centavos, inteiro
+ * ## A margem sobre WhatsApp existe, e é uma linha própria
+ *
+ * O repasse continua sendo repasse: a Meta cobra `R$ 0,3217` por mensagem de
+ * marketing e o cliente paga `R$ 0,3217`, que é o que permite conferir contra a
+ * fatura que ele recebe direto da Meta. O que a Elora ganha em cima disso é a
+ * **taxa da plataforma por mensagem de modelo entregue** — `whatsappTemplateFee`
+ * abaixo —, que aparece numa segunda linha, com nome próprio.
+ *
+ * Três decisões dentro disso, e cada uma tem um erro do outro lado:
+ *
+ * 1. **É valor fixo por mensagem, não percentual sobre o custo da Meta.** Nosso
+ *    custo de entregar um modelo é o mesmo seja ele marketing ou utilidade;
+ *    cobrar percentual faria a taxa reprecificar sozinha a cada reajuste da Meta
+ *    — exatamente o acoplamento que separar o repasse existe para evitar. Também
+ *    produziria o absurdo de ganharmos 9× mais numa mensagem de marketing do que
+ *    numa de utilidade pelo mesmo trabalho.
+ *
+ * 2. **Mensagem de serviço não paga.** É a resposta dentro da janela de 24 h, e
+ *    ela já foi cobrada como conversa tratada. Cobrar de novo por mensagem seria
+ *    faturar o mesmo atendimento duas vezes com dois nomes — e o cliente
+ *    descobre, porque as duas linhas ficam uma embaixo da outra.
+ *
+ * 3. **Tem franquia por edição.** É o que faz o plano ser fechado de verdade: a
+ *    operação típica de cada edição cabe dentro da assinatura, e a taxa só
+ *    aparece para quem dispara acima disso. Sem franquia, a menor campanha faria
+ *    surgir uma linha nova numa fatura que o cliente esperava fechada.
+ *
+ * ## Todo valor aqui é inteiro — em centavos, ou em micros
  *
  * Mesma regra de `types/commerce.ts`: `0,1 + 0,2` vale `0,30000000000000004`, e
  * num orçamento de 36 meses isso vira divergência entre a tela e o contrato. A
  * conversão para reais acontece na formatação, no último instante.
+ *
+ * A exceção de unidade — não de disciplina — é o que se mede **por mensagem**:
+ * tarifa da Meta e taxa da plataforma vivem em micros de real, porque `R$ 0,035`
+ * e `R$ 0,012` não existem em centavos inteiros. Continuam sendo inteiros; o que
+ * muda é a casa. Campos em micros têm sufixo `Micros` no nome, e é o único jeito
+ * de não somar centavo com micro por engano.
  *
  * **Estes números são a proposta de tabela, não um preço praticado.** Ajustar
  * preço é editar este arquivo e mais nenhum: o cálculo em `calculator.ts` não
@@ -101,6 +134,23 @@ export interface PlanDefinition {
   conversationOverageCents: number;
   emailOveragePerThousandCents: number;
   aiOveragePerThousandCents: number;
+  /**
+   * Mensagens de modelo por mês incluídas na assinatura.
+   *
+   * Conta marketing, utilidade e autenticação somadas — serviço nunca entra,
+   * porque não é cobrada nem por nós nem pela Meta. A franquia vale para a
+   * **nossa** taxa; o repasse da Meta é cobrado desde a primeira mensagem, e
+   * fingir o contrário quebraria a conferência contra a fatura dela.
+   */
+  includedWhatsappTemplates: number;
+  /**
+   * Taxa da plataforma por mensagem de modelo além da franquia, em micros.
+   *
+   * Micros, e não centavos, porque a unidade precisa comportar `R$ 0,012` sem
+   * arredondar — em milhão de mensagens, um centavo de diferença vale dez mil
+   * reais. Ver `meta-rates.ts` para o motivo da unidade.
+   */
+  whatsappTemplateFeeMicros: number;
   /** Números de WhatsApp inclusos. */
   includedWhatsappNumbers: number;
   /** Implantação assistida, cobrança única. */
@@ -134,6 +184,8 @@ export const PLANS: PlanDefinition[] = [
     conversationOverageCents: 12,
     emailOveragePerThousandCents: 1_200,
     aiOveragePerThousandCents: 8_900,
+    includedWhatsappTemplates: 1_000,
+    whatsappTemplateFeeMicros: 40_000, // R$ 0,04
     includedWhatsappNumbers: 1,
     setupCents: 190_000,
     includedAddons: [],
@@ -166,6 +218,8 @@ export const PLANS: PlanDefinition[] = [
     conversationOverageCents: 9,
     emailOveragePerThousandCents: 900,
     aiOveragePerThousandCents: 6_900,
+    includedWhatsappTemplates: 10_000,
+    whatsappTemplateFeeMicros: 30_000, // R$ 0,03
     includedWhatsappNumbers: 2,
     setupCents: 490_000,
     includedAddons: [],
@@ -199,6 +253,8 @@ export const PLANS: PlanDefinition[] = [
     conversationOverageCents: 6,
     emailOveragePerThousandCents: 600,
     aiOveragePerThousandCents: 4_900,
+    includedWhatsappTemplates: 50_000,
+    whatsappTemplateFeeMicros: 20_000, // R$ 0,02
     includedWhatsappNumbers: 5,
     setupCents: 1_200_000,
     includedAddons: ["sandbox"],
@@ -232,6 +288,8 @@ export const PLANS: PlanDefinition[] = [
     conversationOverageCents: 4,
     emailOveragePerThousandCents: 400,
     aiOveragePerThousandCents: 3_900,
+    includedWhatsappTemplates: 200_000,
+    whatsappTemplateFeeMicros: 12_000, // R$ 0,012
     includedWhatsappNumbers: 10,
     setupCents: 2_800_000,
     includedAddons: ["sandbox", "sso", "gestor_sucesso"],
@@ -274,8 +332,23 @@ export interface WhatsappPrice {
   category: WhatsappCategory;
   label: string;
   description: string;
-  /** Preço por mensagem cobrado pela Meta, em centavos. */
-  metaCostCents: number;
+  /**
+   * Preço por mensagem cobrado pela Meta, em **micros de real**.
+   *
+   * Micros porque a Meta publica com quatro casas: utilidade custa `R$ 0,0350`,
+   * e em centavos inteiros esse número simplesmente não existe. Ver o cabeçalho
+   * de `meta-rates.ts` — foi esse arredondamento que escondeu, por meses, uma
+   * tarifa de autenticação errada por seis vezes.
+   */
+  metaCostMicros: number;
+  /**
+   * `true` quando a nossa taxa de plataforma incide sobre esta categoria.
+   *
+   * Serviço fica de fora: é resposta dentro da janela de 24 h, já cobrada como
+   * conversa tratada. É o campo que impede o cálculo de faturar o mesmo
+   * atendimento duas vezes com dois nomes.
+   */
+  billableTemplate: boolean;
 }
 
 /**
@@ -294,25 +367,29 @@ export const WHATSAPP_PRICES: WhatsappPrice[] = [
     category: "marketing",
     label: "Marketing",
     description: "Promoção, oferta, recuperação de carrinho e reativação.",
-    metaCostCents: CURRENT_META_RATES.ratesCents.marketing,
+    metaCostMicros: CURRENT_META_RATES.ratesMicros.marketing,
+    billableTemplate: true,
   },
   {
     category: "utilidade",
     label: "Utilidade",
     description: "Confirmação, rastreio, lembrete e aviso de cobrança.",
-    metaCostCents: CURRENT_META_RATES.ratesCents.utilidade,
+    metaCostMicros: CURRENT_META_RATES.ratesMicros.utilidade,
+    billableTemplate: true,
   },
   {
     category: "autenticacao",
     label: "Autenticação",
     description: "Código de verificação e login.",
-    metaCostCents: CURRENT_META_RATES.ratesCents.autenticacao,
+    metaCostMicros: CURRENT_META_RATES.ratesMicros.autenticacao,
+    billableTemplate: true,
   },
   {
     category: "servico",
     label: "Serviço",
     description: "Resposta dentro da janela de 24 h aberta pelo cliente. Gratuita.",
-    metaCostCents: CURRENT_META_RATES.ratesCents.servico,
+    metaCostMicros: CURRENT_META_RATES.ratesMicros.servico,
+    billableTemplate: false,
   },
 ];
 

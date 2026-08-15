@@ -1623,3 +1623,280 @@
   transform-origin: left center;
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* ==========================================================================
+   Prévias do produto na landing page
+   --------------------------------------------------------------------------
+   As oito prévias da seção "Por dentro" são desenhadas em JSX, e o que as faz
+   parecerem telas vivas em vez de ilustrações é o movimento. Ele mora aqui, e
+   não num `<style>` de componente, pelo mesmo motivo de todo o resto desta
+   folha: o corte de `prefers-reduced-motion` no fim do arquivo só alcança o que
+   está nela.
+
+   Duas regras governam esta seção inteira.
+
+   **Só `transform` e `opacity`.** Uma barra que cresce anima `scaleX`, nunca
+   `width`; um cartão que viaja anima `translate`, nunca `top`. São oito prévias,
+   e o gargalo medido deste front é recálculo de estilo e layout — animar
+   geometria aqui multiplicaria exatamente o trabalho que já dói.
+
+   **Laço tem de parar em repouso.** O corte de movimento reduzido leva toda
+   animação ao último quadro, então o último quadro de qualquer laço aqui é o
+   estado parado: a entrada termina visível e no lugar, e o que é decorativo —
+   o cartão fantasma do pipeline, o cursor do agente — termina **invisível**,
+   como o `.glow-pulse` faz com o halo. Um laço cujo quadro final fosse o meio do
+   efeito congelaria a prévia num estado que parece defeito.
+   ========================================================================== */
+
+/**
+ * Entrada de uma peça da prévia.
+ *
+ * O escalonamento é o que transforma uma lista de itens numa cena que
+ * **acontece**: o nó do chatbot aparece depois do anterior, o passo do agente
+ * entra depois de o passo de cima ter sido executado. 120 ms por índice, contra
+ * os 28 ms de `.stagger` — aqui o atraso é narrativa, não alívio de carga
+ * visual.
+ *
+ * `both` mantém o estado inicial antes do atraso. Sem ele, todas as peças
+ * apareceriam no primeiro quadro e só então recuariam para animar.
+ */
+@keyframes preview-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview-in {
+  animation: preview-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--preview-index, 0) * 120ms);
+}
+
+/**
+ * O traço que liga um nó ao seguinte, desenhando-se.
+ *
+ * `scaleY` a partir do topo, e não `height`: o efeito visual é o mesmo e o custo
+ * cai para composição. O atraso soma meio passo ao índice para que o traço saia
+ * **depois** do nó de cima e **antes** do de baixo — é o que faz a leitura ser
+ * "este nó levou àquele" em vez de "apareceram coisas".
+ */
+@keyframes preview-draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.preview-draw {
+  transform-origin: top center;
+  animation: preview-draw 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--preview-index, 0) * 120ms + 60ms);
+}
+
+/**
+ * Barra que cresce da esquerda até a fração de `--bar-fill`.
+ *
+ * A fração viaja como variável porque o valor final precisa estar no quadro
+ * final: sob movimento reduzido a animação é cortada para lá, e uma barra que
+ * terminasse em `scaleX(1)` mostraria 100% em toda linha.
+ */
+@keyframes preview-bar-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(var(--bar-fill, 1));
+  }
+}
+
+.preview-bar-x {
+  transform-origin: left center;
+  transform: scaleX(var(--bar-fill, 1));
+  animation: preview-bar-x 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--preview-index, 0) * 90ms);
+}
+
+/** Coluna de gráfico que sobe da base. A altura final já está no `style`. */
+@keyframes preview-bar-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.preview-bar-y {
+  transform-origin: bottom center;
+  animation: preview-bar-y 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--preview-index, 0) * 45ms);
+}
+
+/**
+ * O cartão fantasma do pipeline.
+ *
+ * Um negócio sendo arrastado de uma etapa para a seguinte. É **cópia
+ * decorativa**, não o cartão de verdade: o cartão real fica parado no lugar dele
+ * o tempo todo, e o fantasma passa por cima e some.
+ *
+ * A alternativa — animar o cartão real — não fecha. Um laço que o tira do lugar
+ * precisa devolvê-lo, e o instante do retorno é um salto visível; e o quadro
+ * final teria de ser "fora do lugar", que é justamente o estado que pareceria
+ * defeito para quem pediu menos movimento. Nascendo e morrendo invisível, o
+ * fantasma resolve os dois: não pisca ao reiniciar e desaparece em repouso. É o
+ * mesmo contrato do halo de `.glow-pulse`.
+ */
+@keyframes preview-ghost {
+  0%,
+  6% {
+    opacity: 0;
+    transform: translate(-104%, -30px) scale(0.94);
+  }
+  20% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  64%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/**
+ * `opacity: 0` no estilo base, e não só no primeiro quadro.
+ *
+ * O corte de movimento reduzido zera a duração e a repetição, e a animação
+ * termina — sem `fill-mode`, o elemento volta ao **estilo base**. Com a
+ * opacidade declarada apenas dentro dos quadros-chave, esse retorno o deixava
+ * visível: o fantasma congelado por cima do cartão real, parecendo duplicata, e
+ * o cursor aceso ao lado de um texto completo. Verificado no navegador com
+ * `prefers-reduced-motion` emulado — era o oposto do que este arquivo promete
+ * duas seções acima.
+ */
+.preview-ghost {
+  opacity: 0;
+  animation: preview-ghost 5.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/**
+ * Cursor de digitação da resposta do agente.
+ *
+ * `steps(1, end)` porque cursor pisca, não desvanece. Repousa **apagado**: um
+ * cursor congelado aceso ao lado de um texto completo lê-se como campo em foco
+ * esperando digitação, que é a coisa errada a dizer numa prévia.
+ */
+@keyframes preview-caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.preview-caret {
+  /* Mesmo motivo do fantasma: o repouso mora no estilo base. */
+  opacity: 0;
+  animation: preview-caret 1.1s steps(1, end) infinite;
+  animation-delay: var(--caret-delay, 0ms);
+}
+
+/* ==========================================================================
+   Carregador de rota do site
+   --------------------------------------------------------------------------
+   Vive aqui, e não num `<style>` do componente, pelo mesmo motivo do cubo do
+   workspace: o corte global de `prefers-reduced-motion` acima só alcança o que
+   está nesta folha. Um `<style jsx>` no componente escaparia dele, e quem pediu
+   ao sistema para não animar veria a peça pulsando mesmo assim.
+
+   Todo laço aqui termina no estado de repouso, porque o corte leva a animação
+   ao último quadro: o traço parado fora do quadro, o esqueleto na cor de base.
+   ========================================================================== */
+
+/**
+ * O carregador só aparece depois de um tempo.
+ *
+ * Em produção a navegação leva dezenas de milissegundos, e um carregador que
+ * entra em 20 ms é um lampejo — pior que espera nenhuma, porque a tela pisca sem
+ * a pessoa entender o que mudou. O atraso de 220 ms é o limiar clássico: abaixo
+ * dele a navegação é percebida como instantânea e não precisa de aviso.
+ *
+ * `opacity` inicial em zero, e não `display: none`, porque o elemento precisa
+ * existir desde o começo para o leitor de tela anunciar a região quando ela
+ * ganha conteúdo.
+ */
+.page-loader {
+  opacity: 0;
+  animation: page-loader-in 0.3s ease-out 0.22s forwards;
+}
+
+@keyframes page-loader-in {
+  to {
+    opacity: 1;
+  }
+}
+
+/**
+ * O esqueleto respira por `opacity`, não por `fill`.
+ *
+ * Animar `fill` num SVG repinta a forma a cada quadro; `opacity` sobe para a
+ * camada de composição. O efeito percebido é o mesmo — a barra clareia e
+ * escurece — e o custo sai do caminho de pintura, que é onde este front dói.
+ */
+.page-loader-skeleton {
+  animation: page-loader-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes page-loader-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+/**
+ * O traço que corre até o quadro.
+ *
+ * `stroke-dashoffset` é a única propriedade que desenha um caminho progressivo
+ * sem recalcular geometria. Termina em `720`, que é o traço **fora** do quadro:
+ * é o quadro final, e é o que o corte de movimento reduzido deixa na tela.
+ */
+.page-loader-trace {
+  stroke-dasharray: 120 600;
+  stroke-dashoffset: 720;
+  animation: page-loader-flow 5s linear infinite;
+}
+
+.page-loader-trace:nth-of-type(2) {
+  animation-delay: 1.2s;
+}
+.page-loader-trace:nth-of-type(3) {
+  animation-delay: 2.4s;
+}
+.page-loader-trace:nth-of-type(4) {
+  animation-delay: 3.6s;
+}
+
+@keyframes page-loader-flow {
+  from {
+    stroke-dashoffset: 720;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}

@@ -445,12 +445,36 @@ a página. No site quem rola é o documento; no produto, o painel. São exigênc
 estão escritas assim nos dois layouts.
 
 **As telas do produto na landing page são desenhadas, não capturadas.**
-`components/site/module-previews.tsx` traz sete prévias em JSX — Inbox, Pipeline, Contato 360º,
-Chatbot, Campanhas, Analytics e agente de IA — exibidas em abas por `product-showcase.tsx`. Captura
-de tela envelhece na primeira mudança de espaçamento, vira retângulo branco no tema escuro e não
-anima; desenhada, a prévia herda token, funciona nos dois temas e o texto dentro dela é texto de
-verdade. O custo é conhecido: **estas prévias precisam ser revistas quando a tela real mudar de
-forma**, e nenhuma delas pode inventar recurso que o produto não tem.
+`components/site/module-previews.tsx` traz oito prévias em JSX — Inbox, Pipeline, Contato 360º,
+Chatbot, Automações, Campanhas, Analytics e agente de IA — exibidas em abas por
+`product-showcase.tsx`. Captura de tela envelhece na primeira mudança de espaçamento, vira retângulo
+branco no tema escuro e não anima; desenhada, a prévia herda token, funciona nos dois temas e o texto
+dentro dela é texto de verdade. O custo é conhecido: **estas prévias precisam ser revistas quando a
+tela real mudar de forma**, e nenhuma delas pode inventar recurso que o produto não tem.
+
+**Todas se movem, e o movimento é o gesto que o módulo resolve.** O pipeline arrasta um negócio de
+etapa; o contato preenche a linha do tempo em ordem; o chatbot desenha o fluxo nó a nó; a automação
+acende o trilho entre gatilho, condição e ações; a campanha enche os lotes; o agente executa os
+passos e escreve a resposta; o analytics conta os números. Uma tela parada comunica "imagem de um
+produto"; a mesma em movimento comunica "produto funcionando", que é o que a seção existe para
+produzir. As classes vivem em `tokens.css` (`.preview-*`), porque é lá que o corte de
+`prefers-reduced-motion` alcança — um `<style>` no componente escaparia dele.
+
+**Laço decorativo repousa invisível, e a opacidade precisa estar no estilo base.** O cartão fantasma
+do pipeline e o cursor do agente declaram `opacity: 0` fora dos quadros-chave. Sem isso o corte de
+movimento reduzido termina a animação, o elemento volta ao estilo base e reaparece **aceso**: o
+fantasma congelado por cima do cartão real, parecendo duplicata, e o cursor piscando ao lado de um
+texto completo, lido como campo em foco. Foi verificado no navegador com o meio emulado, e a
+primeira versão reprovava — declarar a opacidade só dentro do `@keyframes` não basta.
+
+**O fantasma existe porque o cartão real não pode viajar.** Um laço que tira o cartão do lugar precisa
+devolvê-lo, e o instante do retorno é um salto visível; e o quadro final teria de ser "fora do lugar",
+que é o estado que pareceria defeito para quem pediu menos movimento. A cópia decorativa resolve os
+dois: não pisca ao reiniciar, e some em repouso.
+
+**Barra que cresce anima `scaleX` com a fração em `--bar-fill`.** O valor final precisa estar no
+quadro final: sob movimento reduzido a animação é cortada para lá, e uma barra que terminasse em
+`scaleX(1)` mostraria 100% em toda linha — inclusive nos lotes de campanha que ainda nem começaram.
 
 Duas armadilhas de largura, ambas já cobradas uma vez: item de grade nasce com `min-width: auto`, e
 os pontos de corte do Tailwind medem a **janela**, não o contêiner. Foi assim que o painel do
@@ -464,21 +488,56 @@ segundo, base grande e adormecida. A Elora cobra os dois separados — assinatur
 consumo medido. A tabela inteira mora em `packages/core/src/pricing/catalog.ts` e **não há um único
 número em `calculator.ts`**: reajustar preço não deveria exigir ler lógica de cálculo.
 
-Quatro consequências que valem enunciar:
+Oito consequências que valem enunciar:
 
 1. **Repasse de provedor viaja separado da margem.** A conversa de WhatsApp tem o custo da Meta
    (sem margem) e a taxa da plataforma. Somá-los produziria a linha que ninguém consegue auditar
    quando a Meta reajusta — e a Meta reajusta. Por isso o desconto comercial **não incide sobre o
    repasse**: descontá-lo sairia do nosso bolso a cada mensagem, e o prejuízo cresceria justamente
    com quem mais dispara. Coberto por teste.
-2. **A escada de contatos é progressiva.** Cada fatia paga o preço da própria faixa. Aplicar o
-   preço da faixa final ao total cria o degrau em que cadastrar mil contatos a mais **reduz** a
-   fatura — o tipo de tabela que o cliente descobre uma vez e nunca mais confia. Há teste de
-   monotonicidade.
-3. **Colaborador ilimitado existe só na edição de cima.** "Ilimitado" numa edição barata é preço
+2. **A margem sobre WhatsApp existe, e é a segunda linha.** O repasse continua sendo repasse; o que
+   ganhamos é a **taxa de envio por mensagem de modelo** (`whatsappTemplateFeeMicros`), com franquia
+   por edição (`includedWhatsappTemplates`). É valor fixo, não percentual sobre o custo da Meta:
+   nosso custo de entregar um modelo é o mesmo em marketing e em utilidade, e percentual
+   reprecificaria sozinho a cada reajuste dela — o acoplamento que separar o repasse existe para
+   evitar. Mensagem de **serviço** não paga, porque já foi cobrada como conversa tratada, e cobrá-la
+   de novo faturaria o mesmo atendimento duas vezes com dois nomes. Na análise de margem a taxa cai
+   na receita sozinha, por estar no total mensal e fora de `passthroughCents` — é por isso que as
+   duas precisam viver em linhas separadas desde o cálculo. Tudo coberto por teste.
+3. **A escada é progressiva nos dois lugares.** Na nossa tabela de contatos e na escada de volume da
+   própria Meta (utilidade acima de 250 mil, autenticação acima de 500 mil). Cada fatia paga o preço
+   da própria faixa; aplicar o preço da faixa final ao total cria o degrau em que consumir mais
+   **reduz** a fatura — o tipo de tabela que o cliente descobre uma vez e nunca mais confia. Há teste
+   de monotonicidade nos dois.
+4. **Tarifa por mensagem mora em micros de real, não em centavos.** A Meta publica com quatro casas:
+   utilidade custa `R$ 0,0350`, e em centavos inteiros esse número não existe. Foi esse
+   arredondamento que escondeu uma tarifa de autenticação errada por **seis vezes** — `R$ 0,20` é um
+   preço plausível, e nada acusou. Campo em micros tem sufixo `Micros` no nome, e é o único jeito de
+   não somar centavo com micro por engano. Os totais de linha continuam em centavos: a conversão
+   acontece uma vez, no total, nunca na tarifa unitária.
+5. **Colaborador ilimitado existe só na edição de cima.** "Ilimitado" numa edição barata é preço
    por assento escondido num número redondo, e quebra no dia em que o cliente cadastra a operação
    inteira.
-4. **O cálculo roda no navegador, e é a única cópia que existe.** O simulador precisa ser
+6. **O imposto sai da receita, e o Simples tributa faturamento.** `pricing/taxes.ts` modela os
+   Anexos III e V com alíquota **efetiva** — `(RBT12 × nominal − dedução) / RBT12`, nunca a nominal,
+   que superestima em vários pontos. O regime sai do **Fator R** (folha ÷ receita ≥ 28%), e a
+   diferença na primeira faixa é de 6% para 15,5%: quase dez pontos de margem que somem sem nenhuma
+   mudança de produto. Na **sexta faixa o ISS sai do DAS** e é recolhido à parte — a fórmula devolve
+   15,00% contra 17,51% da quinta, e quem ler só o DAS conclui que crescer barateia o imposto. Não
+   barateia; `issOutsideDas` soma o ISS por fora, e há teste para ninguém "consertar" o degrau.
+   **O preço de tabela é com imposto embutido**: o anunciado é o que sai na fatura.
+   Consequência que decide contrato: cada real de repasse da Meta que passa pela nossa nota paga
+   imposto sem gerar margem **e** empurra a RBT12, elevando a alíquota de toda a receita —
+   `passthroughTaxDrag` põe esse prejuízo em reais por ano, e acima de R$ 1.000 ele vira aviso.
+7. **A implantação tem porte, e o porte é linha.** `setup.ts` enquadra a empresa do cliente por
+   faturamento anual **e** por número de colaboradores, e vale o **maior** dos dois — multiplicar
+   cobraria em dobro de quem é grande nas duas pontas, somar diluiria quem é grande em uma só. O
+   acréscimo incide **só sobre a base** da edição: aplicá-lo ao total cobraria porte em cima de
+   migração de contatos, que é trabalho de máquina. Unidades/CNPJs e setor regulado são parcelas
+   próprias. `ResolvedSize.drivenBy` declara qual critério mandou, porque "média empresa pelo número
+   de colaboradores" é frase que o cliente confere e "média empresa" sozinho é classificação que ele
+   contesta.
+8. **O cálculo roda no navegador, e é a única cópia que existe.** O simulador precisa ser
    instantâneo — arrastar o volume vinte vezes procurando o ponto em que a edição vira é o gesto
    central da ferramenta. Antes havia um segundo cálculo, no servidor, refazendo a conta que o
    formulário de orçamento trazia em campos ocultos: aceitar o total enviado pelo navegador
@@ -586,6 +645,105 @@ de **configuração**, não de credencial: se as variáveis existem, nunca o que
 transformaria o formulário em redirecionador aberto — mandar a vítima para
 `/entrar?proximo=https://site-falso` e devolvê-la autenticada em outro domínio. Duas barras no
 início também são recusadas: `//site-falso` é URL absoluta com o protocolo herdado.
+
+## Conteúdo editável do site
+
+**A terceira aba de `/admin` edita o texto do site público, e ela grava em disco — não na memória.**
+É a única escrita do repositório que sobrevive ao reinício, e a exceção tem motivo: dado de
+demonstração é recarregado a cada apresentação de qualquer forma, texto de marketing não. Perder a
+tarde de ajuste do título do herói porque alguém salvou um arquivo e o `next dev` reiniciou é o que
+faz uma ferramenta ser usada uma vez só. O efeito colateral é o motivo real da escolha: o arquivo
+**entra no Git**, então mudança de texto passa a ter histórico, autor e reversão.
+
+O conteúdo vive em `apps/web/content/site-content.json`, lido por
+`apps/web/src/lib/site/content-store.ts`. **Sem arquivo, as páginas servem `DEFAULT_SITE_CONTENT`** —
+o texto original, palavra por palavra, extraído do JSX. É o que garante que a extração não mudou o
+site: uma cópia recém-clonada renderiza o que renderizava antes.
+
+**O modelo é dado; o desenho continua em JSX.** `types/content.ts` descreve herói, marquise,
+problemas, módulos, notas de preço, seção de IA, implantação, segurança, FAQ, preços, cabeçalho e
+rodapé; as páginas só compõem. Consequência que vale enunciar: **lista vazia esconde a seção
+inteira**, com cabeçalho e sobrelinha junto — quem apaga todos os cartões não fica com um título
+órfão sobre espaço em branco.
+
+**Número de preço não é editável, e isso não é esquecimento.** Franquia, excedente, tarifa da Meta e
+valor de assento continuam vindo de `pricing/catalog.ts`. Onde o texto precisa citar um número, ele
+usa **marcador** — `{precoUtilidade}`, `{vigencia}`, `{premioMensal}` —, resolvido na renderização por
+`content/placeholders.ts`. Digitar `R$ 0,0350` no campo criaria a segunda cópia do preço, e no dia do
+reajuste um dos dois lados ficaria para trás: o site anunciando o que a proposta não confirma.
+Marcador sem valor **fica visível** em vez de virar vazio — `{precoUtilidade}` na página é feio e
+corrigido no mesmo dia; um buraco no meio da frase passa meses.
+
+**Ênfase é Markdown mínimo, e não existe `dangerouslySetInnerHTML` neste caminho.** `utils/markup.ts`
+analisa `**negrito**`, `*itálico*` e `[texto](/link)` e devolve **árvore de nós**; `rich-text.tsx`
+monta elementos React a partir dela. Um analisador de biblioteca traria a saída em HTML, que só serve
+se for injetada — exatamente o que não se quer numa página pública alimentada por campo de
+formulário. A conferência de `href` mora no analisador porque é o único ponto por onde todo link
+passa: `javascript:`, `data:` e `//outro-dominio` não viram link, viram o texto do rótulo. Coberto por
+teste, e foi o teste que achou o defeito do parêntese — o fechamento pegava o primeiro `)` e cortava
+endereço que contém parêntese.
+
+**A leitura tolera; a escrita recusa.** `content/normalize.ts` nunca lança: campo ausente ou de tipo
+errado cai no padrão, e o resto do documento continua valendo. Uma biblioteca de schema devolveria
+erro, que é o comportamento errado aqui — não interessa recusar o documento porque um ícone foi
+digitado errado, interessa desenhar a página com o ícone padrão. A recusa tem lugar, e é a gravação:
+lá a mensagem volta para quem pode consertar.
+
+**Ícone viaja como nome, e o tipo é o que impede o quadrado vazio.** O `core` declara `CONTENT_ICONS`
+(strings) porque não conhece React; `lib/site/icons.tsx` mapeia nome → componente com
+`Record<ContentIcon, LucideIcon>`, então acrescentar nome sem o par **não compila**. Sem a amarra, o
+esquecimento apareceria como espaço em branco no meio de um cartão, em produção, sem erro no console.
+
+**Três guardas na gravação, e nenhuma é redundante.** A tela não desenha a aba para quem não é
+administrador; `content-actions.ts` confere o papel de novo, porque Server Action tem endereço próprio
+e um `POST` montado à mão nunca passa pela função que renderiza a página; e a gravação leva o carimbo
+da versão carregada — se o arquivo mudou nesse meio-tempo, alguém publicou junto, e continuar apagaria
+o texto dessa pessoa sem aviso.
+
+**O carimbo de publicação usa o relógio real, não o ancorado.** Mesma distinção de `lastActivityAt` e
+`touchedAtMs` no webchat. Com `offsetIso({})` a tela diria "última publicação em 27/07/2026" para
+sempre — e, pior, a conferência de conflito compararia dois valores idênticos e deixaria de proteger
+sem nada indicar isso.
+
+**Exportar e importar existem por causa da hospedagem somente leitura.** Onde o sistema de arquivos
+recusa escrita — Vercel e a maioria das serverless —, publicar falha, e a tela diz isso **antes** com
+o caminho do arquivo. Sem a exportação, o trabalho ficaria preso na aba do navegador; com ela, o
+caminho é baixar, comitar, subir pelo repositório. `saveSiteContent` nunca lança pelo mesmo motivo:
+recusa do ambiente é resposta, não exceção, e precisa chegar com o texto ainda na mão de quem editou.
+
+**Publicar vai ao ar na hora, e a tela diz isso antes do clique.** Não há rascunho nem aprovação. É
+uma decisão, não uma lacuna: o editor existe para quem acabou de descobrir, numa demonstração, qual
+frase não sustenta a pergunta do cliente — e um fluxo de aprovação entre descobrir e corrigir é o que
+faz a correção não acontecer. O que existe é a rede do Git.
+
+**Só a seção ativa existe no DOM.** `content-editor-shell.tsx` desenha um rail de seções à esquerda
+e monta **uma** de cada vez; as abas do Radix desmontam o painel inativo. Com o documento inteiro em
+estado controlado, cada tecla redesenha a raiz — manter montado o mínimo é o que segura a digitação
+leve num formulário de centenas de campos. A versão anterior empilhava acordeões e tinha dois
+defeitos que só aparecem com o formulário cheio: ir do Herói ao Rodapé exigia rolar por tudo o que
+estava aberto no caminho, e nada respondia "quantas seções são, e onde estou".
+
+**As seções se registram sozinhas.** `SectionedEditor` lê os próprios filhos — cada `<SectionBox>`
+declara título, descrição, ícone e contagem, e o rail sai daí. Um arranjo de descritores ao lado do
+JSX seriam duas listas para manter em sincronia, e a esquecida seria sempre a do rail, que é a que
+ninguém edita ao acrescentar seção.
+
+**Nada anima a raiz do editor, e o motivo é o `sticky`.** `.rise-in` termina em `transform:
+translateY(0)` com `fill-mode: both` — o elemento fica com uma `transform` aplicada para sempre, e
+ancestral com `transform` vira bloco de contenção do `position: sticky`. A barra de ações pararia de
+grudar, sem erro e sem aviso: a mesma armadilha do `overflow` no layout do site. O movimento vive nas
+peças de dentro — `.rise-in` no painel de seção, `.stagger` nas linhas de lista, `.glow-pulse` no
+ponto de estado e `.sheen` no botão de publicar **só quando ele está habilitado**.
+
+**O cache guarda o JSON cru, não o documento normalizado.** A primeira versão guardava o resultado de
+`normalizeSiteContent`, e o defeito que isso produziu parece intermitente e não é: o `next dev`
+recarrega módulos mas o `globalThis` sobrevive, então um campo acrescentado ao modelo (foi
+`titleRoll`) nunca alcançava o objeto já normalizado que estava em memória. A tela quebrava com
+`Cannot read properties of undefined (reading 'length')` apontando para um componente correto, e
+reiniciar o servidor "resolvia". É a mesma armadilha que `repositories/store.ts` documenta ao mesclar
+coleção nova em vez de usar `??=`. A saída aqui é mais simples: guardar o cru e normalizar a cada
+leitura — a normalização é pura, idempotente (há teste) e custa microssegundos, enquanto o cache
+continua evitando o disco e o `JSON.parse`, que é onde está o custo.
 
 ## Montagem de proposta na conversa
 
@@ -840,8 +998,30 @@ era da marca "Nexa", tinha texto branco que sumia em superfície clara e exigia 
 tema. Sendo desenho, ele herda cor de token e acompanha a troca de paleta de graça. As coordenadas do
 vão do anel e as alturas das hastes são solidárias — mexer numa sem a outra fecha o E dentro do anel.
 
-O único hexadecimal literal da marca vive em `apps/web/src/app/icon.svg`, e não tem alternativa: o
-ícone da aba é lido fora do documento, sem folha de estilo e sem tema.
+**Onde a cor da marca aparece literal, ela deriva do token — e já derivou errado.** Três arquivos não
+têm alternativa a hexadecimal, porque são lidos fora do documento, sem folha de estilo e sem tema:
+`apps/web/src/app/icon.svg`, os arquivos de `apps/web/public/marca/` e o que os gera. O âmbar ficou
+`#F59E0B` no ícone da aba com um comentário afirmando que batia com `--accent` — que vale `38 92% 45%`,
+ou seja `#DC8F09`, cinco pontos mais escuro. Ao mexer, **converta o HSL do token**; copiar de outro
+arquivo é como a deriva entrou.
+
+**Os arquivos soltos da marca são gerados, não desenhados.** `scripts/gerar-marca.mjs` copia os quatro
+traçados de `LogoMark` e converte "Elora" em contorno a partir do mesmo `@fontsource/sora` que o site
+carrega, produzindo `apps/web/public/marca/` — símbolo e logotipo em versão clara, escura e
+monocromática, o selo quadrado, a imagem de compartilhamento e os PNG. Sem o script, o caminho é
+alguém redesenhar "parecido" no Figma, e seis meses depois o logotipo do slide não ser o do produto.
+**Ao mexer no componente, rode o script de novo** — ele não tem como saber que o desenho mudou.
+
+Três decisões dele valem enunciar. O nome vai em **contorno**, porque fora do site a fonte Sora não
+existe e o editor cairia numa substituta. `opentype.js` e `sharp` **não** são dependências do projeto:
+entram por `npm i --no-save --prefix scripts`, e o `--prefix` importa porque mandar o npm reconciliar a
+árvore da raiz pode desfazer os vínculos do pnpm. E `apple-icon.png` e `opengraph-image.png` moram em
+`app/`, não em `public/marca/`: é o **nome do arquivo naquele diretório** que faz o Next emitir as
+tags, e movê-los desliga a prévia do link em silêncio.
+
+**O componente continua sendo a marca dentro do produto.** Os arquivos gerados têm cor fixa; usá-los
+numa tela traria de volta o defeito que derrubou o PNG da "Nexa" — o logotipo sumindo quando o fundo
+muda.
 
 Tipografia: **Sora** (`font-display`, classe `.figure`) nos números e títulos de seção; **Inter** no
 resto. Ambas auto-hospedadas via `@fontsource` — nenhuma requisição externa.

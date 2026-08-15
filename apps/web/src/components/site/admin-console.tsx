@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import * as React from "react";
+import type { SiteContent } from "@elora/core";
 import { Button, Callout, Tabs, TabsContent, TabsList, TabsTrigger } from "@elora/ui";
-import { Calculator, Info, Layers, Send } from "lucide-react";
+import { Calculator, Info, Layers, PenLine, Send } from "lucide-react";
 
+import { ContentEditor } from "./content-editor";
 import { PricingSimulator } from "./pricing-simulator";
 import { VerticalGallery } from "./vertical-gallery";
+import type { ContentSource } from "@/lib/site/content-store";
 
 /**
  * O console da equipe comercial: bases de demonstração e simulador de preço.
@@ -30,13 +33,25 @@ import { VerticalGallery } from "./vertical-gallery";
  * alimentam a tabela de `/precos`. Uma cópia "de vendedor" divergiria do que o
  * cliente vê no primeiro reajuste, e a divergência apareceria na pior hora
  * possível — com os dois olhando telas diferentes na mesma chamada.
+ *
+ * ## Por que o editor do site mora aqui, e não numa página própria
+ *
+ * Pelo mesmo motivo das outras duas: é a mesma pessoa, no mesmo dia. Quem
+ * apresenta o produto é quem descobre qual frase da landing page não sustenta a
+ * pergunta que o cliente acabou de fazer — e a distância entre descobrir e
+ * corrigir é o que decide se a correção acontece. A aba está a um clique da
+ * demonstração que a motivou.
  */
 export function AdminConsole({
   activeCompany,
   activeName,
+  content,
+  contentSource,
 }: {
   activeCompany: string;
   activeName: string;
+  content: SiteContent;
+  contentSource: ContentSource;
 }) {
   const [tab, setTab] = React.useState("demonstracoes");
 
@@ -50,6 +65,10 @@ export function AdminConsole({
         <TabsTrigger value="simulador" className="gap-1.5">
           <Calculator className="size-3.5" aria-hidden />
           Simulador de preços
+        </TabsTrigger>
+        <TabsTrigger value="conteudo" className="gap-1.5">
+          <PenLine className="size-3.5" aria-hidden />
+          Conteúdo do site
         </TabsTrigger>
       </TabsList>
 
@@ -87,6 +106,20 @@ export function AdminConsole({
             sem total calculado.
           </p>
         </div>
+      </TabsContent>
+
+      <TabsContent value="conteudo" className="mt-6 focus-visible:outline-none">
+        <Callout variant="warning" icon={<PenLine />} className="mb-6">
+          <p className="font-medium">O que você publicar aqui vai ao ar na hora.</p>
+          <p className="mt-1 text-sm leading-relaxed">
+            Não há rascunho nem aprovação: publicar troca o texto que o visitante lê. Os{" "}
+            <strong>números</strong> — franquia, excedente, tarifa da Meta, valor de assento —
+            continuam vindo da tabela de preços e não são editáveis por aqui, de propósito: um preço
+            digitado à mão diverge da proposta no primeiro reajuste.
+          </p>
+        </Callout>
+
+        <ContentEditor initial={content} source={contentSource} />
       </TabsContent>
     </Tabs>
   );

@@ -1,5 +1,52 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { ehDoProduto, produtoExposto } from "@/lib/site/exposicao";
+
+/**
+ * Duas responsabilidades, e a ordem entre elas importa.
+ *
+ * A primeira é decidir **o que este domínio publica**: no endereço da empresa
+ * vai ao ar o site público, e o produto — demonstração de instância única, sem
+ * verificação de sessão no `(workspace)` — fica fechado até que alguém decida o
+ * contrário por variável de ambiente. O porquê está em `lib/site/exposicao.ts`.
+ *
+ * A segunda é a política de incorporação do quadro do webchat, que existia aqui
+ * antes e continua valendo quando o produto está exposto.
+ *
+ * A guarda vem primeiro porque a política de incorporação faz uma chamada HTTP
+ * para resolver os domínios autorizados: conferir a exposição depois gastaria
+ * uma requisição para responder a um quadro que não vai ser servido.
+ */
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (ehDoProduto(pathname) && !produtoExposto(process.env)) {
+    /**
+     * API responde 404; página redireciona.
+     *
+     * Redirecionar uma chamada de API devolveria o HTML da landing page para
+     * quem esperava JSON, e o erro chegaria ao chamador como falha de parse —
+     * mensagem que não diz nada sobre a causa. A página, ao contrário, tem para
+     * onde ir: quem abriu `/inbox` neste domínio veio de link antigo, e a home é
+     * a resposta útil.
+     */
+    if (pathname === "/api" || pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { erro: "indisponivel", detalhe: "Esta superfície não está publicada neste domínio." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (pathname === "/webchat/frame") {
+    return quadroDoWebchat(request);
+  }
+
+  return NextResponse.next();
+}
+
 /**
  * Quem pode embutir o quadro do webchat.
  *
@@ -18,7 +65,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * chamar a API direto, sem o `iframe`. As duas checagens cobrem caminhos
  * diferentes, e nenhuma torna a outra dispensável.
  */
-export async function middleware(request: NextRequest) {
+async function quadroDoWebchat(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key")?.trim();
 
   if (!key) {
@@ -82,6 +129,15 @@ function withFrameAncestors(response: NextResponse, value: string): NextResponse
   return response;
 }
 
+/**
+ * O matcher deixou de ser um caminho só.
+ *
+ * A guarda de exposição precisa ver toda requisição de navegação e de API, então
+ * a exclusão é pelo que **nunca** é decidido aqui: os artefatos de build do Next
+ * e a arte da marca em `public/`. Listar extensão de arquivo seria pior — o
+ * `/webchat/embed.js` termina em `.js` e escaparia da guarda justamente por ser
+ * o arquivo que abre o widget no site alheio.
+ */
 export const config = {
-  matcher: ["/webchat/frame"],
+  matcher: ["/((?!_next/|marca/).*)"],
 };

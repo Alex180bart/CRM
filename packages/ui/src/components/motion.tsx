@@ -91,6 +91,65 @@ export function Reveal({
 }
 
 /**
+ * Número que interpola **do valor anterior**, não do zero.
+ *
+ * É o par de `AnimatedNumber`, e a diferença decide qual usar. `AnimatedNumber`
+ * conta a partir de zero, o que é certo numa entrada de página — dá para
+ * perceber a ordem de grandeza. Aqui o valor **muda** com o gesto de quem está
+ * na tela: alternar entre anual e mensal, somar um item ao carrinho. Contar do
+ * zero a cada mudança faria o número piscar até o novo total, e o piscar é lido
+ * como recarregamento.
+ *
+ * Existia como cópia privada no montador de proposta do Inbox. Subiu para cá no
+ * segundo consumidor, que é o momento em que duas cópias começam a divergir.
+ */
+export function RollingNumber({
+  value,
+  format,
+  className,
+  durationMs = 420,
+}: {
+  value: number;
+  format: (value: number) => string;
+  className?: string;
+  durationMs?: number;
+}) {
+  const [display, setDisplay] = React.useState(value);
+  const fromRef = React.useRef(value);
+  const frameRef = React.useRef<number | undefined>(undefined);
+
+  React.useEffect(() => {
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduced) {
+      fromRef.current = value;
+      setDisplay(value);
+      return;
+    }
+
+    const from = fromRef.current;
+    const start = performance.now();
+
+    function tick(now: number) {
+      const progress = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(from + (value - from) * eased));
+      if (progress < 1) frameRef.current = requestAnimationFrame(tick);
+      else fromRef.current = value;
+    }
+
+    frameRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (frameRef.current !== undefined) cancelAnimationFrame(frameRef.current);
+    };
+  }, [value, durationMs]);
+
+  return <span className={className}>{format(display)}</span>;
+}
+
+/**
  * Número que conta até o valor final na montagem.
  *
  * Serve à leitura, não ao enfeite: a contagem dura 700 ms e usa easing de

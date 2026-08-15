@@ -19,6 +19,8 @@ import {
   startSession,
   verifyPassword,
 } from "@/lib/site/auth";
+import { produtoExposto } from "@/lib/site/exposicao";
+import { enderecoComercial, notificarPedidoDeOrcamento } from "@/lib/site/notificacao";
 
 /**
  * Escritas do site público.
@@ -212,6 +214,44 @@ export async function requestQuoteAction(
 
   revalidatePath("/conta");
 
+  /**
+   * A gravação vem primeiro; o e-mail, depois.
+   *
+   * É a mesma ordem do envio de proposta na conversa, e pelo mesmo motivo: no
+   * pior caso sobra um pedido gravado sem aviso, que ainda é recuperável. O
+   * inverso — avisar sem gravar — produziria referência citada num e-mail que não
+   * corresponde a pedido nenhum.
+   */
+  const notificacao = await notificarPedidoDeOrcamento(result.value);
+
+  /**
+   * Falha de notificação **é dita a quem preencheu**.
+   *
+   * A tentação é responder sucesso e resolver depois: o pedido "está gravado",
+   * afinal. Só que o armazém é por instância e não sobrevive ao próximo deploy —
+   * sem o e-mail, este pedido provavelmente não existe para ninguém. Confirmar
+   * mesmo assim é prometer retorno que não vai acontecer, e a pessoa só descobre
+   * pela ausência, dias depois, quando já procurou outro fornecedor.
+   *
+   * O texto não expõe o motivo técnico: quem preencheu não pode fazer nada com
+   * "falha de autenticação SMTP". O que ele oferece é o caminho que funciona
+   * agora, que é escrever direto para o comercial.
+   */
+  if (!notificacao.enviado) {
+    const contato = enderecoComercial();
+
+    return {
+      ok: true,
+      reference: result.value.reference,
+      message:
+        `Pedido ${result.value.reference} registrado, mas não conseguimos avisar o time comercial ` +
+        `automaticamente. ` +
+        (contato
+          ? `Para garantir o retorno, escreva para ${contato} citando esta referência.`
+          : `Se possível, entre em contato pelos canais da Contabilidade Facilitada citando esta referência.`),
+    };
+  }
+
   return {
     ok: true,
     reference: result.value.reference,
@@ -241,6 +281,17 @@ export async function openVerticalAction(data: FormData): Promise<void> {
    * base debaixo de uma apresentação em andamento.
    */
   if (!(await currentAdmin())) redirect("/entrar?proximo=/admin");
+
+  /**
+   * Com o produto fechado, trocar a vertical não tem para onde levar.
+   *
+   * A tela já desabilita o botão, e isso protege contra o clique. Esta linha
+   * protege contra a requisição: Server Action tem endereço próprio, e um `POST`
+   * montado à mão recarregaria o armazém da instância para depois cair num
+   * `/inicio` que o middleware devolve para a home — efeito colateral sem
+   * benefício nenhum.
+   */
+  if (!produtoExposto(process.env)) redirect("/admin");
 
   const id = text(data, "vertical");
   if (!isDemoVerticalId(id)) return;

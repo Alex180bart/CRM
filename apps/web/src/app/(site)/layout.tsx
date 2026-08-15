@@ -1,4 +1,5 @@
 import { currentAccountPublic } from "@/lib/site/auth";
+import { readSiteContent } from "@/lib/site/content-store";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 
@@ -16,7 +17,7 @@ import { SiteHeader } from "@/components/site/site-header";
  * e a rolagem da página, que o workspace não tem (lá quem rola é o painel).
  */
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const account = await currentAccountPublic();
+  const [account, content] = await Promise.all([currentAccountPublic(), readSiteContent()]);
 
   /**
    * Sem `overflow-y-auto` aqui, e a ausência é o que faz o cabeçalho grudar.
@@ -35,9 +36,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
    */
   return (
     <div className="bg-background flex min-h-full flex-col">
-      <SiteHeader accountName={account?.name} />
+      <SiteHeader accountName={account?.name} content={content.header} />
       <main className="flex-1">{children}</main>
-      <SiteFooter />
+      <SiteFooter content={content.footer} />
     </div>
   );
 }

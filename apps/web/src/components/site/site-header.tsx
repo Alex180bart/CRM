@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
+import type { HeaderContent } from "@elora/core";
 import { Button, cn } from "@elora/ui";
 import { Menu, X } from "lucide-react";
 
@@ -35,22 +36,27 @@ import { LogoWordmark } from "@/components/shell/logo";
  */
 
 /**
- * A navegação pública não tem "Demonstrações", e a ausência é deliberada.
+ * ## Os links chegam por propriedade, e o componente continua sendo cliente
  *
- * As bases de demonstração são material de venda: carregá-las troca os dados da
- * instância inteira. Anunciá-las no menu convidaria o visitante a abrir uma
- * sozinho — e, sem back-end, ele trocaria a base debaixo de uma apresentação em
- * andamento. O caminho fica em `/entrar`, para quem tem conta de administrador.
+ * O menu é editável em `/admin`, mas quem lê o conteúdo é o layout — Server
+ * Component. Buscar aqui exigiria efeito, estado de carregamento e um cabeçalho
+ * que nasce vazio e preenche depois: pulo de layout na primeira coisa que o
+ * visitante vê.
+ *
+ * A navegação pública não tem "Demonstrações", e a ausência é deliberada — vale
+ * lembrar antes de acrescentá-la pelo editor. As bases de demonstração são
+ * material de venda: carregá-las troca os dados da instância inteira. Anunciá-las
+ * no menu convidaria o visitante a abrir uma sozinho — e, sem back-end, ele
+ * trocaria a base debaixo de uma apresentação em andamento. O caminho fica em
+ * `/entrar`, para quem tem conta de administrador.
  */
-const LINKS = [
-  { href: "/#produto", label: "Produto" },
-  { href: "/precos", label: "Preços" },
-  { href: "/#ia", label: "Inteligência artificial" },
-  { href: "/#seguranca", label: "Segurança" },
-  { href: "/orcamento", label: "Falar com o comercial" },
-];
-
-export function SiteHeader({ accountName }: { accountName?: string }) {
+export function SiteHeader({
+  accountName,
+  content,
+}: {
+  accountName?: string;
+  content: HeaderContent;
+}) {
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
@@ -83,9 +89,9 @@ export function SiteHeader({ accountName }: { accountName?: string }) {
         </Link>
 
         <nav className="hidden flex-1 items-center gap-1 md:flex">
-          {LINKS.map((link) => (
+          {content.links.map((link) => (
             <Link
-              key={link.href}
+              key={link.id}
               href={link.href}
               className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg px-3 py-2 text-sm font-medium transition-colors"
             >
@@ -101,11 +107,11 @@ export function SiteHeader({ accountName }: { accountName?: string }) {
             </Button>
           ) : (
             <Button asChild variant="ghost" size="sm">
-              <Link href="/entrar">Entrar</Link>
+              <Link href="/entrar">{content.signInLabel}</Link>
             </Button>
           )}
           <Button asChild size="sm">
-            <Link href="/orcamento">Solicitar orçamento</Link>
+            <Link href={content.cta.href}>{content.cta.label}</Link>
           </Button>
         </div>
 
@@ -123,9 +129,9 @@ export function SiteHeader({ accountName }: { accountName?: string }) {
       {open ? (
         <div className="site-header border-border border-t px-5 py-4 md:hidden">
           <nav className="grid gap-1">
-            {LINKS.map((link) => (
+            {content.links.map((link) => (
               <Link
-                key={link.href}
+                key={link.id}
                 href={link.href}
                 className="hover:bg-muted rounded-lg px-3 py-2.5 text-sm font-medium"
               >
@@ -136,11 +142,11 @@ export function SiteHeader({ accountName }: { accountName?: string }) {
           <div className="mt-3 grid gap-2">
             <Button asChild variant="outline">
               <Link href={accountName ? "/conta" : "/entrar"}>
-                {accountName ? "Minha conta" : "Entrar"}
+                {accountName ? content.accountLabel : content.signInLabel}
               </Link>
             </Button>
             <Button asChild>
-              <Link href="/orcamento">Solicitar orçamento</Link>
+              <Link href={content.cta.href}>{content.cta.label}</Link>
             </Button>
           </div>
         </div>

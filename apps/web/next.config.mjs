@@ -93,6 +93,37 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["@elora/core", "@elora/ui", "@xyflow/react"],
   },
+  /**
+   * O conteúdo do site viaja junto com **toda** função.
+   *
+   * `lib/site/content-store.ts` monta o caminho em tempo de execução
+   * (`path.join(process.cwd(), "content", "site-content.json")`), e o rastreador
+   * de arquivos do Next resolve isso só em parte: no build de verificação, o JSON
+   * entrou no pacote de `/`, `/precos` e `/admin` — que chamam `readSiteContent`
+   * no próprio módulo da página — e **ficou de fora** de `/orcamento`, `/entrar`,
+   * `/cadastrar` e `/conta`, que leem o mesmo arquivo pelo layout do grupo, para
+   * desenhar cabeçalho e rodapé.
+   *
+   * Em hospedagem serverless, onde cada rota é empacotada com os arquivos que o
+   * rastreamento apontou, o efeito seria silencioso e confuso: metade do site com
+   * o menu editado, a outra metade com o texto padrão do código — sem erro, sem
+   * log, e sem relação aparente com a publicação que acabou de acontecer.
+   *
+   * O arquivo tem dezenas de kilobytes. Incluí-lo em todas as rotas custa menos
+   * que a chance de alguém acrescentar uma página ao site e reencontrar isto.
+   */
+  outputFileTracingIncludes: {
+    "/**": ["./content/site-content.json"],
+  },
+  /**
+   * O nodemailer sai do empacotamento.
+   *
+   * Ele resolve transporte e codificação por `require` dinâmico, e o empacotador
+   * não consegue seguir esses caminhos: o pacote quebra em tempo de execução, no
+   * envio, e não no build — o pior lugar para descobrir, porque o único sintoma é
+   * o pedido de proposta que não chega.
+   */
+  serverExternalPackages: ["nodemailer"],
   // Os pacotes internos são publicados como TypeScript puro; o Next transpila.
   transpilePackages: ["@elora/ui", "@elora/core"],
   eslint: {

@@ -7,6 +7,7 @@ import { ArrowRight, Lock } from "lucide-react";
 
 import { AdminConsole } from "@/components/site/admin-console";
 import { currentAccount, currentAdmin } from "@/lib/site/auth";
+import { readSiteContent, siteContentSource } from "@/lib/site/content-store";
 
 export const metadata: Metadata = {
   title: "Área comercial",
@@ -86,6 +87,7 @@ export default async function AdminPage() {
   }
 
   const active = verticalMeta(activeVerticalId());
+  const [content, contentSource] = await Promise.all([readSiteContent(), siteContentSource()]);
 
   return (
     <>
@@ -103,7 +105,12 @@ export default async function AdminPage() {
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-5 py-10">
-        <AdminConsole activeCompany={active.company} activeName={active.name} />
+        <AdminConsole
+          activeCompany={active.company}
+          activeName={active.name}
+          content={content}
+          contentSource={contentSource}
+        />
       </section>
 
       <section className="bg-surface-sunken py-14">

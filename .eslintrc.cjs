@@ -31,4 +31,18 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "warn",
     "no-console": ["warn", { allow: ["warn", "error"] }],
   },
+  overrides: [
+    {
+      /**
+       * Ferramenta de linha de comando pode escrever na saída.
+       *
+       * A regra existe para impedir `console.log` esquecido em código de
+       * aplicação, onde ele vaza para o navegador de quem visita. Num script que
+       * a pessoa roda no terminal, a saída **é** a interface — sem ela, o comando
+       * termina em silêncio e ninguém sabe se gerou alguma coisa.
+       */
+      files: ["scripts/**/*.mjs"],
+      rules: { "no-console": "off" },
+    },
+  ],
 };
