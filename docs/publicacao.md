@@ -126,7 +126,20 @@ sem parar tudo.
 
 `HOSTGATOR_DEPLOY` existe para o workflow rodar como verificação antes de a
 publicação estar pronta: enquanto ela não valer `true`, cada push roda lint,
-typecheck, teste e build, e não tenta enviar nada.
+typecheck, teste e build, e não tenta enviar nada. O disparo manual não a
+contorna, de propósito.
+
+### Instalar sem FTP, na primeira vez
+
+O workflow publica o pacote como **artefato** (`elora-standalone`) em toda
+execução. Para a primeira instalação — ou no dia em que o envio automático
+falhar — o caminho é: abrir a execução em Actions, baixar o zip, e enviá-lo pelo
+cPanel → Gerenciador de Arquivos, dentro de `elora`, usando o botão de
+descompactar.
+
+Vale como saída de emergência, não como rotina: feito à mão, ninguém garante que
+o que está no servidor é o que está no repositório — e essa divergência costuma
+ser descoberta durante um incidente, que é o pior momento.
 
 ## 5. O domínio
 

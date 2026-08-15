@@ -81,14 +81,30 @@ jobs:
           mkdir -p .github/restart
           echo "$GITHUB_SHA $(date -u +%FT%TZ)" > .github/restart/restart.txt
           ls -la apps/web/.next/standalone
+          echo "Tamanho do pacote: $(du -sh apps/web/.next/standalone | cut -f1)"
 
-      # O envio é opt-in: até a variável de repositório `HOSTGATOR_DEPLOY` valer
-      # "true", o push roda só a verificação e o build. Sem isso, cada push antes
-      # de os segredos existirem falharia por credencial ausente e encheria a
-      # caixa de e-mail de alerta — e alerta que sempre falha é alerta que se
-      # aprende a ignorar, inclusive no dia em que a falha é real.
+      # O pacote também sai como artefato, e não só pelo FTP.
+      #
+      # É o caminho de instalação sem credencial: baixar o zip desta execução e
+      # enviá-lo pelo Gerenciador de Arquivos do cPanel, que descompacta no
+      # servidor. Serve para a primeira instalação — quando ainda não há conta de
+      # FTP — e para o dia em que o envio automático falhar e for preciso publicar
+      # à mão sem esperar ninguém.
+      - name: Publicar o pacote como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: elora-standalone
+          path: apps/web/.next/standalone
+          retention-days: 14
+
+      # O envio é opt-in pela variável de repositório `HOSTGATOR_DEPLOY`, e o
+      # disparo manual **não** a contorna. Sem isso, cada push antes de os
+      # segredos existirem falharia por credencial ausente e encheria a caixa de
+      # alerta — e alerta que sempre falha é alerta que se aprende a ignorar,
+      # inclusive no dia em que a falha é real. Enquanto ela não valer "true", o
+      # workflow entrega o pacote como artefato e para aí.
       - name: Enviar por FTP
-        if: ${{ vars.HOSTGATOR_DEPLOY == 'true' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ vars.HOSTGATOR_DEPLOY == 'true' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.HOSTGATOR_FTP_HOST }}
@@ -108,7 +124,7 @@ jobs:
       # O Passenger recarrega quando este arquivo muda. É o restart oficial em
       # hospedagem compartilhada, e funciona por FTP — não exige shell.
       - name: Reiniciar a aplicação
-        if: ${{ vars.HOSTGATOR_DEPLOY == 'true' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ vars.HOSTGATOR_DEPLOY == 'true' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.HOSTGATOR_FTP_HOST }}
