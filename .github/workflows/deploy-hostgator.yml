@@ -27,8 +27,13 @@ env:
   # numa major e executar noutra é a origem de `ERR_REQUIRE_ESM` e de falhas de
   # ABI em dependência nativa — erros que só aparecem em tempo de execução.
   NODE_VERSION: "20"
-  # Diretório da aplicação no servidor, relativo ao home (/home4/alexfe21).
-  APP_DIR: elora
+  # A conta de FTP usada aqui é dedicada e **confinada** ao diretório da
+  # aplicação, então o destino é a raiz dela — não há prefixo a acrescentar. O
+  # caminho absoluto correspondente no servidor é
+  # /home4/alexfe21/alexfernandes<...>.meusitehostgator.com.br/eloraintelligence,
+  # que fica **fora** do `public_html`: o Apache não serve aquele diretório, e é
+  # por isso que o código da aplicação não é acessível por URL.
+  APP_DIR: ./
 
 jobs:
   publicar:
@@ -110,8 +115,14 @@ jobs:
           server: ${{ secrets.HOSTGATOR_FTP_HOST }}
           username: ${{ secrets.HOSTGATOR_FTP_USER }}
           password: ${{ secrets.HOSTGATOR_FTP_PASSWORD }}
+          # TLS com validação frouxa. O servidor é compartilhado e apresenta um
+          # certificado que não casa com o endereço usado — verificado nos dois
+          # hosts possíveis. Recusar aí seria trocar sigilo por rigor formal: sem
+          # `ftps`, a senha da conta trafega em claro, que é a falha real.
+          protocol: ftps
+          security: loose
           local-dir: apps/web/.next/standalone/
-          server-dir: ${{ env.APP_DIR }}/
+          server-dir: ${{ env.APP_DIR }}
           # O `.env` do servidor é escrito uma vez pelo painel do cPanel e não
           # pode ser apagado por deploy: ele guarda os segredos de produção, que
           # não estão no repositório.
@@ -130,5 +141,7 @@ jobs:
           server: ${{ secrets.HOSTGATOR_FTP_HOST }}
           username: ${{ secrets.HOSTGATOR_FTP_USER }}
           password: ${{ secrets.HOSTGATOR_FTP_PASSWORD }}
+          protocol: ftps
+          security: loose
           local-dir: .github/restart/
-          server-dir: ${{ env.APP_DIR }}/tmp/
+          server-dir: ./tmp/
