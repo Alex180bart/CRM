@@ -1,0 +1,116 @@
+# Build e publicação na hospedagem HostGator (cPanel + Passenger).
+#
+# ## Por que o build acontece aqui, e não na máquina de quem desenvolve
+#
+# O pacote `standalone` do Next carrega as dependências que o rastreamento provou
+# necessárias — inclusive binários compilados para a plataforma onde o build
+# rodou. Montado no Windows, ele leva `@next/swc-win32-x64-msvc` e falha no Linux
+# do servidor; e o próprio build quebra antes disso, porque recriar os symlinks
+# do pnpm no Windows exige privilégio que a conta comum não tem.
+#
+# ## Por que o build não acontece no servidor
+#
+# A hospedagem compartilhada tem `npm`, e `npm` não resolve o protocolo
+# `workspace:*` que `@elora/core` e `@elora/ui` usam. Somado ao limite de memória
+# da conta, instalar e compilar lá seria o passo mais frágil do processo. O
+# standalone existe justamente para não precisar instalar nada no destino.
+
+name: Publicar na HostGator
+
+on:
+  push:
+    branches: [rebrand/elora]
+  workflow_dispatch:
+
+env:
+  # Precisa casar com a versão escolhida no cPanel → Setup Node.js App. Compilar
+  # numa major e executar noutra é a origem de `ERR_REQUIRE_ESM` e de falhas de
+  # ABI em dependência nativa — erros que só aparecem em tempo de execução.
+  NODE_VERSION: "20"
+  # Diretório da aplicação no servidor, relativo ao home (/home4/alexfe21).
+  APP_DIR: elora
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # As três verificações rodam antes do build: publicar um pacote que não
+      # passa no teste custa mais caro aqui que num ambiente com rollback de um
+      # clique — na hospedagem própria, voltar atrás é outro deploy inteiro.
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - run: pnpm --filter web build
+        env:
+          NEXT_OUTPUT: standalone
+
+      # O Next não copia `static` nem `public` para o standalone: ele assume que
+      # o CDN os serve. Aqui não há CDN, então eles viajam junto — sem isso, a
+      # página carrega sem CSS e sem JavaScript, que é o sintoma clássico de
+      # standalone incompleto.
+      - name: Montar o pacote
+        run: |
+          cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
+          cp -r apps/web/public apps/web/.next/standalone/apps/web/public
+          # O Passenger aponta para um arquivo de inicialização na raiz da
+          # aplicação; o standalone o gera dentro de apps/web, refletindo o
+          # monorepo. Esta ponte evita depender de caminho relativo na
+          # configuração do cPanel, que é digitada à mão e some sem aviso.
+          echo 'require("./apps/web/server.js");' > apps/web/.next/standalone/server.js
+          # O gatilho de restart precisa MUDAR a cada publicação: a ação de FTP
+          # compara conteúdo e pula arquivo idêntico. Um `restart.txt` fixo seria
+          # enviado uma vez só, e todo deploy seguinte subiria o código novo com
+          # o processo antigo ainda em memória — a pior falha possível, porque o
+          # site continua no ar mostrando a versão anterior.
+          mkdir -p .github/restart
+          echo "$GITHUB_SHA $(date -u +%FT%TZ)" > .github/restart/restart.txt
+          ls -la apps/web/.next/standalone
+
+      # O envio é opt-in: até a variável de repositório `HOSTGATOR_DEPLOY` valer
+      # "true", o push roda só a verificação e o build. Sem isso, cada push antes
+      # de os segredos existirem falharia por credencial ausente e encheria a
+      # caixa de e-mail de alerta — e alerta que sempre falha é alerta que se
+      # aprende a ignorar, inclusive no dia em que a falha é real.
+      - name: Enviar por FTP
+        if: ${{ vars.HOSTGATOR_DEPLOY == 'true' || github.event_name == 'workflow_dispatch' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTGATOR_FTP_HOST }}
+          username: ${{ secrets.HOSTGATOR_FTP_USER }}
+          password: ${{ secrets.HOSTGATOR_FTP_PASSWORD }}
+          local-dir: apps/web/.next/standalone/
+          server-dir: ${{ env.APP_DIR }}/
+          # O `.env` do servidor é escrito uma vez pelo painel do cPanel e não
+          # pode ser apagado por deploy: ele guarda os segredos de produção, que
+          # não estão no repositório.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.env
+            **/tmp/**
+
+      # O Passenger recarrega quando este arquivo muda. É o restart oficial em
+      # hospedagem compartilhada, e funciona por FTP — não exige shell.
+      - name: Reiniciar a aplicação
+        if: ${{ vars.HOSTGATOR_DEPLOY == 'true' || github.event_name == 'workflow_dispatch' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTGATOR_FTP_HOST }}
+          username: ${{ secrets.HOSTGATOR_FTP_USER }}
+          password: ${{ secrets.HOSTGATOR_FTP_PASSWORD }}
+          local-dir: .github/restart/
+          server-dir: ${{ env.APP_DIR }}/tmp/

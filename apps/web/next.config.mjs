@@ -59,6 +59,32 @@ const nextConfig = {
    */
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   /**
+   * Pacote autocontido para hospedagem própria, sob demanda.
+   *
+   * `NEXT_OUTPUT=standalone` faz o build emitir `server.js` com apenas as
+   * dependências que o rastreamento provou necessárias — é o que permite subir a
+   * aplicação para um servidor onde `pnpm install` não roda. A hospedagem
+   * compartilhada em que este projeto vai ao ar tem `npm`, e `npm` não resolve o
+   * protocolo `workspace:*` que `@elora/core` e `@elora/ui` usam: instalar lá
+   * falharia, e o standalone existe para não precisar instalar nada.
+   *
+   * Fica atrás de variável porque plataformas gerenciadas montam o próprio
+   * pacote a partir do rastreamento e não usam esta saída — ligá-la sempre
+   * produziria artefato ignorado e minutos de build gastos à toa.
+   */
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
+  /**
+   * A raiz do rastreamento é o monorepo, não `apps/web`.
+   *
+   * O `pnpm` guarda os pacotes em `node_modules/.pnpm` na raiz e liga por
+   * symlink; com a raiz padrão (a pasta do app), o Next segue os links para fora
+   * do escopo e **não copia** o que está do lado de lá. O sintoma é o pior tipo:
+   * o build passa, o pacote sobe, e a aplicação morre na primeira requisição com
+   * `Cannot find module`, apontando uma dependência que existe na máquina de quem
+   * compilou.
+   */
+  outputFileTracingRoot: resolve(here, "../.."),
+  /**
    * O indicador de desenvolvimento do Next fica desligado.
    *
    * Não é preferência estética: ele é renderizado dentro de **todo** documento,
