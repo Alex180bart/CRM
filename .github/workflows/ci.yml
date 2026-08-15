@@ -1,0 +1,39 @@
+# Verificação a cada push.
+#
+# A publicação em si é do Netlify, que constrói a partir do repositório. Este
+# fluxo existe para que lint, tipos e testes rodem **antes** — o build da
+# plataforma também falharia num erro de tipo, mas falharia depois de enfileirar
+# o deploy, e o retorno chega mais tarde e misturado ao log de publicação.
+#
+# Também roda em Linux, que é onde o código de fato executa: o `pnpm test` da
+# máquina de quem desenvolve não cobre diferença de sistema de arquivos que só
+# aparece em produção.
+
+name: Verificação
+
+on:
+  push:
+    branches: [main, rebrand/elora]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sem `version` de propósito: a raiz declara `packageManager: pnpm@9.15.9`,
+      # e o action aborta quando recebe as duas fontes.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm --filter web build

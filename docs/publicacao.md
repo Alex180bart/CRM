@@ -1,8 +1,7 @@
-# Publicação — eloraintelligence.com.br na HostGator
+# Publicação — eloraintelligence.com.br
 
-Roteiro para colocar o site público da Elora no ar, na hospedagem cPanel que a
-empresa já mantém. Escrito a partir do estado verificado do repositório, da conta
-(consultada pela API do cPanel) e do DNS em 15/08/2026.
+Roteiro para colocar o site público da Elora no ar. Escrito a partir do estado
+verificado do repositório, da conta de hospedagem e do DNS em 15/08/2026.
 
 ## O que vai ao ar
 
@@ -22,66 +21,55 @@ A guarda está em [`apps/web/src/lib/site/exposicao.ts`](../apps/web/src/lib/sit
 Verificado em build de produção: site público responde 200, `/inbox` e
 `/administracao` respondem 307 para `/`, `/api/*` responde 404, e o endereço
 inexistente continua caindo na página 404 do site. `ELORA_EXPOR_PRODUTO=1` abre
-tudo — use isso apenas fora do domínio da empresa.
+tudo — use apenas fora do domínio da empresa.
 
-## Por que HostGator, e não uma plataforma gerenciada
+## Por que não na HostGator, apesar de a conta já existir
 
-A conta `alexfe21` tem a feature `passengerapps` habilitada — o "Setup Node.js
-App" do cPanel —, além de `ssh` e `version_control`. Ou seja, ela **roda Node**,
-ao contrário do que a hospedagem compartilhada costuma oferecer.
+**A hospedagem compartilhada `alexfe21` não tem Node.js instalado.** Não é
+questão de versão: `node -v` responde `command not found`, `/opt/alt` não tem
+nenhum `alt-nodejs*` e `/opt/cpanel` só traz PHP (`ea-php80` a `ea-php85`). É por
+isso que a ferramenta "Setup Node.js App" sequer aparece no painel — ela só
+existe quando o seletor está provisionado.
 
-Do outro lado, o plano gratuito da Vercel proíbe uso comercial de forma
-explícita, e "anunciar a venda de um produto ou serviço" é o exemplo que ela
-mesma dá. Este site se enquadra, então lá o custo seria de US$ 20/mês.
+Fica o registro de um erro de leitura que quase custou uma implantação quebrada:
+a API do cPanel lista `passengerapps: 1` entre as features da conta, e isso foi
+interpretado como "a conta roda Node". **A flag é permissão de interface, não
+runtime instalado.** Publicar naquele servidor teria produzido exatamente o 503
+silencioso que este documento existe para evitar. A verificação que vale é
+executar `node -v` no ambiente, não ler a lista de features.
 
-O que se paga por essa escolha está listado em "Riscos conhecidos", no fim.
+O plano gratuito da Vercel também está fora, por outro motivo: ele proíbe uso
+comercial de forma explícita, e "anunciar a venda de um produto ou serviço" é o
+exemplo que ela mesma dá.
 
-## 1. Onde o build acontece — e por que não é aqui
+Sobra o **Netlify**, cujo plano gratuito permite uso comercial — a restrição é
+não revender hospedagem. São 100 GB de banda, 300 minutos de build e 125 mil
+invocações de função por mês.
 
-O pacote `standalone` do Next carrega as dependências que o rastreamento provou
-necessárias, **incluindo binários da plataforma onde foi montado**. Montado no
-Windows, ele leva `@next/swc-win32-x64-msvc` para um servidor Linux. E o build
-sequer termina no Windows: recriar os symlinks do pnpm exige privilégio que a
-conta comum não tem — foi o erro `EPERM: operation not permitted, symlink` que
-apareceu na primeira tentativa.
+## 1. Criar o site no Netlify
 
-No servidor também não dá: a hospedagem tem `npm`, e `npm` não resolve o
-protocolo `workspace:*` que `@elora/core` e `@elora/ui` usam.
+Importar `Alex180bart/CRM` e configurar:
 
-Sobra o GitHub Actions, que roda em Ubuntu e é gratuito para repositório público
-— que é o caso deste. O fluxo está em
-[`.github/workflows/deploy-hostgator.yml`](../.github/workflows/deploy-hostgator.yml):
-instala com pnpm, roda lint, typecheck e testes, monta o standalone, envia por
-FTP e toca o gatilho de restart do Passenger.
+| Campo                 | Valor                                    |
+| --------------------- | ---------------------------------------- |
+| Branch to deploy      | `rebrand/elora`                          |
+| **Base directory**    | vazio — a raiz do repositório            |
+| **Package directory** | `apps/web`                               |
+| Build command         | vem do `netlify.toml` (`pnpm build`)     |
+| Publish directory     | vem do `netlify.toml` (`.next`)          |
 
-## 2. Criar a aplicação Node no cPanel
+A base precisa ficar na raiz para que o `pnpm install` enxergue o
+`pnpm-workspace.yaml`: as dependências internas usam o protocolo `workspace:*`,
+que não resolve de dentro de `apps/web`. O resto vem de
+[`apps/web/netlify.toml`](../apps/web/netlify.toml), inclusive a versão do Node.
 
-cPanel → **Setup Node.js App** → **Create Application**:
+O runtime de Next.js é detectado e instalado pela própria plataforma — não há
+plugin a declarar à mão.
 
-| Campo                     | Valor                                    |
-| ------------------------- | ---------------------------------------- |
-| Node.js version           | a mais alta disponível — **precisa ser 20.11 ou maior** |
-| Application mode          | Production                               |
-| Application root          | `elora`                                  |
-| Application URL           | o domínio, depois que ele estiver na conta |
-| Application startup file  | `server.js`                              |
-
-**A versão do Node é o primeiro item a conferir, e é eliminatório.** O
-repositório exige `>= 20.11`. Se o servidor parar em 18, este caminho acaba aqui
-e a conversa volta a ser sobre plataforma gerenciada ou VPS. Depois de escolher,
-ajuste `NODE_VERSION` no workflow para a mesma major: compilar numa e executar
-noutra produz erro de ABI que só aparece em tempo de execução.
-
-Não use o botão "Run NPM Install" — não há o que instalar. O standalone chega
-com as dependências dentro.
-
-## 3. Variáveis de ambiente da aplicação
-
-Ainda em Setup Node.js App, na própria aplicação, seção de variáveis:
+## 2. Variáveis de ambiente (Site configuration → Environment variables)
 
 | Variável               | Obrigatória | Observação                                                     |
 | ---------------------- | ----------- | -------------------------------------------------------------- |
-| `NODE_ENV`             | **Sim**     | `production`. É o que ativa a guarda de exposição — sem ela, o produto inteiro fica público. |
 | `SITE_SESSION_SECRET`  | **Sim**     | Sem ela o cookie é assinado com a chave de desenvolvimento, que está neste repositório público — qualquer pessoa forja uma sessão. Gere com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. |
 | `ELORA_ADMIN_EMAIL`    | Sim         | Sem o par e-mail + senha, nenhuma conta de administrador é criada e `/admin` fica inacessível. |
 | `ELORA_ADMIN_PASSWORD` | Sim         | Nunca vai para o Git. É derivada com scrypt no primeiro login.  |
@@ -93,11 +81,15 @@ Ainda em Setup Node.js App, na própria aplicação, seção de variáveis:
 | `ELORA_EXPOR_PRODUTO`  | **Não definir** | Abrir o produto neste domínio é o que a guarda existe para impedir. |
 | `GEMINI_API_KEY`       | Não         | A IA só é usada pelo produto, que está fechado.                 |
 
+`NODE_ENV` não entra na lista: a plataforma já define `production` no build e na
+função. Defini-la à mão só cria uma segunda verdade a divergir.
+
 ### O pedido de proposta precisa sair por e-mail
 
-`repositories.site.createQuote` grava no armazém em memória, que morre quando o
-Passenger recicla o processo. Sem notificação, o pedido some e quem preencheu leu
-"responderemos em até um dia útil".
+`repositories.site.createQuote` grava no armazém em memória. Em serverless cada
+requisição pode cair numa instância diferente, e a que gravou não é
+necessariamente a que desenha a lista depois — o pedido some, e quem preencheu
+leu "responderemos em até um dia útil".
 
 `lib/site/notificacao.ts` envia cada pedido assim que ele é gravado. Sem as
 variáveis SMTP nada quebra: o pedido é registrado, o conteúdo inteiro vai para o
@@ -108,68 +100,34 @@ Depois de configurar, envie um pedido de teste pelo próprio `/orcamento` e
 confirme a chegada. É a única verificação que prova a credencial — porta errada
 falha por tempo limite, não por erro de autenticação.
 
-## 4. Credenciais de publicação no GitHub
-
-Em **Settings → Secrets and variables → Actions** do repositório:
-
-| Nome                       | Tipo     | Valor                                      |
-| -------------------------- | -------- | ------------------------------------------ |
-| `HOSTGATOR_FTP_HOST`       | Secret   | `50.116.112.95`                            |
-| `HOSTGATOR_FTP_USER`       | Secret   | usuário da conta FTP                       |
-| `HOSTGATOR_FTP_PASSWORD`   | Secret   | senha dessa conta                          |
-| `HOSTGATOR_DEPLOY`         | Variable | `true` — só então o workflow publica       |
-
-Crie uma **conta FTP dedicada** no cPanel, com diretório restrito a `elora`, em
-vez de usar a credencial principal. A senha vai para um segredo do GitHub, e um
-segredo que dá acesso à conta inteira é um segredo que você não pode rotacionar
-sem parar tudo.
-
-`HOSTGATOR_DEPLOY` existe para o workflow rodar como verificação antes de a
-publicação estar pronta: enquanto ela não valer `true`, cada push roda lint,
-typecheck, teste e build, e não tenta enviar nada. O disparo manual não a
-contorna, de propósito.
-
-### Instalar sem FTP, na primeira vez
-
-O workflow publica o pacote como **artefato** (`elora-standalone`) em toda
-execução. Para a primeira instalação — ou no dia em que o envio automático
-falhar — o caminho é: abrir a execução em Actions, baixar o zip, e enviá-lo pelo
-cPanel → Gerenciador de Arquivos, dentro de `elora`, usando o botão de
-descompactar.
-
-Vale como saída de emergência, não como rotina: feito à mão, ninguém garante que
-o que está no servidor é o que está no repositório — e essa divergência costuma
-ser descoberta durante um incidente, que é o pior momento.
-
-## 5. O domínio
+## 3. O domínio
 
 Estado conferido antes de qualquer mudança:
 
 | Registro | Valor hoje                            | O que fazer                        |
 | -------- | ------------------------------------- | ---------------------------------- |
-| `NS`     | `dns3.hostgator.com.br` / `dns4...`   | Não mexer                          |
-| `A` (`@`)| `162.240.81.81` (não responde HTTP)   | Apontar para `50.116.112.97`       |
-| `www`    | `CNAME` → `eloraintelligence.com.br`  | Manter                             |
+| `NS`     | `dns3.hostgator.com.br` / `dns4...`   | Não mexer — o DNS fica na HostGator |
+| `A` (`@`)| `162.240.81.81` (não responde HTTP)   | `75.2.60.5`, ou ALIAS/ANAME para `apex-loadbalancer.netlify.com` se o painel aceitar |
+| `www`    | `CNAME` → `eloraintelligence.com.br`  | `CNAME` → `<seu-site>.netlify.app` |
 | `MX`     | `mx1.titan.email` / `mx2.titan.email` | **Não mexer** — o e-mail depende deles |
 
-Duas coisas precisam acontecer, nesta ordem:
+O ALIAS é preferível ao registro A quando existe: ele acompanha mudanças de
+endereço da plataforma sem exigir edição manual.
 
-1. **Adicionar `eloraintelligence.com.br` à conta** (cPanel → Domínios →
-   Criar um novo domínio), para que o Apache saiba servi-lo e o AutoSSL emita o
-   certificado. Depois disso, volte à aplicação Node e defina o Application URL.
-2. **Trocar o registro A** para o IP da hospedagem.
+**A troca não é feita pela API do cPanel.** A zona não pertence à conta de
+hospedagem — a API respondeu, com todas as letras: *"You do not control a DNS
+zone named eloraintelligence.com.br"*. Ela é servida por `dns3`/`dns4`, do painel
+de domínios da HostGator, e é lá que os registros mudam.
 
-**A troca do A não é feita por aqui.** A API do cPanel desta conta respondeu, com
-todas as letras: *"You do not control a DNS zone named eloraintelligence.com.br"*.
-A zona é servida por `dns3`/`dns4`, que pertencem ao painel de domínios da
-HostGator — é lá, na área de gerenciamento de DNS do domínio, que o registro A
-muda. A conta de hospedagem só controla a zona do próprio domínio temporário.
+No Netlify, adicione `eloraintelligence.com.br` como domínio principal e
+`www.eloraintelligence.com.br` com redirecionamento para ele.
 
-## 6. Conferência depois de publicar
+## 4. Conferência depois de publicar
 
 ```bash
-nslookup eloraintelligence.com.br             # 50.116.112.97
-curl -I https://eloraintelligence.com.br      # 200
+nslookup eloraintelligence.com.br
+curl -I https://eloraintelligence.com.br                  # 200
+curl -I https://www.eloraintelligence.com.br              # redireciona para a raiz
 curl -I https://eloraintelligence.com.br/inbox            # 307 para /
 curl -I https://eloraintelligence.com.br/api/ai/copilot   # 404
 ```
@@ -177,34 +135,44 @@ curl -I https://eloraintelligence.com.br/api/ai/copilot   # 404
 Confira também que o e-mail do domínio continua entrando — é o teste que ninguém
 lembra de fazer e o único cujo defeito aparece dias depois.
 
-## O editor de conteúdo do site funciona aqui
+## O editor de conteúdo do site nesta hospedagem
 
-Diferente de hospedagem serverless, o Passenger roda num sistema de arquivos
-gravável: a aba de conteúdo em `/admin` publica direto em
-`apps/web/content/site-content.json`, dentro do diretório da aplicação.
+A aba de conteúdo em `/admin` grava em `apps/web/content/site-content.json`. Em
+serverless o sistema de arquivos é **somente leitura**: a leitura funciona (o
+arquivo versionado é servido normalmente), e o botão de publicar recusa com o
+motivo escrito na tela.
 
-**Com uma ressalva que precisa estar escrita:** o deploy sobrescreve aquele
-arquivo com a versão do repositório. Quem editar pelo painel e não trouxer a
-mudança para o Git perde o texto na publicação seguinte. O botão de exportar
-existe para isso — baixe o JSON, comite, e a próxima publicação passa a ser a
-fonte da verdade.
+O caminho é o que a própria tela indica: **exportar o JSON, comitar no
+repositório, e o deploy publica**. Mais lento que salvar, e em troca a mudança de
+texto passa a ter histórico, autor e reversão.
 
-## Riscos conhecidos desta hospedagem
+Uma armadilha coberta: o arquivo é lido por caminho montado em tempo de execução,
+e o rastreador do Next não enxergava isso em todas as rotas — `/orcamento`,
+`/entrar`, `/cadastrar` e `/conta` sairiam com o cabeçalho e o rodapé padrão
+enquanto a home mostrava o texto editado. `outputFileTracingIncludes` no
+`next.config.mjs` resolve, e o `"/**"` já cobre rota nova.
 
-Escritos aqui porque cada um já cobrou o seu preço em projetos parecidos, e
-porque a escolha por ela foi consciente:
+## O que ainda não existe em produção
 
-1. **Sem log, o diagnóstico para.** Erro de inicialização do Passenger aparece
-   como 503 sem explicação. O log fica em `~/logs` e em
-   `~/elora/stderr.log` — chegar até ele exige SSH ou o Gerenciador de Arquivos.
-2. **Memória da conta é limitada.** O Next em produção consome de 100 a 200 MB
-   por processo. Se a conta estourar o limite, o Passenger derruba e reinicia o
-   app — e o sintoma para o visitante é lentidão intermitente, não erro.
-3. **Sem CDN e sem rollback de um clique.** Voltar atrás é outro deploy inteiro,
-   e leva o tempo do workflow.
-4. **O armazém em memória zera quando o Passenger recicla o processo.** Contas
-   criadas em `/cadastrar` e pedidos gravados desaparecem — é o motivo de o
-   e-mail do orçamento não ser opcional. A conta de administrador é a exceção,
-   porque é semeada das variáveis de ambiente no momento do login.
-5. **Cada publicação para o site por alguns segundos**, enquanto o FTP substitui
-   os arquivos e o Passenger recarrega.
+Nada é persistido além do arquivo de conteúdo. Contas criadas em `/cadastrar`
+vivem no armazém em memória e **somem a cada novo deploy** e a cada reciclagem da
+função — a tela de cadastro já diz isso antes do formulário. Em serverless há um
+agravante que a tela não menciona: instâncias diferentes não compartilham o
+armazém, então cadastrar e entrar em seguida pode falhar com "e-mail ou senha
+incorretos" sem que nada esteja errado com a senha.
+
+A conta de administrador é a exceção, e por construção: ela é semeada a partir
+das variáveis de ambiente **no momento do login**, então existe em qualquer
+instância.
+
+Enquanto não houver back-end, trate o pedido de proposta como notificação, não
+como registro: quem preencher é respondido pelo e-mail que sai na hora, não
+recuperado de uma base depois. É também o motivo de um VPS ser o destino natural
+quando o Supabase, os workers e as filas do roadmap entrarem.
+
+## Sobre a conta da HostGator
+
+Ela continua servindo duas coisas que não mudam: **o e-mail do domínio** (Titan)
+e **a zona de DNS**. A conta de FTP `eloraintelligence` e o diretório criados na
+tentativa anterior não têm mais uso — podem ser removidos, e a senha que passou
+por canal de conversa deve ser trocada de qualquer forma.

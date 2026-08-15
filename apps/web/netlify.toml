@@ -1,0 +1,21 @@
+# Publicação do site público da Elora.
+#
+# O arquivo vive em `apps/web` porque é assim que o Netlify espera num monorepo:
+# o **base directory** fica na raiz do repositório — para que o `pnpm install`
+# enxergue o `pnpm-workspace.yaml` e resolva `@elora/core` e `@elora/ui` — e o
+# **package directory**, configurado no painel do site, aponta para cá.
+#
+# Instalar a partir de `apps/web` não funcionaria: as dependências de workspace
+# usam o protocolo `workspace:*`, que só resolve com o arquivo de workspace da
+# raiz à vista.
+
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  # O repositório exige Node >= 20.11 (`engines` na raiz). Fixar a versão evita
+  # que uma troca do padrão da plataforma mude o comportamento do build sem
+  # ninguém ter mexido em nada — que é o tipo de mudança que aparece como "o
+  # deploy quebrou sozinho".
+  NODE_VERSION = "22"
