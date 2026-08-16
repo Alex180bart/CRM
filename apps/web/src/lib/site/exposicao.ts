@@ -94,7 +94,8 @@ export type ModoDeExposicao = "aberto" | "somente_admin" | "fechado";
  * transformaria em cerimônia esquecida em vez de proteção.
  */
 export function modoDeExposicao(env: AmbienteDeExposicao): ModoDeExposicao {
-  if (env.NODE_ENV !== "production") return "aberto";
+  // Nomear os ambientes de trabalho, em vez de negar producao: num runtime de borda o NODE_ENV chega indefinido, e a forma anterior abria o produto sozinho.
+  if (env.NODE_ENV === "development" || env.NODE_ENV === "test") return "aberto";
 
   const valor = env.ELORA_EXPOR_PRODUTO?.trim().toLowerCase();
 
