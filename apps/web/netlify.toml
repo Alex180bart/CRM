@@ -11,7 +11,7 @@
 
 [build]
   command = "pnpm build"
-  publish = ".next"
+  publish = "apps/web/.next"
 
 [build.environment]
   # O repositório exige Node >= 20.11 (`engines` na raiz). Fixar a versão evita
