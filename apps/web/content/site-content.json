@@ -345,9 +345,9 @@
       "subtitle": "Assinatura da plataforma, assento e consumo medido — separados, para que o crescimento de um não pague pelo do outro. O que o provedor cobra viaja como repasse, sem margem e em linha própria."
     },
     "overage": {
-      "title": "O que custa passar da franquia",
+      "title": "Quanto custa crescer",
       "body": "Contato é cobrado em faixas **progressivas**: cada fatia paga o preço da própria faixa. Aplicar o preço da faixa final ao total produziria o salto em que cadastrar mil contatos a mais reduz a fatura.",
-      "footnote": "A seta indica a progressão entre faixas — a franquia da edição vale até o teto declarado, e o excedente cai na faixa seguinte, pelo preço dela."
+      "footnote": "A seta indica a progressão entre faixas — a franquia da edição vale até o teto declarado, e o volume seguinte cai na faixa seguinte, pelo preço dela. A implantação é orçada por operação e não entra nesta tabela."
     },
     "whatsapp": {
       "title": "Mensagem de WhatsApp",

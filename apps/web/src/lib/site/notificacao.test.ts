@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { QuoteRequest } from "@elora/core";
 
-import { enderecoComercial, notificacaoConfigurada, notificarPedidoDeOrcamento } from "./notificacao";
+import {
+  enderecoComercial,
+  notificacaoConfigurada,
+  notificarPedidoDeOrcamento,
+  paraWhatsapp,
+} from "./notificacao";
 
 const CHAVES = [
   "SMTP_HOST",
@@ -75,6 +80,32 @@ describe("configuração do envio", () => {
     process.env.SMTP_USER = "   ";
     process.env.SMTP_PASSWORD = "segredo";
     expect(notificacaoConfigurada()).toBe(false);
+  });
+});
+
+describe("número para o link de WhatsApp", () => {
+  it("tira pontuação e acrescenta o código do país", () => {
+    expect(paraWhatsapp("(11) 99770-9889")).toBe("5511997709889");
+    expect(paraWhatsapp("11 9 9770 9889")).toBe("5511997709889");
+    expect(paraWhatsapp("1133334444")).toBe("551133334444");
+  });
+
+  /**
+   * A duplicação do código do país é a falha silenciosa deste tipo de link:
+   * `wa.me/555511...` abre o aplicativo numa conversa vazia com um número que
+   * não existe, e quem clicou conclui que o contato deu errado.
+   */
+  it("não duplica o 55 de quem já informou o país", () => {
+    expect(paraWhatsapp("+55 11 99770-9889")).toBe("5511997709889");
+    expect(paraWhatsapp("5511997709889")).toBe("5511997709889");
+  });
+
+  it("recusa o que não é telefone", () => {
+    expect(paraWhatsapp(undefined)).toBeUndefined();
+    expect(paraWhatsapp("")).toBeUndefined();
+    expect(paraWhatsapp("não tenho")).toBeUndefined();
+    // Curto demais para ser DDD + número: vira link quebrado, não contato.
+    expect(paraWhatsapp("99770-9889")).toBeUndefined();
   });
 });
 

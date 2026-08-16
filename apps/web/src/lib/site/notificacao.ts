@@ -142,6 +142,34 @@ function escaparHtml(valor: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Só dígitos, com código do país.
+ *
+ * `wa.me` recusa qualquer pontuação, e telefone digitado em formulário vem com
+ * parêntese, traço e espaço em qualquer combinação. Número que já chega com 55
+ * na frente não ganha outro — a duplicação produz um link que abre o WhatsApp
+ * numa conversa vazia com um número inexistente, que é pior que não ter link.
+ */
+export function paraWhatsapp(telefone: string | undefined): string | undefined {
+  const digitos = telefone?.replace(/\D/g, "");
+  if (!digitos || digitos.length < 10) return undefined;
+
+  return digitos.startsWith("55") ? digitos : `55${digitos}`;
+}
+
+/**
+ * O número da operação, para onde vai o resumo com um clique.
+ *
+ * O envio automático de WhatsApp depende de provedor com credencial — e, na
+ * Cloud API, de modelo aprovado, porque notificação fora da janela de 24 horas
+ * não pode ser texto livre. Enquanto isso não existe, o e-mail carrega um link
+ * que abre a conversa com a mensagem pronta: um toque no celular resolve, e
+ * nada promete um envio que não acontece.
+ */
+function numeroDaOperacao(): string | undefined {
+  return paraWhatsapp(texto(process.env.ELORA_WHATSAPP_NOTIFICACAO));
+}
+
 function linhas(pedido: QuoteRequest): Array<[string, string]> {
   // A edição chega como chave (`essencial`) e sai com o nome do catálogo. Quem lê
   // o e-mail é a área comercial, que fala em nome de edição, não em identificador.
@@ -187,6 +215,39 @@ export async function notificarPedidoDeOrcamento(
   const corpoTexto = campos.map(([rotulo, valor]) => `${rotulo}: ${valor}`).join("\n");
   const mensagem = texto(pedido.message);
 
+  const doInteressado = paraWhatsapp(pedido.phone);
+  const daOperacao = numeroDaOperacao();
+
+  /**
+   * Dois links, e cada um resolve um momento diferente.
+   *
+   * O primeiro abre a conversa **com quem pediu**, que é o que o comercial faz
+   * ao ler o e-mail no computador. O segundo manda o resumo para o número da
+   * operação, que é o que serve quando o e-mail é lido no celular e a resposta
+   * vai acontecer no aplicativo de qualquer forma.
+   */
+  const resumoWhatsapp = [
+    `*Pedido ${pedido.reference}*`,
+    ...campos.filter(([rotulo]) => rotulo !== "Referência").map(([r, v]) => `${r}: ${v}`),
+    mensagem ? `\nMensagem: ${mensagem}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const acoes: Array<[string, string]> = [];
+  if (doInteressado) {
+    acoes.push([
+      `Responder ${pedido.name.split(" ")[0]} no WhatsApp`,
+      `https://wa.me/${doInteressado}`,
+    ]);
+  }
+  if (daOperacao) {
+    acoes.push([
+      "Mandar este resumo para o meu WhatsApp",
+      `https://wa.me/${daOperacao}?text=${encodeURIComponent(resumoWhatsapp)}`,
+    ]);
+  }
+
   const corpoHtml = [
     `<h2 style="font:600 16px system-ui,sans-serif">Pedido de proposta ${escaparHtml(pedido.reference)}</h2>`,
     '<table style="font:14px system-ui,sans-serif;border-collapse:collapse">',
@@ -199,6 +260,14 @@ export async function notificarPedidoDeOrcamento(
     mensagem
       ? `<p style="font:14px system-ui,sans-serif;white-space:pre-wrap;border-left:3px solid #ddd;padding-left:12px">${escaparHtml(mensagem)}</p>`
       : "",
+    acoes.length
+      ? `<p style="font:14px system-ui,sans-serif;margin-top:18px">${acoes
+          .map(
+            ([rotulo, href]) =>
+              `<a href="${escaparHtml(href)}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;background:#1E1B4B;color:#fff;text-decoration:none;border-radius:8px">${escaparHtml(rotulo)}</a>`,
+          )
+          .join("")}</p>`
+      : "",
   ].join("");
 
   try {
@@ -209,7 +278,13 @@ export async function notificarPedidoDeOrcamento(
       // mão — que é onde o comercial erra e a resposta volta para si mesmo.
       replyTo: `${umaLinha(pedido.name)} <${pedido.email}>`,
       subject: umaLinha(`[Elora] Proposta ${pedido.reference} — ${pedido.company}`),
-      text: mensagem ? `${corpoTexto}\n\nMensagem:\n${mensagem}` : corpoTexto,
+      text: [
+        corpoTexto,
+        mensagem ? `\nMensagem:\n${mensagem}` : "",
+        acoes.length ? `\n${acoes.map(([rotulo, href]) => `${rotulo}: ${href}`).join("\n")}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
       html: corpoHtml,
     });
 

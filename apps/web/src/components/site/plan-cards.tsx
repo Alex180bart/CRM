@@ -31,7 +31,16 @@ const HIGHLIGHT: string = "profissional";
 
 export function PlanCards({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-4">
+    /*
+      No celular as quatro edições viram trilho, e no desktop voltam a ser grade.
+
+      Empilhadas, elas somam mais de dois mil pixels de rolagem para uma
+      comparação que exige lembrar do cartão anterior — o mesmo defeito que a
+      seção de preço da landing page já resolveu assim. Cada cartão ocupa 82% da
+      largura para o seguinte aparecer pela borda, que é a única affordance que
+      diz "há mais para o lado".
+    */
+    <div className="rail rail-snap -mx-4 gap-4 px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
       {PLANS.map((plan) => {
         const featured = plan.key === HIGHLIGHT;
 
@@ -39,7 +48,9 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
           <Card
             key={plan.key}
             className={cn(
-              "lift flex h-full flex-col",
+              // `w-[82%] shrink-0` só vale dentro do trilho; a partir de `lg` o
+              // item volta a ser célula de grade e a largura é a da coluna.
+              "lift flex h-full w-[82%] shrink-0 flex-col lg:w-auto lg:shrink",
               featured && "ring-accent shadow-overlay ring-2",
             )}
           >
@@ -61,20 +72,26 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
                 <span className="text-muted-foreground text-sm"> / mês</span>
               </p>
               {/*
-                A conta aparece somada e aberta.
+                A decomposição saiu, e a razão é o que ela provocava.
 
-                "A partir de" sozinho é um número que o cliente não consegue
-                reproduzir, e número irreproduzível numa página de preço tem o
-                mesmo efeito de não publicar preço nenhum: ele pergunta na
-                reunião de qualquer jeito, agora com desconfiança.
+                O cartão dizia "R$ 149 de assinatura + 2 × R$ 79 por pessoa/mês",
+                e a palavra **assinatura** não significa nada para quem chega: ela
+                nomeia a parcela fixa da edição num vocabulário interno, e a
+                primeira pergunta de quem lê passou a ser "o que é essa
+                assinatura, além do que já estou pagando?". Abrir a conta era para
+                dar confiança e cobrava explicação — o oposto.
+
+                O que ficou responde à pergunta que o cliente realmente faz: quantas
+                pessoas estão inclusas nesse valor, e o que mais entra na fatura.
               */}
               <p className="text-muted-foreground mt-1 text-xs leading-snug">
                 {plan.seatPriceCents === 0
-                  ? "Assinatura fechada, colaboradores ilimitados"
-                  : `${formatCurrencyCents(plan.platformFeeCents)} de assinatura + ${plan.minSeats} × ${formatCurrencyCents(plan.seatPriceCents)} por pessoa/mês`}
+                  ? "Colaboradores ilimitados"
+                  : `Inclui ${plan.minSeats} ${plan.minSeats === 1 ? "pessoa" : "pessoas"}; cada pessoa a mais, ${formatCurrencyCents(plan.seatPriceCents)}/mês`}
               </p>
               <p className="text-muted-foreground/80 mt-1 text-[11px] leading-snug">
-                Fora disso: o que a Meta cobra por mensagem, repassado sem margem.
+                Implantação sob medida, orçada por operação. À parte, o que a Meta cobra por
+                mensagem — repassado sem margem.
               </p>
 
               <dl className="border-border mt-4 space-y-1.5 border-t pt-4 text-xs">

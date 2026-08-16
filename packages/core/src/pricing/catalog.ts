@@ -427,7 +427,15 @@ export const ADDONS: AddonDefinition[] = [
     key: "numero_whatsapp",
     name: "Número de WhatsApp adicional",
     description: "Cada número tem fila, escala e qualidade próprias.",
-    priceCents: 12_900,
+    /**
+     * Reajustado de R$ 129 para R$ 199.
+     *
+     * O valor anterior tratava o número como linha de cadastro. Cada número
+     * carrega fila, escala, reputação e limite de envio próprios — e é a
+     * qualidade dele que a seção 11 do plano manda proteger. O preço passou a
+     * refletir o que operar um segundo número custa, não o que registrá-lo custa.
+     */
+    priceCents: 19_900,
     oneTime: false,
     quantifiable: true,
   },
@@ -435,7 +443,14 @@ export const ADDONS: AddonDefinition[] = [
     key: "sandbox",
     name: "Ambiente de homologação",
     description: "Cópia isolada para testar fluxo, jornada e template antes de publicar.",
-    priceCents: 45_000,
+    /**
+     * Reajustado de R$ 450 para R$ 690.
+     *
+     * É uma instalação inteira em paralelo — banco, filas, workers e integração
+     * de canal —, e o custo de servir é próximo ao de um cliente adicional. O
+     * valor anterior cobria a percepção de "ambiente de teste" e não a conta.
+     */
+    priceCents: 69_000,
     oneTime: false,
     quantifiable: false,
   },

@@ -370,10 +370,18 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         "linha própria.",
     },
     overage: {
-      title: "O que custa passar da franquia",
+      /**
+       * O título fala de crescer, não de estourar.
+       *
+       * "O que custa passar da franquia" descreve a mesma tabela com a moldura
+       * errada: põe o cliente no lugar de quem excedeu um limite e vai pagar por
+       * isso. O número é o mesmo; o que muda é que quem cresce quer saber quanto
+       * a conta acompanha o crescimento, e não quanto custa a punição.
+       */
+      title: "Quanto custa crescer",
       body: "Contato é cobrado em faixas **progressivas**: cada fatia paga o preço da própria faixa. Aplicar o preço da faixa final ao total produziria o salto em que cadastrar mil contatos a mais reduz a fatura.",
       footnote:
-        "A seta indica a progressão entre faixas — a franquia da edição vale até o teto declarado, e o excedente cai na faixa seguinte, pelo preço dela.",
+        "A seta indica a progressão entre faixas — a franquia da edição vale até o teto declarado, e o volume seguinte cai na faixa seguinte, pelo preço dela. A implantação é orçada por operação e não entra nesta tabela.",
     },
     whatsapp: {
       title: "Mensagem de WhatsApp",

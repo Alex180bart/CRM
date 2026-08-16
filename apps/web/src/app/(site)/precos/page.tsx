@@ -79,8 +79,72 @@ export default async function PrecosPage() {
             </RichText>
           </Reveal>
 
-          <div className="mt-8 overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-sm">
+          {/*
+            A coluna de implantação saiu da tabela.
+
+            Implantação é a linha que mais varia entre dois clientes do mesmo
+            porte — depende de quantos canais, de quanta base a migrar e de quanto
+            processo existe para desenhar. Publicá-la como número fixo ao lado do
+            excedente fazia o oposto do que uma tabela de preço deve fazer: fixava
+            a expectativa no menor valor possível e transformava a proposta real
+            numa negociação para justificar a diferença.
+
+            O excedente continua publicado, porque ele é o contrário — não varia,
+            e é o número que decide a conta de quem cresce.
+          */}
+
+          {/* Celular: um cartão por edição. Ver a nota da grade abaixo. */}
+          <div className="mt-8 space-y-3 md:hidden">
+            {PLANS.map((plan) => (
+              <Card key={plan.key}>
+                <CardContent className="p-4">
+                  <h3 className="font-display text-base font-semibold">{plan.name}</h3>
+                  <dl className="divide-border mt-2 divide-y text-sm">
+                    {(
+                      [
+                        [
+                          "Contato extra (por mil)",
+                          plan.contactTiers
+                            .map((tier) => formatCurrencyCents(tier.pricePerThousandCents))
+                            .join(" → "),
+                        ],
+                        ["Conversa extra", formatCurrencyCents(plan.conversationOverageCents)],
+                        [
+                          "E-mail extra (por mil)",
+                          formatCurrencyCents(plan.emailOveragePerThousandCents),
+                        ],
+                        [
+                          "Resposta de IA (por mil)",
+                          formatCurrencyCents(plan.aiOveragePerThousandCents),
+                        ],
+                        [
+                          "Envio de WhatsApp (por msg)",
+                          formatRateMicros(plan.whatsappTemplateFeeMicros),
+                        ],
+                      ] as const
+                    ).map(([label, value]) => (
+                      <div key={label} className="flex items-baseline justify-between gap-3 py-2">
+                        <dt className="text-muted-foreground text-xs leading-snug">{label}</dt>
+                        <dd className="figure shrink-0 text-sm font-semibold">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/*
+            Tabela só a partir de `md`.
+
+            Seis colunas de número não cabem em 390 px — a versão anterior tinha
+            `min-w-[720px]` e resolvia com rolagem lateral dentro do bloco, que no
+            celular esconde metade dos preços atrás de um gesto que ninguém
+            descobre. Comparar edições é o trabalho desta seção, e comparação que
+            exige arrastar não acontece.
+          */}
+          <div className="mt-8 hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead>
                 <tr className="border-border border-b text-left">
                   <th className="py-2.5 pr-4 font-semibold">Edição</th>
@@ -88,8 +152,7 @@ export default async function PrecosPage() {
                   <th className="py-2.5 pr-4 font-semibold">Conversa extra</th>
                   <th className="py-2.5 pr-4 font-semibold">E-mail extra (por mil)</th>
                   <th className="py-2.5 pr-4 font-semibold">Resposta de IA (por mil)</th>
-                  <th className="py-2.5 pr-4 font-semibold">Envio de WhatsApp (por msg)</th>
-                  <th className="py-2.5 font-semibold">Implantação</th>
+                  <th className="py-2.5 font-semibold">Envio de WhatsApp (por msg)</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,10 +173,9 @@ export default async function PrecosPage() {
                     <td className="figure py-3 pr-4">
                       {formatCurrencyCents(plan.aiOveragePerThousandCents)}
                     </td>
-                    <td className="figure py-3 pr-4">
+                    <td className="figure py-3">
                       {formatRateMicros(plan.whatsappTemplateFeeMicros)}
                     </td>
-                    <td className="figure py-3">{formatCurrencyCents(plan.setupCents)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -212,9 +274,50 @@ export default async function PrecosPage() {
           </div>
 
           {/* Franquias comparadas */}
-          <div className="mt-12 overflow-x-auto">
+          <div className="mt-12">
             <h3 className="font-display text-base font-semibold">{pricing.included.title}</h3>
-            <table className="mt-4 w-full min-w-[720px] border-collapse text-sm">
+
+            {/*
+              No celular, a comparação inverte: um cartão por edição, com as sete
+              franquias dentro. A matriz de 5 colunas exigiria rolagem lateral, e
+              quem rola perde a coluna de rótulos — fica olhando números sem saber
+              a que se referem.
+            */}
+            <div className="mt-4 space-y-3 md:hidden">
+              {PLANS.map((plan) => (
+                <Card key={plan.key}>
+                  <CardContent className="p-4">
+                    <h4 className="font-display text-sm font-semibold">{plan.name}</h4>
+                    <dl className="divide-border mt-2 divide-y text-sm">
+                      {(
+                        [
+                          ["Contatos", formatNumber(plan.includedContacts)],
+                          ["Conversas", formatNumber(plan.includedConversations)],
+                          ["E-mails", formatNumber(plan.includedEmails)],
+                          ["Respostas de IA", formatNumber(plan.includedAiReplies)],
+                          ["Mensagens de modelo", formatNumber(plan.includedWhatsappTemplates)],
+                          ["Números de WhatsApp", formatNumber(plan.includedWhatsappNumbers)],
+                          [
+                            "Colaboradores",
+                            plan.maxSeats === null
+                              ? "ilimitados"
+                              : `${plan.minSeats} a ${plan.maxSeats}`,
+                          ],
+                        ] as const
+                      ).map(([label, value]) => (
+                        <div key={label} className="flex items-baseline justify-between gap-3 py-2">
+                          <dt className="text-muted-foreground text-xs">{label}</dt>
+                          <dd className="figure shrink-0 text-sm font-semibold">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="mt-4 w-full min-w-[640px] border-collapse text-sm">
               <thead>
                 <tr className="border-border border-b text-left">
                   <th className="py-2.5 pr-4 font-semibold">Incluído por mês</th>
@@ -262,8 +365,9 @@ export default async function PrecosPage() {
                     ))}
                   </tr>
                 ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
