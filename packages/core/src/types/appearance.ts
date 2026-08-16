@@ -94,7 +94,7 @@ export const PALETTE_CATALOG: PaletteDefinition[] = [
   {
     key: "arena",
     label: "Arena clássica",
-    description: "O azul e a laranja originais da Contabilidade Facilitada, preservados.",
+    description: "O azul e a laranja originais do produto, preservados.",
     swatch: ["#102850", "#212D51", "#FF9933"],
     accentContrast: 2.13,
   },

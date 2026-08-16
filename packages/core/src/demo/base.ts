@@ -20,7 +20,7 @@ import { buildDemoProposals } from "./comercio";
 export const CONTABILIDADE_META: DemoVerticalMeta = {
   id: "contabilidade",
   name: "Contabilidade",
-  company: "Contabilidade Facilitada",
+  company: "Contábil Aurora",
   tagline: "Escritório contábil com escola de negócios",
   description:
     "Rotina de escritório contábil: apuração, obrigações acessórias, regularização documental e " +

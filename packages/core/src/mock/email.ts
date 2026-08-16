@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Base de demonstração — E-mail Studio e entregabilidade.
  * Referência: Plano Completo, seção 14.
  */
@@ -21,17 +21,17 @@ export const brandKits: BrandKit[] = [
   {
     id: "brand_cf",
     organizationId: ORG_ID,
-    name: "Contabilidade Facilitada",
+    name: "Contábil Aurora",
     description: "Identidade principal — usada em campanhas, jornadas e comunicados.",
     primaryColor: "#102850",
     accentColor: "#FF9933",
     textColor: "#1B2B45",
     backgroundColor: "#F4F6FA",
     fontStack: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    logoText: "Contabilidade Facilitada",
+    logoText: "Contábil Aurora",
     footerAddress: "Rua das Palmeiras, 480 · Campinas/SP · CEP 13010-000 · CNPJ 11.222.333/0001-44",
     footerLegal:
-      "Você recebe este e-mail porque autorizou comunicações da Contabilidade Facilitada. Pode sair quando quiser.",
+      "Você recebe este e-mail porque autorizou comunicações da Contábil Aurora. Pode sair quando quiser.",
     isDefault: true,
     createdAt: offsetIso({ days: -300 }),
     updatedAt: offsetIso({ days: -18 }),
@@ -61,7 +61,7 @@ const headerBlocks: EmailBlock[] = [
   {
     id: "mb_header_logo",
     kind: "texto",
-    content: "Contabilidade Facilitada",
+    content: "Contábil Aurora",
     align: "centro",
     scale: "subtitulo",
     locked: true,
@@ -73,13 +73,13 @@ const headerBlocks: EmailBlock[] = [
       {
         id: "mi_1",
         label: "Portal do cliente",
-        href: "https://contabilidadefacilitada.com/portal",
+        href: "https://contabilaurora.com.br/portal",
       },
-      { id: "mi_2", label: "Conteúdos", href: "https://contabilidadefacilitada.com/blog" },
+      { id: "mi_2", label: "Conteúdos", href: "https://contabilaurora.com.br/blog" },
       {
         id: "mi_3",
         label: "Falar com o time",
-        href: "https://contabilidadefacilitada.com/contato",
+        href: "https://contabilaurora.com.br/contato",
       },
     ],
     locked: true,
@@ -100,7 +100,7 @@ const footerBlocks: EmailBlock[] = [
     kind: "rodape",
     address: "Rua das Palmeiras, 480 · Campinas/SP · CEP 13010-000 · CNPJ 11.222.333/0001-44",
     legal:
-      "Você recebe este e-mail porque autorizou comunicações da Contabilidade Facilitada. Pode sair quando quiser.",
+      "Você recebe este e-mail porque autorizou comunicações da Contábil Aurora. Pode sair quando quiser.",
     unsubscribeLabel: "Cancelar inscrição",
     locked: true,
   },
@@ -151,7 +151,7 @@ export const emailModules: EmailModule[] = [
         id: "mb_cta_botao",
         kind: "botao",
         label: "Agendar conversa",
-        href: "https://contabilidadefacilitada.com/agenda",
+        href: "https://contabilaurora.com.br/agenda",
         align: "centro",
         variant: "primario",
       },
@@ -205,7 +205,7 @@ export const emailModules: EmailModule[] = [
       {
         id: "mb_ass_texto",
         kind: "texto",
-        content: "Um abraço,\n{{consultor.nome}}\nContabilidade Facilitada",
+        content: "Um abraço,\n{{consultor.nome}}\nContábil Aurora",
         align: "esquerda",
         scale: "corpo",
       },
@@ -269,7 +269,7 @@ const comparativoBlocks: EmailBlock[] = [
     id: "b_botao",
     kind: "botao",
     label: "Quero minha simulação",
-    href: "https://contabilidadefacilitada.com/simulacao",
+    href: "https://contabilaurora.com.br/simulacao",
     align: "centro",
     variant: "primario",
   },
@@ -298,7 +298,7 @@ const boasVindasBlocks: EmailBlock[] = [
     id: "bv_botao",
     kind: "botao",
     label: "Começar o módulo 1",
-    href: "https://escola.contabilidadefacilitada.com/entrar",
+    href: "https://escola.contabilaurora.com.br/entrar",
     align: "esquerda",
     variant: "primario",
   },
@@ -307,7 +307,7 @@ const boasVindasBlocks: EmailBlock[] = [
     id: "bv_video",
     kind: "video",
     title: "Como aproveitar o curso em 4 semanas",
-    href: "https://escola.contabilidadefacilitada.com/boas-vindas",
+    href: "https://escola.contabilaurora.com.br/boas-vindas",
     fallbackText: "Assista ao vídeo de boas-vindas (3 min)",
   },
   {
@@ -346,7 +346,7 @@ const obrigacoesBlocks: EmailBlock[] = [
     id: "ob_botao",
     kind: "botao",
     label: "Abrir portal do cliente",
-    href: "https://contabilidadefacilitada.com/portal",
+    href: "https://contabilaurora.com.br/portal",
     align: "esquerda",
     variant: "secundario",
   },
@@ -552,7 +552,7 @@ export const emailDomains: EmailDomain[] = [
   {
     id: "dom_principal",
     organizationId: ORG_ID,
-    domain: "contabilidadefacilitada.com",
+    domain: "contabilaurora.com.br",
     purpose: "transacional",
     spf: "verificado",
     dkim: "verificado",
@@ -582,7 +582,7 @@ export const emailDomains: EmailDomain[] = [
       {
         type: "TXT",
         host: "_dmarc",
-        value: "v=DMARC1; p=quarantine; rua=mailto:dmarc@contabilidadefacilitada.com; pct=100",
+        value: "v=DMARC1; p=quarantine; rua=mailto:dmarc@contabilaurora.com.br; pct=100",
         status: "verificado",
         purpose: "DMARC",
       },
@@ -591,7 +591,7 @@ export const emailDomains: EmailDomain[] = [
   {
     id: "dom_marketing",
     organizationId: ORG_ID,
-    domain: "news.contabilidadefacilitada.com",
+    domain: "news.contabilaurora.com.br",
     purpose: "marketing",
     spf: "verificado",
     dkim: "verificado",
@@ -623,7 +623,7 @@ export const emailDomains: EmailDomain[] = [
       {
         type: "TXT",
         host: "_dmarc.news",
-        value: "v=DMARC1; p=none; rua=mailto:dmarc@contabilidadefacilitada.com",
+        value: "v=DMARC1; p=none; rua=mailto:dmarc@contabilaurora.com.br",
         status: "pendente",
         purpose: "DMARC",
       },

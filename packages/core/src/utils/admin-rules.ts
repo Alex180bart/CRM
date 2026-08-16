@@ -566,7 +566,7 @@ export function checkAccessPolicy(policy: Partial<AccessPolicy>): Refusal {
 
   for (const domain of policy.allowedEmailDomains ?? []) {
     if (!DOMAIN_PATTERN.test(domain.trim().toLowerCase())) {
-      return `"${domain}" não é um domínio válido. Escreva sem "@" e sem protocolo — exemplo: contabilidadefacilitada.com.`;
+      return `"${domain}" não é um domínio válido. Escreva sem "@" e sem protocolo — exemplo: contabilaurora.com.br.`;
     }
   }
 

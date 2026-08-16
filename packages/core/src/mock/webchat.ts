@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Base de demonstração — widgets de webchat.
  *
  * Dois widgets porque a diferença entre eles é o que ensina o módulo: o do site
@@ -74,7 +74,7 @@ export const webchatWidgets: WebchatWidget[] = [
       "Widget da home e das páginas de serviço. Captura lead com nome, WhatsApp e assunto antes de abrir a conversa.",
     channelAccountId: "chan_wgt_site",
     embedKey: "wck_live_7f3a91c4e8",
-    allowedDomains: ["contabilidadefacilitada.com", "www.contabilidadefacilitada.com"],
+    allowedDomains: ["contabilaurora.com.br", "www.contabilaurora.com.br"],
     ownerId: "usr_bruno",
     activeVersionId: "wgtv_site_3",
     draftVersionId: "wgtv_site_4",
@@ -103,7 +103,7 @@ export const webchatWidgets: WebchatWidget[] = [
           launcher: "bolha_rotulo",
           launcherLabel: "Falar com a gente",
           corner: "arredondado",
-          headerTitle: "Contabilidade Facilitada",
+          headerTitle: "Contábil Aurora",
           headerSubtitle: "Respondemos em poucos minutos",
           avatarInitials: "CF",
           icon: "balao",
@@ -111,7 +111,7 @@ export const webchatWidgets: WebchatWidget[] = [
         },
         messages: {
           greeting:
-            "Oi! Aqui é o time da Contabilidade Facilitada. Conta o que você precisa que a gente já começa a resolver.",
+            "Oi! Aqui é o time da Contábil Aurora. Conta o que você precisa que a gente já começa a resolver.",
           greetingDelaySeconds: 4,
           prechatIntro: "Para direcionar você à pessoa certa, precisamos de três informações.",
           awayInside: "Recebemos sua mensagem. Um consultor entra na conversa em instantes.",
@@ -142,9 +142,9 @@ export const webchatWidgets: WebchatWidget[] = [
         },
         privacy: {
           consentText:
-            "Ao continuar, você concorda que a Contabilidade Facilitada use seus dados para responder este atendimento.",
+            "Ao continuar, você concorda que a Contábil Aurora use seus dados para responder este atendimento.",
           consentRequired: true,
-          privacyUrl: "https://contabilidadefacilitada.com/privacidade",
+          privacyUrl: "https://contabilaurora.com.br/privacidade",
           transcriptRetentionDays: 180,
         },
       },
@@ -160,7 +160,7 @@ export const webchatWidgets: WebchatWidget[] = [
           launcher: "barra",
           launcherLabel: "Tire sua dúvida contábil agora",
           corner: "suave",
-          headerTitle: "Contabilidade Facilitada",
+          headerTitle: "Contábil Aurora",
           headerSubtitle: "Respondemos em poucos minutos",
           avatarInitials: "CF",
           icon: "balao",
@@ -198,9 +198,9 @@ export const webchatWidgets: WebchatWidget[] = [
         },
         privacy: {
           consentText:
-            "Ao continuar, você concorda que a Contabilidade Facilitada use seus dados para responder este atendimento.",
+            "Ao continuar, você concorda que a Contábil Aurora use seus dados para responder este atendimento.",
           consentRequired: true,
-          privacyUrl: "https://contabilidadefacilitada.com/privacidade",
+          privacyUrl: "https://contabilaurora.com.br/privacidade",
           transcriptRetentionDays: 180,
         },
       },
@@ -214,7 +214,7 @@ export const webchatWidgets: WebchatWidget[] = [
       "Widget dentro da plataforma de cursos. Sem formulário: quem está logado já está identificado.",
     channelAccountId: "chan_wgt_site",
     embedKey: "wck_live_2b8d40af11",
-    allowedDomains: ["alunos.contabilidadefacilitada.com"],
+    allowedDomains: ["alunos.contabilaurora.com.br"],
     ownerId: "usr_diego",
     activeVersionId: "wgtv_aluno_1",
     draftVersionId: "wgtv_aluno_1",
@@ -282,7 +282,7 @@ export const webchatWidgets: WebchatWidget[] = [
           // O aluno já aceitou o tratamento na matrícula; pedir de novo a cada
           // conversa transformaria consentimento em ruído.
           consentRequired: false,
-          privacyUrl: "https://contabilidadefacilitada.com/privacidade",
+          privacyUrl: "https://contabilaurora.com.br/privacidade",
           transcriptRetentionDays: 365,
         },
       },

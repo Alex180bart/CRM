@@ -59,7 +59,7 @@ export const accessPolicy: AccessPolicy = {
   sessionIdleMinutes: 240,
   sessionMaxDays: 30,
   requireTwoFactorFor: ["superadmin", "admin_empresa", "auditor_dpo"],
-  allowedEmailDomains: ["contabilidadefacilitada.com"],
+  allowedEmailDomains: ["contabilaurora.com.br"],
   allowedIpRanges: [],
   maxFailedLogins: 5,
   lockoutMinutes: 15,
@@ -70,7 +70,7 @@ export const accessPolicy: AccessPolicy = {
 export const invitations: Invitation[] = [
   {
     id: "inv_paula",
-    email: "paula.reis@contabilidadefacilitada.com",
+    email: "paula.reis@contabilaurora.com.br",
     role: "atendente",
     teamIds: ["team_atendimento"],
     invitedByLabel: "Marina Duarte",
@@ -80,17 +80,17 @@ export const invitations: Invitation[] = [
   },
   {
     id: "inv_tiago",
-    email: "tiago.almeida@contabilidadefacilitada.com",
+    email: "tiago.almeida@contabilaurora.com.br",
     role: "analista_fiscal_senior",
     teamIds: ["team_atendimento"],
-    invitedByLabel: "Alex Fernandes",
+    invitedByLabel: "André Fontes",
     createdAt: offsetIso({ days: -11 }),
     expiresAt: offsetIso({ days: -4 }),
     status: "expirado",
   },
   {
     id: "inv_helena",
-    email: "helena.souza@contabilidadefacilitada.com",
+    email: "helena.souza@contabilaurora.com.br",
     role: "marketing",
     teamIds: ["team_marketing"],
     invitedByLabel: "Marina Duarte",

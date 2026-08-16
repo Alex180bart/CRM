@@ -1,7 +1,7 @@
 /**
  * Catálogo de demonstração: produtos e serviços de um escritório contábil.
  *
- * Os itens espelham a oferta real da Contabilidade Facilitada — abertura,
+ * Os itens espelham a oferta real da Contábil Aurora — abertura,
  * contabilidade recorrente por porte, regularização e curso — porque é o que
  * torna a montagem de proposta demonstrável. Um catálogo genérico do tipo "Plano
  * A / Plano B" não exercita nada do que importa aqui: mistura de recorrente com
@@ -47,7 +47,7 @@ export const products: Product[] = [
       "Serviço de entrada: quem abre MEI aqui costuma virar cliente de contabilidade mensal em até um ano. Vale oferecer junto do Contabilidade MEI Mensal — o desconto combinado fecha mais que o desconto isolado. Objeção comum: 'dá para fazer sozinho de graça'. Resposta honesta: dá, e o valor está em não errar o CNAE, que é o que obriga a migrar de regime depois.",
     checkout: {
       mode: "link",
-      baseUrl: "https://pagar.contabilidadefacilitada.com.br/abertura-mei",
+      baseUrl: "https://pagar.contabilaurora.com.br/abertura-mei",
     },
     active: true,
   },
@@ -72,7 +72,7 @@ export const products: Product[] = [
       "Margem fina: o teto de 10% existe porque o custo de entrega é mensal e não cai com desconto. O argumento que fecha não é preço, é o aviso de limite — quem estoura o teto do MEI sem saber paga muito mais caro depois.",
     checkout: {
       mode: "link",
-      baseUrl: "https://pagar.contabilidadefacilitada.com.br/contabilidade-mei",
+      baseUrl: "https://pagar.contabilaurora.com.br/contabilidade-mei",
     },
     active: true,
   },
@@ -142,7 +142,7 @@ export const products: Product[] = [
       "Produto digital: custo marginal quase zero, por isso o teto de 40%. Serve como oferta de recuperação para quem recusou a contabilidade mensal por preço — sai da conversa com algo, e volta depois.",
     checkout: {
       mode: "link",
-      baseUrl: "https://cursos.contabilidadefacilitada.com.br/mei-na-pratica",
+      baseUrl: "https://cursos.contabilaurora.com.br/mei-na-pratica",
     },
     active: true,
   },

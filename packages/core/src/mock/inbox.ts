@@ -542,7 +542,7 @@ const CONVERSATION_SEEDS: ConversationSeed[] = [
       {
         from: "agente",
         authorId: "usr_alex",
-        authorLabel: "Alex Fernandes",
+        authorLabel: "André Fontes",
         body: "Patrícia, recebido. Vou levantar as notas e retorno com o plano de correção.",
         minutesAgo: 700,
         status: "lida",
@@ -550,7 +550,7 @@ const CONVERSATION_SEEDS: ConversationSeed[] = [
       {
         from: "agente",
         authorId: "usr_alex",
-        authorLabel: "Alex Fernandes",
+        authorLabel: "André Fontes",
         body: "Encaminhei ao time fiscal para reprocessamento. Assim que tiver o retorno, aviso por aqui.",
         minutesAgo: 300,
         status: "entregue",
@@ -559,7 +559,7 @@ const CONVERSATION_SEEDS: ConversationSeed[] = [
     notes: [
       {
         authorId: "usr_alex",
-        authorLabel: "Alex Fernandes",
+        authorLabel: "André Fontes",
         body: "Aguardando o time fiscal reprocessar o arquivo. Prazo combinado: amanhã até 12h.",
         minutesAgo: 298,
       },
@@ -917,7 +917,7 @@ export const cannedResponses: CannedResponse[] = [
     organizationId: ORG_ID,
     shortcut: "/ola",
     title: "Saudação inicial",
-    body: "Olá, {{contato.primeiro_nome}}! Aqui é {{agente.nome}} da Contabilidade Facilitada. Como posso ajudar?",
+    body: "Olá, {{contato.primeiro_nome}}! Aqui é {{agente.nome}} da Contábil Aurora. Como posso ajudar?",
     channels: ["whatsapp", "webchat", "instagram"],
   },
   {

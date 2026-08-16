@@ -642,7 +642,7 @@ function buildConsents(seed: ContactSeed): Consent[] {
       source: seed.campaign ?? "Site — aceite de comunicações",
       legalBasis: "Consentimento",
       acceptedText:
-        "Aceito receber comunicações sobre produtos e conteúdos da Contabilidade Facilitada.",
+        "Aceito receber comunicações sobre produtos e conteúdos da Contábil Aurora.",
       version: "v1.2",
       occurredAt: offsetIso({ days: -seed.createdDays + 1 }),
     },

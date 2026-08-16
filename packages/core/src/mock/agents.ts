@@ -183,7 +183,7 @@ export const aiAgents: AiAgent[] = [
           "Passou a transferir na primeira menção a preço, em vez de tentar explicar a composição da mensalidade.",
         identity: {
           displayName: "Alice",
-          role: "assistente de primeiro atendimento da Contabilidade Facilitada",
+          role: "assistente de primeiro atendimento da Contábil Aurora",
           tone: "cordial",
           avatarInitials: "AL",
           greeting: "",
@@ -325,7 +325,7 @@ export const aiAgents: AiAgent[] = [
           "Teste: deixar o agente resolver dúvida de prazo em vez de transferir, para reduzir fila do fiscal.",
         identity: {
           displayName: "Alice",
-          role: "assistente de primeiro atendimento da Contabilidade Facilitada",
+          role: "assistente de primeiro atendimento da Contábil Aurora",
           tone: "cordial",
           avatarInitials: "AL",
           greeting: "",
@@ -471,7 +471,7 @@ export const aiAgents: AiAgent[] = [
         changeNote: "Primeira versão, restrita a prazo e guia.",
         identity: {
           displayName: "Assistente fiscal",
-          role: "plantão de dúvidas fiscais da Contabilidade Facilitada",
+          role: "plantão de dúvidas fiscais da Contábil Aurora",
           tone: "tecnico",
           avatarInitials: "AF",
           greeting: "Oi! Sou o plantão fiscal. Me diz qual é a dúvida que eu procuro aqui.",

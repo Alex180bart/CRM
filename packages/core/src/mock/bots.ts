@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Base de demonstração — projetos de chatbot.
  *
  * O documento do fluxo (nós + arestas) é versionado. A versão publicada é
@@ -27,11 +27,11 @@ const triagemNodes: BotNode[] = [
     id: "bn_02",
     kind: "mensagem",
     label: "Saudação",
-    summary: "Olá, {{contato.primeiro_nome}}! Sou o assistente da Contabilidade Facilitada.",
+    summary: "Olá, {{contato.primeiro_nome}}! Sou o assistente da Contábil Aurora.",
     position: { x: 280, y: 260 },
     config: {
       texto:
-        "Olá, {{contato.primeiro_nome}}! Sou o assistente da Contabilidade Facilitada. Vou te direcionar em instantes.",
+        "Olá, {{contato.primeiro_nome}}! Sou o assistente da Contábil Aurora. Vou te direcionar em instantes.",
     },
     outputs: [{ id: "out", label: "Continuar" }],
   },

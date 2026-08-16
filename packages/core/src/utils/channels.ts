@@ -336,7 +336,7 @@ export const PROVIDER_SPECS: ProviderSpec[] = [
     label: "Messenger e Instagram",
     kinds: ["messenger", "instagram"],
     addressLabel: "Nome de usuário ou página",
-    addressPlaceholder: "@contabilidadefacilitada",
+    addressPlaceholder: "@contabilaurora",
     fields: [
       {
         key: "pageId",
@@ -371,14 +371,14 @@ export const PROVIDER_SPECS: ProviderSpec[] = [
     label: "E-mail transacional",
     kinds: ["email"],
     addressLabel: "Endereço de envio",
-    addressPlaceholder: "atendimento@contabilidadefacilitada.com",
+    addressPlaceholder: "atendimento@contabilaurora.com.br",
     fields: [
       {
         key: "domain",
         label: "Domínio de envio",
         hint: "Precisa ter SPF, DKIM e DMARC publicados antes de qualquer disparo.",
         secret: false,
-        placeholder: "contabilidadefacilitada.com",
+        placeholder: "contabilaurora.com.br",
       },
       {
         key: "region",
@@ -401,7 +401,7 @@ export const PROVIDER_SPECS: ProviderSpec[] = [
     label: "Telegram Bot",
     kinds: ["telegram"],
     addressLabel: "Nome do bot",
-    addressPlaceholder: "@contabilidadefacilitada_bot",
+    addressPlaceholder: "@contabilaurora_bot",
     fields: [
       {
         key: "botUsername",

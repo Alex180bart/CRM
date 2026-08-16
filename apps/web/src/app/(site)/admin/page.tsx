@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { activeVerticalId, verticalMeta } from "@elora/core";
+import { verticalMeta } from "@elora/core";
 import { Badge, Button, Callout } from "@elora/ui";
 import { ArrowRight, Lock } from "lucide-react";
 
 import { AdminConsole } from "@/components/site/admin-console";
 import { currentAccount, currentAdmin } from "@/lib/site/auth";
 import { readSiteContent, siteContentSource } from "@/lib/site/content-store";
+import { aplicarVerticalEscolhida } from "@/lib/site/vertical";
 
 export const metadata: Metadata = {
   title: "Área comercial",
@@ -86,7 +87,10 @@ export default async function AdminPage() {
     );
   }
 
-  const active = verticalMeta(activeVerticalId());
+  // Lê a escolha do cookie, e não a memória da instância: sem isso a mesa
+  // comercial anuncia "base ativa: contabilidade" logo depois de alguém abrir a
+  // demonstração de e-commerce, porque quem respondeu foi outra instância.
+  const active = verticalMeta(await aplicarVerticalEscolhida());
   const [content, contentSource] = await Promise.all([readSiteContent(), siteContentSource()]);
 
   return (

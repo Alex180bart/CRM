@@ -118,7 +118,12 @@ function issueToken(accountId: string, isAdmin: boolean): string {
   return `${payload}.${sign(payload)}`;
 }
 
-function readToken(token: string): string | null {
+interface TokenLido {
+  accountId: string;
+  isAdmin: boolean;
+}
+
+function readToken(token: string): TokenLido | null {
   const parts = token.split(".");
   if (parts.length !== 4) return null;
 
@@ -133,7 +138,7 @@ function readToken(token: string): string | null {
   const expiresAt = Number(expiresRaw);
   if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) return null;
 
-  return accountId;
+  return { accountId, isAdmin: adminRaw === "1" };
 }
 
 export async function startSession(accountId: string, isAdmin = false): Promise<void> {
@@ -155,20 +160,50 @@ export async function endSession(): Promise<void> {
 /**
  * A conta da sessão, ou `null`.
  *
- * Devolve `null` também quando o token é válido e a conta **não existe mais** —
- * o caso normal depois de um reinício do servidor, já que o armazém é em
- * memória. Tratar isso como erro faria a área do cliente responder 500 para
- * quem simplesmente ficou com um cookie de ontem.
+ * ## Por que o administrador é re-semeado aqui
+ *
+ * O armazém vive na memória do processo. Em hospedagem serverless cada
+ * requisição pode cair numa instância diferente — e a instância nova nasce com o
+ * armazém recém-semeado, **sem** a conta de administrador, que só é criada
+ * dentro de `signInAction`. O efeito era visível e desnorteante: a pessoa
+ * entrava, era redirecionada para a área logada, e o cabeçalho da página
+ * seguinte mostrava "Entrar" de novo, como se o login não tivesse acontecido.
+ * O cookie estava lá e era válido o tempo todo; quem sumia era a conta.
+ *
+ * Como o token é assinado e declara o papel, um token de administrador é prova
+ * suficiente para recriar aquela conta a partir das variáveis de ambiente — que
+ * é de onde ela nasce, sempre. A busca final é por **e-mail**, e não pelo
+ * identificador do token, porque o identificador é derivado da posição no
+ * armazém e não sobrevive a uma re-semeadura em outra ordem.
+ *
+ * Conta comum não tem esse resgate, e não há como ter: ela existiu apenas na
+ * memória de uma instância que já morreu. Devolver `null` é a resposta honesta —
+ * a pessoa é tratada como visitante e a tela de cadastro avisa que as contas não
+ * duram. Quem resolve isso de verdade é a camada de escrita com back-end.
  */
 export async function currentAccount(): Promise<SiteAccount | null> {
   const jar = await cookies();
   const token = jar.get(COOKIE_NAME)?.value;
   if (!token) return null;
 
-  const accountId = readToken(token);
-  if (!accountId) return null;
+  const lido = readToken(token);
+  if (!lido) return null;
 
-  return repositories.site.getAccountById(accountId);
+  const encontrada = await repositories.site.getAccountById(lido.accountId);
+  if (encontrada) return encontrada;
+
+  if (!lido.isAdmin) return null;
+
+  await ensureAdminAccount();
+
+  const email = process.env.ELORA_ADMIN_EMAIL?.trim().toLowerCase();
+  if (!email) return null;
+
+  const admin = await repositories.site.getAccountByEmail(email);
+  // A conferência do papel não é cerimônia: se as variáveis de ambiente mudarem
+  // e o e-mail passar a apontar para uma conta comum, o token antigo não pode
+  // continuar valendo como credencial de administrador.
+  return admin?.isAdmin ? admin : null;
 }
 
 export async function currentAccountPublic(): Promise<SiteAccountPublic | null> {

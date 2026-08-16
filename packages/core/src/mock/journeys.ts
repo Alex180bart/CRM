@@ -47,7 +47,7 @@ const migracaoNodes: JourneyNode[] = [
     config: {
       template: "comparativo_regime_v4",
       assunto: "Você pode estar pagando imposto a mais",
-      remetente: "conteudo@contabilidadefacilitada.com",
+      remetente: "conteudo@contabilaurora.com.br",
     },
     outputs: [{ id: "out", label: "Enviado" }],
   },

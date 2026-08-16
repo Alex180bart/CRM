@@ -2,13 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import {
-  isDemoVerticalId,
-  isPlanKey,
-  PLAN_BY_KEY,
-  repositories,
-  switchVertical,
-} from "@elora/core";
+import { isDemoVerticalId, isPlanKey, PLAN_BY_KEY, repositories } from "@elora/core";
 
 import {
   currentAccount,
@@ -21,6 +15,7 @@ import {
 } from "@/lib/site/auth";
 import { produtoExposto } from "@/lib/site/exposicao";
 import { enderecoComercial, notificarPedidoDeOrcamento } from "@/lib/site/notificacao";
+import { definirVertical } from "@/lib/site/vertical";
 
 /**
  * Escritas do site público.
@@ -298,7 +293,15 @@ export async function openVerticalAction(data: FormData): Promise<void> {
   const id = text(data, "vertical");
   if (!isDemoVerticalId(id)) return;
 
-  switchVertical(id);
+  /**
+   * A escolha vai para o cookie, não só para a memória do processo.
+   *
+   * `switchVertical` sozinho grava no `globalThis` — e a requisição seguinte
+   * pode ser atendida por outra instância, que nunca soube da troca e serve a
+   * base padrão. Era exatamente o que acontecia: o clique levava para dentro do
+   * produto e o produto continuava mostrando contabilidade.
+   */
+  await definirVertical(id);
   revalidatePath("/", "layout");
   redirect("/inicio");
 }

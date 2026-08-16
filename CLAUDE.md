@@ -667,9 +667,19 @@ paleta por segmento; ficava bonito dentro do produto e virava defeito no site, p
 é a marca da Elora e mudava de cor quando alguém abria a demonstração de e-commerce. A cor da
 vertical vive no cartão da vitrine, onde é decoração.
 
-**Trocar de vertical vale para a instância inteira**, e a interface diz isso em três lugares. Sem
-back-end, o repositório em memória é único: não existe versão "só para o meu navegador". Esconder
-isso produziria a cena em que dois vendedores demonstram ao mesmo tempo e um vê a base do outro.
+**A vertical escolhida vive num cookie, não no processo.** `setActiveVerticalId` grava no
+`globalThis`, e isso bastava num servidor só — em serverless a requisição seguinte cai noutra
+instância, que nunca ouviu falar da troca e serve a base padrão. O sintoma foi observado em
+produção: clicar em "abrir esta demonstração" levava para dentro do produto e o produto continuava
+mostrando contabilidade, sem erro nenhum. `lib/site/vertical.ts` grava a escolha no cookie e
+`aplicarVerticalEscolhida()` alinha o armazém no começo de toda superfície que lê dado de
+demonstração — o layout do `(workspace)` e a mesa de `/admin`. A comparação com `activeVerticalId()`
+evita re-semear quando a instância já está certa; sem ela, toda requisição descartaria o armazém.
+
+O efeito colateral é a melhoria que a operação esperava: a escolha passou a ser **por navegador**.
+Dois vendedores podem demonstrar verticais diferentes ao mesmo tempo. O armazém continua único por
+instância, então cada requisição realinha a base antes de responder — o que não dá para fazer sem
+back-end é manter duas bases vivas simultaneamente na mesma memória.
 
 **E é exatamente por isso que a demonstração é restrita.** As bases saíram da landing page e vivem
 atrás de conta de administrador: quem carrega uma base troca os dados de todo mundo, e um visitante
@@ -918,6 +928,20 @@ lista de envelhecer: tela nova sem entrada ali nasceria pública, sem erro e sem
 aviso. Exigir **administrador**, e não só login, é o que impede alguém de se
 cadastrar em `/cadastrar` e entrar: o armazém é único por instância, e quem troca
 a vertical troca a base debaixo de quem está apresentando.
+
+**A conta de administrador é re-semeada na leitura da sessão.** O armazém nasce vazio em cada
+instância nova, e a conta só era criada dentro de `signInAction` — então a pessoa entrava, era
+redirecionada, e o cabeçalho da página seguinte mostrava "Entrar" outra vez. O cookie estava
+correto o tempo todo; quem sumia era a conta. `currentAccount` agora recria o administrador a partir
+do ambiente quando o token assinado declara o papel, e busca **por e-mail**, porque o identificador é
+derivado da posição no armazém e não sobrevive a uma re-semeadura. Conta comum não tem esse resgate,
+e não pode ter: ela existiu só na memória de uma instância que morreu.
+
+**A base de demonstração não usa nome de empresa real.** A organização é `Contábil Aurora`, com
+domínio `contabilaurora.com.br`, e as pessoas são fictícias. O rodapé do site público continua
+citando a Contabilidade Facilitada — ali é a empresa falando de si, não dado de demonstração. Os
+identificadores (`usr_alex`, `org_cf`) ficaram como estavam: não aparecem em tela, e trocá-los deixa
+referências penduradas nos módulos que a vertical não reescreve.
 
 **O papel viaja dentro do cookie porque o middleware não tem como perguntar.** Na
 borda não há `node:crypto` nem repositório, então `issueToken` assina
