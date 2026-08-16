@@ -51,9 +51,9 @@ export default async function PrecosPage() {
   return (
     <>
       <section className="bg-primary text-primary-foreground aurora">
-        <div className="mx-auto w-full max-w-6xl px-5 py-16 md:py-20">
+        <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-5 md:py-20">
           <Reveal index={0}>
-            <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
+            <h1 className="font-display max-w-3xl text-[2rem] font-semibold leading-[1.14] tracking-tight sm:text-4xl sm:leading-tight md:text-5xl">
               <RichLine>{pricing.hero.title}</RichLine>
             </h1>
             <RichText className="text-primary-foreground/75 mt-4 max-w-2xl text-base leading-relaxed">
@@ -63,15 +63,15 @@ export default async function PrecosPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-5 py-16">
+      <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-5 md:py-16">
         <PlanCards />
       </section>
 
       {/* Excedente ---------------------------------------------------------- */}
-      <section className="bg-surface-sunken py-16">
-        <div className="mx-auto w-full max-w-6xl px-5">
+      <section className="bg-surface-sunken py-12 md:py-16">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-5">
           <Reveal index={0}>
-            <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+            <h2 className="font-display text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-2xl md:text-3xl">
               <RichLine>{pricing.overage.title}</RichLine>
             </h2>
             <RichText className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
@@ -269,11 +269,11 @@ export default async function PrecosPage() {
       </section>
 
       {/* Conta do seu caso ----------------------------------------------------- */}
-      <section className="mx-auto w-full max-w-6xl px-5 py-16">
+      <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-5 md:py-16">
         <Reveal index={0}>
           <Card>
             <CardContent className="p-8 md:p-10">
-              <h2 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+              <h2 className="font-display text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-2xl md:text-3xl">
                 <RichLine>{pricing.close.title}</RichLine>
               </h2>
               <RichText className="text-muted-foreground mt-3 max-w-2xl text-sm leading-relaxed">
@@ -300,8 +300,8 @@ export default async function PrecosPage() {
         </Reveal>
       </section>
 
-      <section id="faq" className="bg-surface-sunken scroll-mt-20 py-16">
-        <div className="mx-auto w-full max-w-4xl px-5">
+      <section id="faq" className="bg-surface-sunken scroll-mt-16 py-12 md:scroll-mt-20 md:py-16">
+        <div className="mx-auto w-full max-w-4xl px-4 sm:px-5">
           <h2 className="font-display text-2xl font-semibold tracking-tight">
             {pricing.faq.title}
           </h2>

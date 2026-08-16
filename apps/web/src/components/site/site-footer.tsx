@@ -19,9 +19,22 @@ import { RichText } from "./rich-text";
 export function SiteFooter({ content }: { content: FooterContent }) {
   return (
     <footer className="border-border bg-surface-sunken border-t">
-      <div className="mx-auto w-full max-w-6xl px-5 py-14">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
-          <div>
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-5 md:py-14">
+        {/*
+          Duas colunas no celular, e a marca ocupa as duas.
+
+          Em coluna única as três listas de links viravam uma escada de quinze
+          linhas no fim de uma página que já é longa — e o rodapé aqui não é
+          decoração: com a barra inferior segurando quatro destinos, é ele que
+          guarda todo link que não coube. Um rodapé que ninguém rola até o fim
+          deixa esses links inalcançáveis no celular.
+
+          O alvo de toque tem 40 px de altura mesmo com texto de 14 px: o recuo
+          vertical no link é o que separa "lista de links" de "parágrafo com
+          palavras sublinhadas" quando o dedo mira.
+        */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-[1.4fr_repeat(3,1fr)] md:gap-10">
+          <div className="col-span-2 md:col-span-1">
             <LogoWordmark height={26} />
             <RichText className="text-muted-foreground mt-3 max-w-xs text-sm leading-relaxed">
               {content.tagline}
@@ -31,12 +44,12 @@ export function SiteFooter({ content }: { content: FooterContent }) {
           {content.columns.map((column) => (
             <div key={column.id}>
               <h3 className="text-xs font-semibold uppercase tracking-wide">{column.title}</h3>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-2 md:mt-3 md:space-y-2">
                 {column.links.map((link) => (
                   <li key={link.id}>
                     <Link
                       href={link.href}
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                      className="text-muted-foreground hover:text-foreground -mx-2 flex min-h-10 items-center rounded-lg px-2 text-sm transition-colors md:mx-0 md:min-h-0 md:px-0"
                     >
                       {link.label}
                     </Link>
@@ -47,7 +60,7 @@ export function SiteFooter({ content }: { content: FooterContent }) {
           ))}
         </div>
 
-        <div className="border-border mt-12 border-t pt-6">
+        <div className="border-border mt-10 border-t pt-6 md:mt-12">
           <p className="text-muted-foreground text-xs leading-relaxed">
             {content.statusTitle ? (
               <strong className="text-foreground font-semibold">{content.statusTitle}</strong>

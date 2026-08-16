@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Tokens da Elora — identidade Arena Elora.
  *
  *   Índigo principal   #1E1B4B   hsl(244 47% 20%)
@@ -738,11 +738,21 @@
     background-size: 400% 100%;
   }
 
-  /* Faixa de vidro usada nos cabeçalhos fixos. */
+  /*
+    Faixa de vidro usada nos cabeçalhos fixos.
+
+    Sem o `-webkit-backdrop-filter` escrito à mão, e a ausência é a correção de
+    um defeito silencioso: com o par declarado, o prefixador descartava **as
+    duas** propriedades e o cabeçalho do Inbox, o do E-mail Studio e o
+    `page-header` do produto inteiro paravam de desfocar. Nada disso aparece
+    como erro — o fundo translúcido continua lá, e o texto que passa por baixo
+    fica só um pouco mais legível do que deveria.
+
+    Quem acrescenta o prefixo é o autoprefixer, pelo browserslist do projeto.
+  */
   .glass {
     background-color: hsl(var(--surface) / 0.82);
     backdrop-filter: saturate(180%) blur(12px);
-    -webkit-backdrop-filter: saturate(180%) blur(12px);
   }
 
   /**
@@ -825,6 +835,44 @@
     opacity: 0;
     animation: reveal-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     animation-delay: calc(var(--reveal-index, 0) * 60ms);
+  }
+
+  /**
+   * A mesma entrada, dirigida pela rolagem em vez do relógio.
+   *
+   * ## O defeito que isto corrige
+   *
+   * `.reveal` anima na **montagem**. Numa tela de produto isso está certo: o que
+   * é montado é o que está à vista. Numa landing page de dez seções, não: as
+   * nove seções abaixo da dobra terminam a animação antes de alguém chegar
+   * nelas, e quem rola encontra tudo parado. O efeito de entrada existe e nunca
+   * é visto — pior no celular, onde a dobra cabe uma seção por vez.
+   *
+   * ## Por que `@supports`, e não `IntersectionObserver`
+   *
+   * A alternativa em JavaScript exigiria nascer em `opacity: 0` e depender de um
+   * efeito para revelar. Numa página **pública**, isso põe o conteúdo inteiro
+   * atrás de um script: se ele falhar, atrasar ou for bloqueado, a página fica
+   * em branco com o HTML todo presente. Esse é um risco que uma animação
+   * decorativa não tem o direito de criar.
+   *
+   * Aqui não há risco. Sem suporte a `animation-timeline`, o seletor inteiro é
+   * descartado e o elemento mantém o comportamento de hoje — `.reveal` na
+   * montagem, exatamente como antes. Com suporte, a mesma animação passa a ser
+   * percorrida pela rolagem. Não existe estado em que o conteúdo suma.
+   *
+   * O atraso por índice é zerado de propósito: com linha do tempo de progresso,
+   * quem controla o quadro é a posição do elemento na tela, e um `delay` em
+   * milissegundos ali significaria "comece depois", que não tem tradução.
+   */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal-on-view {
+        animation-timeline: view();
+        animation-range: entry 10% cover 26%;
+        animation-delay: 0s;
+      }
+    }
   }
 
   .lift {
@@ -1510,10 +1558,36 @@
   }
 }
 
+/**
+ * O corte é `overflow: clip`, e as duas linhas abaixo são deliberadas.
+ *
+ * A mancha de `::before` se estende 25% para fora em cada lado e precisa ser
+ * cortada. `hidden` corta — e cobra um preço escondido: **`overflow` diferente
+ * de `visible` transforma o elemento em contêiner de rolagem**, mesmo sem nada
+ * para rolar. É esse contêiner que uma `animation-timeline: view()` toma como
+ * referência, então o parallax do conteúdo do herói media progresso contra uma
+ * caixa que nunca rola e ficava congelado no primeiro quadro.
+ *
+ * `clip` corta sem criar contêiner de rolagem — é exatamente para isso que a
+ * palavra-chave existe. A declaração `hidden` fica antes como queda para quem
+ * não a conhece (Safari anterior à 16): lá o corte continua valendo e o
+ * parallax, que é enfeite, simplesmente não acontece.
+ *
+ * `clip-path: inset(0)` foi tentado no lugar e **reintroduziu rolagem
+ * horizontal na página**: ele recorta a pintura, mas o pseudo-elemento continua
+ * ocupando área e empurrando a largura rolável do documento. Medido em 390 px,
+ * a página andava 79 px para o lado — o defeito de celular mais comum que
+ * existe, e o mais fácil de não notar em quem desenvolve no desktop.
+ *
+ * É a mesma família de armadilha que o layout do site documenta com o `sticky`
+ * do cabeçalho: `overflow` decide quem é o contexto de rolagem, e o sintoma
+ * nunca é um erro — é um efeito que não acontece.
+ */
 .aurora {
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  overflow: clip;
 }
 
 .aurora::before {
@@ -1898,5 +1972,179 @@
   }
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+/* ==========================================================================
+   Celular — barra inferior, trilhos e movimento por rolagem
+
+   Tudo desta seção só existe abaixo de `md`. É a única parte da folha escrita
+   para um gesto específico — o polegar —, e as decisões saem disso.
+
+   **A navegação desce.** No alto de um telefone segurado com uma mão, a faixa
+   superior é a região mais difícil de alcançar; a inferior é a mais fácil. É por
+   isso que todo sistema operacional móvel pôs a navegação embaixo, e é o motivo
+   de a barra existir. O cabeçalho continua no alto porque marca e ação primária
+   são alvo raro; navegação é alvo constante.
+
+   **A barra não some ao rolar.** Foi considerado e descartado: esconder e
+   revelar por direção de rolagem obriga a um ouvinte de `scroll` com estado, e
+   troca um alvo previsível por um que aparece quando o sistema decide. A tab bar
+   do iOS é persistente pelo mesmo motivo.
+   ========================================================================== */
+
+/**
+ * A barra inferior.
+ *
+ * `env(safe-area-inset-bottom)` é a diferença entre uma barra que funciona e uma
+ * que fica embaixo do indicador de gesto do iPhone — onde o toque é interceptado
+ * pelo sistema e o botão simplesmente "não responde". O valor de recuo é `0px`
+ * com unidade de propósito: `env(x, 0)` sem unidade invalida o `calc` inteiro em
+ * alguns navegadores, e a barra volta a encostar na borda sem erro nenhum no
+ * console.
+ *
+ * O vidro é o mesmo do cabeçalho, e não é enfeite: a barra flutua sobre conteúdo
+ * que continua rolando por baixo, e opacidade sozinha faria o texto atravessar
+ * legível. O desfoque é estático — aplicado uma vez, nunca animado.
+ */
+.tab-bar {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background-color: hsl(var(--background) / 0.85);
+  /*
+    Sem o prefixo `-webkit-` escrito à mão: quem o acrescenta é o autoprefixer,
+    pelo alvo declarado no browserslist. Escrever os dois aqui fez o prefixador
+    descartar **as duas** declarações, e o sintoma foi um vidro que não desfoca —
+    silencioso, porque a cor de fundo continuava aplicada e a barra parecia
+    apenas translúcida demais. O `.site-header` acima declara só a propriedade
+    padrão pelo mesmo motivo, e é assim que ele funciona.
+  */
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/**
+ * O espaço que a página reserva para a barra.
+ *
+ * Sem isto, o último parágrafo do rodapé fica **atrás** do vidro: legível pela
+ * metade, e sem nenhuma forma de rolar mais. Mora numa classe, e não num
+ * utilitário arbitrário do Tailwind, porque o valor tem `env()` dentro de um
+ * `calc` — e porque o número precisa acompanhar a altura real da barra num lugar
+ * só.
+ */
+.has-tab-bar {
+  padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+/*
+  1024 px, e não 768: o corte é o mesmo `lg` em que a barra some e o cabeçalho
+  completo aparece. Ele foi para lá porque em 768 o cabeçalho de desktop **não
+  cabia** — cinco links, "Entrar" e o botão de ação somavam 827 px de conteúdo
+  numa janela de 768, e a página inteira ganhava 59 px de rolagem horizontal. O
+  defeito é anterior à barra inferior; ela só o tornou visível ao dar um segundo
+  lugar para a navegação morar.
+
+  Efeito colateral desejado: o tablet em retrato passa a usar a barra, que é
+  onde ela também é o padrão do sistema.
+*/
+@media (min-width: 1024px) {
+  .has-tab-bar {
+    padding-bottom: 0;
+  }
+}
+
+/**
+ * O ponto que marca a seção corrente.
+ *
+ * Cresce do centro por `scale`, nunca por `width`: são cinco itens numa barra
+ * fixa, e animar geometria ali recalcularia o layout da barra a cada rolagem que
+ * troca a seção ativa.
+ */
+.tab-dot {
+  transform-origin: center;
+  transition: transform 0.24s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/**
+ * Trilho horizontal — abas do produto, cartões de plano.
+ *
+ * ## Por que em `components`, e não solto no fim do arquivo
+ *
+ * As outras classes desta folha vivem fora de camada porque ninguém as
+ * sobrescreve. Esta é diferente: as duas peças que a usam **desligam o trilho**
+ * a partir de `md` com utilitários (`lg:grid`, `lg:overflow-visible`), e
+ * utilitário do Tailwind e regra solta têm a mesma especificidade — vence quem
+ * vem por último no arquivo, que seria esta. O carrossel simplesmente nunca
+ * viraria grade no desktop, sem erro nenhum para investigar.
+ *
+ * Em `components`, a ordem das camadas resolve: utilitário sempre ganha de
+ * componente, que é a hierarquia que o Tailwind existe para garantir.
+ *
+ * ## As escolhas do trilho
+ *
+ * A barra de rolagem é escondida porque no toque ela não existe de qualquer
+ * forma. `overscroll-behavior-x: contain` impede que o fim do trilho vire o
+ * gesto de "voltar" do navegador — o defeito mais irritante de carrossel em
+ * celular, porque tira a pessoa da página sem aviso e sem forma de desfazer.
+ */
+@layer components {
+  .rail {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  /**
+   * Encaixe por item.
+   *
+   * `proximity`, e não `mandatory`: com encaixe obrigatório, um trilho cujos
+   * itens são mais largos que a tela prende a rolagem entre dois pontos e o
+   * gesto passa a "brigar" com o dedo. Proximidade encaixa quando o gesto
+   * termina perto e deixa a rolagem livre no meio do caminho.
+   */
+  .rail-snap {
+    scroll-snap-type: x proximity;
+  }
+
+  .rail-snap > * {
+    scroll-snap-align: center;
+  }
+}
+
+/**
+ * Parallax do herói, dirigido pela rolagem.
+ *
+ * O conteúdo sobe um pouco mais devagar que a página e desvanece ao sair — o
+ * gesto que o iOS usa para dizer "isto ficou para trás". Sem linha do tempo de
+ * rolagem, nada acontece: é enfeite, e enfeite não merece um ouvinte de `scroll`
+ * disputando o quadro com a própria rolagem, que é onde o custo aparece no
+ * celular.
+ *
+ * `animation-range: exit` amarra o efeito à saída do elemento. Preso à entrada,
+ * ele rodaria no carregamento — quando o herói já está na tela e não há gesto
+ * nenhum a acompanhar.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-parallax {
+      animation: hero-recede linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 90%;
+    }
+  }
+}
+
+@keyframes hero-recede {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0.35;
+    transform: translateY(-28px) scale(0.985);
   }
 }

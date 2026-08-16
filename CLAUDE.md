@@ -444,6 +444,68 @@ conteúdo e nunca rola por dentro, então o cabeçalho grudava no topo de uma ca
 a página. No site quem rola é o documento; no produto, o painel. São exigências opostas, e agora
 estão escritas assim nos dois layouts.
 
+**No celular a navegação desce, e o corte é `lg`, não `md`.** `components/site/mobile-tab-bar.tsx`
+é uma barra fixa no rodapé com quatro destinos e a marca no centro; o cabeçalho fica com marca e ação
+primária, e o menu sanfonado deixou de existir. A faixa superior de um telefone é a região mais
+distante do polegar, e o menu anterior custava dois toques para qualquer lugar. O corte é `lg`
+porque o cabeçalho completo precisa de 827 px só de conteúdo: ligado em `md`, ele estourava uma
+janela de 768 e dava **59 px de rolagem horizontal à página inteira** — defeito anterior à barra,
+que só ficou visível quando a navegação ganhou um segundo lugar para morar.
+
+Três consequências que valem enunciar:
+
+1. **Cabem quatro destinos, não cinco.** A barra leva os três primeiros links do conteúdo,
+   descartando o que repete o botão de ação, mais conta/entrada. O que sobra vive no rodapé — que
+   por isso deixou de ser opcional nesta página. A `<MobileTabBar>` é montada **antes** do `<main>`
+   no layout: sendo `fixed`, a ordem no DOM não decide onde ela aparece, decide a ordem de leitura e
+   de foco, e abaixo de `lg` ela é a única `nav` da página.
+2. **O item ativo tem dois regimes.** Rota sai de `usePathname`; âncora da mesma página sai da seção
+   visível, por `IntersectionObserver` com faixa estreita (`-45% 0px -45% 0px`). Sem o segundo, rolar
+   a landing page inteira deixaria o indicador parado — e indicador que nunca se move é lido como
+   quebrado. Só conta como âncora o que aponta para a raiz: `/precos#tabela` tem fragmento e não é
+   seção daqui.
+3. **O ícone é derivado do endereço** (`lib/site/nav-icons.ts`), não guardado. `ContentLink` não tem
+   campo de ícone e o normalizador é o mesmo do rodapé, onde ícone não faz sentido; endereço
+   desconhecido cai numa bússola, que é feio e funciona — melhor que quadrado vazio.
+
+**Onde a lista é longa, o celular ganha trilho com encaixe.** As oito abas do "Por dentro" ocupavam
+quatro linhas e 180 px antes da primeira prévia; as quatro edições empilhadas somavam mais de 2.400
+px de rolagem para uma comparação que exige lembrar da tela anterior. As duas viraram `.rail` com
+`.rail-snap` abaixo de `md`/`lg` e voltam a ser fila e grade acima. Três decisões: o encaixe é
+`proximity`, não `mandatory` — obrigatório, um item mais largo que a tela prende a rolagem e o gesto
+briga com o dedo; o cartão tem 82% da largura para o **seguinte aparecer pela borda**, que é a única
+affordance de carrossel; e o indicador de posição fica **antes** dos cartões, contra a convenção,
+porque cartão de plano tem mais de mil pixels e depois dele é duas telas longe do dedo.
+
+**`.rail` mora em `@layer components`, e o motivo é cascata.** As duas peças desligam o trilho com
+utilitário (`lg:grid`, `md:overflow-visible`), e regra solta no fim da folha tem a mesma
+especificidade de utilitário — venceria por ordem, e o carrossel nunca viraria grade no desktop.
+
+**A entrada por rolagem é opt-in e degrada para o que já existia.** `<Reveal onView>` acrescenta
+`.reveal-on-view`, que só faz algo dentro de `@supports (animation-timeline: view())`: com suporte, a
+mesma animação passa a ser percorrida pela rolagem; sem, continua animando na montagem. Foi escolhido
+sobre `IntersectionObserver` por uma razão de risco — a alternativa exigiria nascer em `opacity: 0` e
+depender de script para revelar, e numa página pública isso põe o conteúdo inteiro atrás de um
+`if` que pode falhar. Aqui não existe estado em que algo fique invisível. O parallax do herói
+(`.hero-parallax`) segue a mesma regra e some sob `prefers-reduced-motion`.
+
+**`.aurora` corta com `overflow: clip`, com `hidden` antes como queda.** `hidden` torna o elemento
+contêiner de rolagem, e é esse contêiner que uma `animation-timeline: view()` toma como referência —
+o parallax media progresso contra uma caixa parada. `clip-path: inset(0)` foi tentado no lugar e
+**reintroduziu 79 px de rolagem horizontal**: recorta a pintura, mas o pseudo-elemento continua
+ocupando área. Mesma família do `sticky` acima: `overflow` decide quem é o contexto, e o sintoma
+nunca é erro.
+
+**Dois defeitos silenciosos foram corrigidos no caminho, e há teste para os dois**
+(`apps/web/src/lib/tokens-css.test.ts`). O `tokens.css` começava com **BOM**, e como `@tailwind base`
+é a primeira diretiva, o byte invisível colou no primeiro seletor do CSS gerado — justamente
+`*, ::before, ::after`, onde o Tailwind reseta `--tw-translate-x`, `--tw-scale-x` e o resto. Seletor
+inválido invalida a regra inteira, então **todo utilitário de transform do produto estava morto**:
+`scale-*`, `translate-*`, `rotate-*`, inclusive o `data-[state=checked]:translate-x-*` de qualquer
+switch. E `-webkit-backdrop-filter` escrito à mão ao lado da propriedade padrão fazia o prefixador
+descartar **as duas** — `.glass` (cabeçalho do Inbox, do E-mail Studio, `page-header`) não desfocava.
+Nenhum dos dois produz aviso; quem acrescenta prefixo é o autoprefixer, pelo browserslist.
+
 **As telas do produto na landing page são desenhadas, não capturadas.**
 `components/site/module-previews.tsx` traz oito prévias em JSX — Inbox, Pipeline, Contato 360º,
 Chatbot, Automações, Campanhas, Analytics e agente de IA — exibidas em abas por

@@ -12,7 +12,7 @@ export default async function CadastrarPage() {
   if (await currentAccount()) redirect("/conta");
 
   return (
-    <div className="mesh-surface flex min-h-[70vh] items-center justify-center px-5 py-16">
+    <div className="mesh-surface flex min-h-[70vh] items-center justify-center px-4 py-12 sm:px-5 md:py-16">
       <Card className="w-full max-w-2xl">
         <CardContent className="p-7">
           <h1 className="font-display text-2xl font-semibold tracking-tight">Criar conta</h1>

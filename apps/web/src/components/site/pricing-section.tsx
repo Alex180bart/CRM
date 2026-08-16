@@ -109,8 +109,50 @@ function CycleSwitch({
   );
 }
 
+/**
+ * Em que cartão o carrossel parou.
+ *
+ * `IntersectionObserver` com o próprio trilho como raiz, e não um ouvinte de
+ * `scroll`: rolagem por toque dispara dezenas de eventos por segundo, e calcular
+ * posição em cada um deles põe trabalho de JavaScript exatamente no quadro em
+ * que o dedo está arrastando — o lugar onde o custo aparece como travamento.
+ * O observador só fala quando um cartão de fato cruza o limiar.
+ *
+ * O limiar é alto (0,6) de propósito: com um valor baixo, dois cartões contam
+ * como visíveis durante metade do gesto e o indicador pisca entre os dois.
+ */
+function useCartaoVisivel(trilho: React.RefObject<HTMLDivElement | null>, total: number): number {
+  const [indice, setIndice] = React.useState(0);
+
+  React.useEffect(() => {
+    const raiz = trilho.current;
+    if (!raiz) return;
+
+    const itens = Array.from(raiz.querySelectorAll<HTMLElement>("[data-plan-index]"));
+    if (itens.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const valor = Number((entry.target as HTMLElement).dataset.planIndex);
+          if (Number.isInteger(valor)) setIndice(valor);
+        }
+      },
+      { root: raiz, threshold: 0.6 },
+    );
+
+    for (const item of itens) observer.observe(item);
+    return () => observer.disconnect();
+  }, [trilho, total]);
+
+  return indice;
+}
+
 export function PricingSection() {
   const [billing, setBilling] = React.useState<BillingCycle>("anual");
+  const trilhoRef = React.useRef<HTMLDivElement>(null);
+  const visivel = useCartaoVisivel(trilhoRef, PLANS.length);
 
   return (
     <div>
@@ -124,13 +166,65 @@ export function PricingSection() {
           : `Sem fidelidade, a assinatura e os assentos custam ${MONTHLY_PREMIUM_PCT}% a mais.`}
       </p>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-4">
+      {/*
+        O indicador fica **antes** dos cartões, e a posição contraria a
+        convenção de propósito.
+
+        Cartão de plano tem mais de mil pixels de altura: pôr o indicador
+        depois do trilho, como faz todo carrossel de imagem, o deixaria a duas
+        telas de distância de quem está arrastando. Ele responde "onde estou, de
+        quantos" — uma pergunta que só faz sentido enquanto o dedo está no
+        trilho, ou seja, aqui em cima.
+
+        Não é clicável, e a omissão também é escolha: ponto de carrossel tem 8 px
+        e reprova a recomendação de 44 px de alvo de toque; cercá-lo de área
+        invisível poria quatro alvos grandes bem onde o polegar descansa depois
+        de arrastar. A navegação continua sendo o gesto, que já funciona.
+
+        Escondido de leitor de tela: os quatro cartões estão no documento em
+        ordem, e um leitor não rola horizontalmente. Anunciar "1 de 4" ali
+        descreveria um recorte visual que, para quem ouve, não existe.
+      */}
+      <div aria-hidden className="mt-5 flex justify-center gap-1.5 lg:hidden">
+        {PLANS.map((plan, index) => (
+          <span
+            key={plan.key}
+            className={cn(
+              "tab-dot size-1.5 rounded-full transition-colors",
+              index === visivel ? "bg-primary scale-125" : "bg-border-strong",
+            )}
+          />
+        ))}
+      </div>
+
+      {/*
+        No celular as quatro edições viram carrossel; a partir de `lg`, grade.
+
+        Empilhadas, elas somam mais de 2.400 px de rolagem — e a comparação, que
+        é a única coisa que uma tabela de preço serve para fazer, exige lembrar
+        de cabeça o que estava na tela anterior. Lado a lado com encaixe, o gesto
+        de comparar é o mesmo de folhear.
+
+        O cartão tem 82% da largura da tela para que o **seguinte apareça pela
+        borda**. É o detalhe que transforma "uma coluna estranhamente estreita"
+        em "há mais para o lado"; com 100%, o carrossel é indistinguível de uma
+        pilha até alguém arrastar por acaso.
+      */}
+      <div
+        ref={trilhoRef}
+        className="rail rail-snap -mx-4 mt-4 w-[calc(100%+2rem)] gap-4 px-4 pb-2 lg:mx-0 lg:mt-8 lg:grid lg:w-full lg:snap-none lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0"
+      >
         {PLANS.map((plan, index) => {
           const featured = plan.key === "profissional";
           const unlimitedSeats = plan.seatPriceCents === 0;
 
           return (
-            <Reveal key={plan.key} index={index + 1}>
+            <Reveal
+              key={plan.key}
+              index={index + 1}
+              data-plan-index={index}
+              className="w-[82vw] max-w-[19rem] shrink-0 lg:w-auto lg:max-w-none"
+            >
               <Card
                 className={cn(
                   "lift flex h-full flex-col",
@@ -222,11 +316,7 @@ export function PricingSection() {
                   </ul>
 
                   <div className="mt-auto pt-5">
-                    <Button
-                      asChild
-                      variant={featured ? "accent" : "outline"}
-                      className="w-full"
-                    >
+                    <Button asChild variant={featured ? "accent" : "outline"} className="w-full">
                       <Link href={`/orcamento?plano=${plan.key}`}>
                         Pedir proposta
                         <ArrowRight />

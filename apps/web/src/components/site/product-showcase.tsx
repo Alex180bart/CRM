@@ -174,12 +174,55 @@ const MODULES: Module[] = [
 export function ProductShowcase() {
   const [active, setActive] = React.useState(MODULES[0].key);
   const current = MODULES.find((module) => module.key === active) ?? MODULES[0];
+  const listRef = React.useRef<HTMLDivElement>(null);
+
+  /**
+   * A aba escolhida vai para o centro do trilho.
+   *
+   * O repositório manda evitar `scrollIntoView` — ele força um passe síncrono de
+   * layout — e a regra escrita lá é "só quando a seleção veio do teclado, porque
+   * num clique o item já estava visível". Num trilho horizontal a segunda metade
+   * dessa frase deixa de valer: o item clicado costuma estar **na borda**, meio
+   * cortado, e é justamente por isso que o dedo o alcançou por último.
+   *
+   * Sem isto, tocar na última aba visível deixa a seleção encostada na margem e
+   * as próximas escondidas — a pessoa não descobre que existem oito. O custo é
+   * um layout por toque de aba, que é raro por definição.
+   */
+  function selecionar(key: string) {
+    setActive(key);
+    const alvo = listRef.current?.querySelector<HTMLElement>(`[data-value="${key}"]`);
+    alvo?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }
 
   return (
-    <Tabs value={active} onValueChange={setActive}>
-      <TabsList className="flex w-full flex-wrap justify-start gap-1">
+    <Tabs value={active} onValueChange={selecionar}>
+      {/*
+        No celular as abas viram trilho; a partir de `md` voltam a ser uma fila
+        que quebra em linhas.
+
+        Oito abas em 390 px ocupavam **quatro linhas** e 180 px de altura antes
+        de a primeira prévia aparecer — a seção inteira começava com um bloco de
+        rótulos que se lê como sumário, não como controle. Em trilho, elas
+        ocupam uma linha e o corte no meio do último item visível é o que diz
+        "há mais para o lado", que é a única affordance que um carrossel tem.
+
+        O sangramento (`-mx-4` com `px-4` de volta) faz o trilho encostar na
+        borda da tela mantendo o primeiro item alinhado ao texto da seção. Sem
+        ele, o item cortado morreria numa margem branca e pareceria erro de
+        layout em vez de continuação.
+      */}
+      <TabsList
+        ref={listRef}
+        className="rail rail-snap -mx-4 w-[calc(100%+2rem)] gap-1 px-4 md:mx-0 md:w-full md:snap-none md:flex-wrap md:justify-start md:overflow-visible md:px-0"
+      >
         {MODULES.map((module) => (
-          <TabsTrigger key={module.key} value={module.key} className="gap-1.5">
+          <TabsTrigger
+            key={module.key}
+            value={module.key}
+            data-value={module.key}
+            className="shrink-0 gap-1.5 whitespace-nowrap"
+          >
             <module.icon className="size-3.5" aria-hidden />
             {module.label}
           </TabsTrigger>
@@ -195,10 +238,19 @@ export function ProductShowcase() {
         rolagem horizontal na página para denunciar. Largura fixa à esquerda
         resolve na origem: a prévia sempre sabe com quanto pode contar.
       */}
+      {/*
+        No celular a prévia sobe para cima do texto.
+
+        A ordem da leitura em duas colunas é texto → imagem, porque os dois
+        chegam ao olho juntos. Empilhado, não: com o texto primeiro, tocar numa
+        aba muda algo que está **abaixo da dobra**, e o gesto parece não ter
+        feito nada. Com a prévia colada nas abas, o resultado do toque acontece
+        onde o dedo acabou de sair.
+      */}
       <div className="mt-6 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         {/* O texto fica fora do painel de aba de propósito: trocar de aba não
             deve remontar a coluna inteira, só a prévia. */}
-        <div className="min-w-0 lg:pt-4">
+        <div className="order-2 min-w-0 lg:order-none lg:pt-4">
           <h3 className="font-display text-xl font-semibold leading-snug tracking-tight md:text-2xl">
             {current.headline}
           </h3>
@@ -214,7 +266,7 @@ export function ProductShowcase() {
           </ul>
         </div>
 
-        <div className="min-w-0">
+        <div className="order-1 min-w-0 lg:order-none">
           {MODULES.map((module) => (
             <TabsContent
               key={module.key}

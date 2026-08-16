@@ -47,13 +47,19 @@ export default async function LandingPage() {
 
   return (
     <>
-      {/* Herói ------------------------------------------------------------- */}
-      <section className="aurora bg-primary text-primary-foreground relative overflow-hidden">
-        <div className="mx-auto w-full max-w-6xl px-5 pb-20 pt-16 md:pb-28 md:pt-24">
+      {/* Herói -------------------------------------------------------------
+          `hero-parallax` faz o conteúdo recuar ao sair da tela, e o efeito só
+          existe onde o navegador tem linha do tempo de rolagem. O `overflow-hidden`
+          saiu daqui porque `.aurora` já corta — e corta com `overflow: clip`,
+          que é o que não transforma o herói em contêiner de rolagem. Repor a
+          classe aqui reataria o nó: o parallax mediria progresso contra uma
+          caixa parada e nada se moveria. */}
+      <section className="aurora bg-primary text-primary-foreground relative">
+        <div className="hero-parallax mx-auto w-full max-w-6xl px-4 pb-14 pt-10 sm:px-5 md:pb-28 md:pt-24">
           {hero.eyebrow ? (
             <Reveal index={0}>
-              <span className="glass-card text-primary-foreground/85 inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium">
-                <Sparkles className="size-3.5" aria-hidden />
+              <span className="glass-card text-primary-foreground/85 inline-flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium leading-snug md:text-xs">
+                <Sparkles className="size-3.5 shrink-0" aria-hidden />
                 <RichLine>{hero.eyebrow}</RichLine>
               </span>
             </Reveal>
@@ -76,8 +82,17 @@ export default async function LandingPage() {
             e a condicional garante que esvaziar a lista no editor não deixe um
             ponto órfão no meio da frase.
           */}
+          {/*
+            O passo de tamanho tem um degrau a mais no celular.
+
+            `text-4xl` (2,25 rem) numa tela de 390 px punha quatro palavras por
+            linha e empurrava o título para cinco linhas — sozinho ele comia a
+            dobra inteira, e o subtítulo, os botões e a prévia começavam abaixo
+            dela. 2 rem com entrelinha um pouco mais fechada devolve uma linha
+            de altura sem que o título deixe de ser a maior coisa da tela.
+          */}
           <Reveal index={1}>
-            <h1 className="font-display mt-6 max-w-4xl text-4xl font-semibold leading-[1.12] tracking-tight md:text-[3.4rem]">
+            <h1 className="font-display mt-5 max-w-4xl text-[2rem] font-semibold leading-[1.14] tracking-tight sm:text-4xl sm:leading-[1.12] md:mt-6 md:text-[3.4rem]">
               <RichLine>{hero.titleLead}</RichLine>
               {hero.titleRoll.length > 0 ? (
                 <>
@@ -95,7 +110,7 @@ export default async function LandingPage() {
           </Reveal>
 
           <Reveal index={2}>
-            <RichText className="text-primary-foreground/75 mt-5 max-w-2xl text-base leading-relaxed md:text-lg">
+            <RichText className="text-primary-foreground/75 mt-4 max-w-2xl text-[0.95rem] leading-relaxed md:mt-5 md:text-lg">
               {hero.subtitle}
             </RichText>
           </Reveal>
@@ -105,11 +120,17 @@ export default async function LandingPage() {
             rodapé: "comece pelo número, não pela reunião". Com o orçamento em
             primeiro e o preço num link discreto, a peça dizia o contrário do
             texto — pedia a reunião antes de mostrar a conta.
+
+            No celular eles empilham em largura total, e não é preferência
+            estética: `flex-wrap` já os empilhava, mas com a largura do próprio
+            texto — dois botões de tamanhos diferentes, alinhados à esquerda,
+            com uma borda irregular à direita. Largura total dá a mesma linha de
+            corte aos dois e põe a área de toque onde o polegar está.
           */}
           <Reveal index={3}>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center md:mt-8">
               {hero.primary.label ? (
-                <Button asChild size="lg" variant="accent">
+                <Button asChild size="lg" variant="accent" className="w-full sm:w-auto">
                   <Link href={hero.primary.href}>
                     {hero.primary.label}
                     <ArrowRight />
@@ -121,7 +142,7 @@ export default async function LandingPage() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent"
+                  className="border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/10 w-full bg-transparent sm:w-auto"
                 >
                   <Link href={hero.secondary.href}>{hero.secondary.label}</Link>
                 </Button>
@@ -129,7 +150,7 @@ export default async function LandingPage() {
               {hero.tertiary.label ? (
                 <Link
                   href={hero.tertiary.href}
-                  className="text-primary-foreground/70 hover:text-primary-foreground text-sm underline underline-offset-4"
+                  className="text-primary-foreground/70 hover:text-primary-foreground py-1 text-center text-sm underline underline-offset-4 sm:py-0 sm:text-left"
                 >
                   {hero.tertiary.label}
                 </Link>
@@ -147,10 +168,10 @@ export default async function LandingPage() {
           */}
           {hero.stats.length > 0 ? (
             <Reveal index={4}>
-              <dl className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+              <dl className="mt-8 grid max-w-2xl grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3 md:mt-10">
                 {hero.stats.map((stat) => (
                   <div key={stat.id} className="glass-card p-3">
-                    <dd className="figure text-2xl font-semibold">
+                    <dd className="figure text-xl font-semibold sm:text-2xl">
                       <AnimatedNumber value={stat.value} />
                       {stat.suffix}
                     </dd>
@@ -164,7 +185,7 @@ export default async function LandingPage() {
           ) : null}
 
           <Reveal index={5}>
-            <div className="mt-12">
+            <div className="mt-10 md:mt-12">
               <ProductPreview />
             </div>
           </Reveal>
@@ -199,15 +220,15 @@ export default async function LandingPage() {
 
       {/* Problema ------------------------------------------------------------ */}
       {landing.problems.length > 0 ? (
-        <section className="mx-auto w-full max-w-6xl px-5 py-20">
-          <Reveal index={0}>
+        <section className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-5 md:py-20">
+          <Reveal onView index={0}>
             <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
               {landing.problem.eyebrow}
             </p>
-            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+            <h2 className="font-display mt-2 max-w-2xl text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
               <RichLine>{landing.problem.title}</RichLine>
             </h2>
-            <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+            <RichText className="text-muted-foreground mt-3 max-w-2xl text-[0.95rem] leading-relaxed md:text-base">
               {landing.problem.body}
             </RichText>
           </Reveal>
@@ -216,7 +237,7 @@ export default async function LandingPage() {
             {landing.problems.map((problem, index) => {
               const Icon = contentIcon(problem.icon);
               return (
-                <Reveal key={problem.id} index={index + 1}>
+                <Reveal onView key={problem.id} index={index + 1}>
                   <Card className="h-full">
                     <CardContent className="p-5">
                       <Icon className="text-accent size-6" aria-hidden />
@@ -234,21 +255,24 @@ export default async function LandingPage() {
       ) : null}
 
       {/* Por dentro do produto -------------------------------------------------- */}
-      <section id="produto" className="bg-surface-sunken scroll-mt-20 py-20">
-        <div className="mx-auto w-full max-w-6xl px-5">
-          <Reveal index={0}>
+      <section
+        id="produto"
+        className="bg-surface-sunken scroll-mt-16 py-14 md:scroll-mt-20 md:py-20"
+      >
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-5">
+          <Reveal onView index={0}>
             <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
               {landing.showcase.eyebrow}
             </p>
-            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+            <h2 className="font-display mt-2 max-w-2xl text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
               <RichLine>{landing.showcase.title}</RichLine>
             </h2>
-            <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+            <RichText className="text-muted-foreground mt-3 max-w-2xl text-[0.95rem] leading-relaxed md:text-base">
               {landing.showcase.body}
             </RichText>
           </Reveal>
 
-          <Reveal index={1}>
+          <Reveal onView index={1}>
             <div className="mt-10">
               <ProductShowcase />
             </div>
@@ -258,33 +282,50 @@ export default async function LandingPage() {
 
       {/* Módulos ---------------------------------------------------------------- */}
       {landing.moduleCards.length > 0 ? (
-        <section className="mx-auto w-full max-w-6xl px-5 py-20">
-          <Reveal index={0}>
+        <section className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-5 md:py-20">
+          <Reveal onView index={0}>
             <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
               {landing.modules.eyebrow}
             </p>
-            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+            <h2 className="font-display mt-2 max-w-2xl text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
               <RichLine>{landing.modules.title}</RichLine>
             </h2>
-            <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+            <RichText className="text-muted-foreground mt-3 max-w-2xl text-[0.95rem] leading-relaxed md:text-base">
               {landing.modules.body}
             </RichText>
           </Reveal>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/*
+            No celular o cartão deita: ícone à esquerda, texto à direita.
+
+            Empilhado, cada um dos oito módulos ocupava uma tela inteira de
+            rolagem e a lista virava um corredor — e um corredor de oito é a
+            forma mais eficiente de fazer alguém desistir antes do sétimo. Com o
+            ícone ao lado, o cartão perde ~40% da altura e a seção volta a ser
+            legível como **lista**, que é o que ela é: um inventário do que vem
+            junto, não oito argumentos para ler um a um.
+
+            A partir de `sm` volta ao empilhado, porque em duas ou quatro colunas
+            a largura já não sustenta ícone e texto lado a lado.
+          */}
+          <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {landing.moduleCards.map((module, index) => {
               const Icon = contentIcon(module.icon);
               return (
-                <Reveal key={module.id} index={Math.min(index + 1, 6)}>
+                <Reveal onView key={module.id} index={Math.min(index + 1, 6)}>
                   <Card className="lift h-full">
-                    <CardContent className="p-5">
-                      <span className="bg-accent-soft text-accent-ink inline-flex size-9 items-center justify-center rounded-lg">
+                    <CardContent className="flex gap-3.5 p-4 sm:block sm:p-5">
+                      <span className="bg-accent-soft text-accent-ink inline-flex size-9 shrink-0 items-center justify-center rounded-lg">
                         <Icon className="size-4" aria-hidden />
                       </span>
-                      <h3 className="font-display mt-3 text-sm font-semibold">{module.title}</h3>
-                      <RichText className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
-                        {module.body}
-                      </RichText>
+                      <div className="min-w-0">
+                        <h3 className="font-display text-sm font-semibold sm:mt-3">
+                          {module.title}
+                        </h3>
+                        <RichText className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                          {module.body}
+                        </RichText>
+                      </div>
                     </CardContent>
                   </Card>
                 </Reveal>
@@ -299,13 +340,16 @@ export default async function LandingPage() {
           lugar de onze, que era onde estava. Quem chegou por busca de preço não
           rola quatro seções para encontrá-lo; e quem gostou do produto quer a
           conta antes de ler sobre implantação e governança. */}
-      <section id="planos" className="bg-surface-sunken scroll-mt-20 py-20">
-        <div className="mx-auto w-full max-w-6xl px-5">
-          <Reveal index={0}>
+      <section
+        id="planos"
+        className="bg-surface-sunken scroll-mt-16 py-14 md:scroll-mt-20 md:py-20"
+      >
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-5">
+          <Reveal onView index={0}>
             <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
               {plans.eyebrow}
             </p>
-            <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+            <h2 className="font-display mt-2 max-w-2xl text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
               <RichLine>{plans.title}</RichLine>
             </h2>
             <RichText className="text-muted-foreground mt-3 max-w-3xl text-base leading-relaxed">
@@ -333,7 +377,7 @@ export default async function LandingPage() {
             Deixá-las para a fatura é o que produz a conversa sobre confiança.
           */}
           {plans.notes.length > 0 ? (
-            <Reveal index={1}>
+            <Reveal onView index={1}>
               <div className="mt-8 grid gap-4 md:grid-cols-3">
                 {plans.notes.map((note) => {
                   const Icon = contentIcon(note.icon);
@@ -358,14 +402,17 @@ export default async function LandingPage() {
       </section>
 
       {/* IA -------------------------------------------------------------------- */}
-      <section id="ia" className="bg-primary text-primary-foreground scroll-mt-20 py-20">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 lg:grid-cols-[1fr_1fr]">
-          <Reveal index={0}>
+      <section
+        id="ia"
+        className="bg-primary text-primary-foreground scroll-mt-16 py-14 md:scroll-mt-20 md:py-20"
+      >
+        <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 sm:px-5 lg:grid-cols-[1fr_1fr] lg:gap-10">
+          <Reveal onView index={0}>
             {ai.badge ? <Badge variant="accent">{ai.badge}</Badge> : null}
-            <h2 className="font-display mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
+            <h2 className="font-display mt-4 text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
               <RichLine>{ai.title}</RichLine>
             </h2>
-            <RichText className="text-primary-foreground/75 mt-4 text-base leading-relaxed">
+            <RichText className="text-primary-foreground/75 mt-4 text-[0.95rem] leading-relaxed md:text-base">
               {ai.body}
             </RichText>
 
@@ -384,8 +431,8 @@ export default async function LandingPage() {
           </Reveal>
 
           {ai.trace.length > 0 ? (
-            <Reveal index={1}>
-              <div className="glass-card p-5">
+            <Reveal onView index={1}>
+              <div className="glass-card p-4 sm:p-5">
                 <p className="text-primary-foreground/60 flex items-center gap-2 text-[11px] uppercase tracking-wide">
                   <Bot className="size-3.5" aria-hidden />
                   {ai.traceTitle}
@@ -426,25 +473,25 @@ export default async function LandingPage() {
 
       {/* Implantação ------------------------------------------------------------- */}
       {landing.stepCards.length > 0 ? (
-        <section className="py-20">
-          <div className="mx-auto w-full max-w-6xl px-5">
-            <Reveal index={0}>
+        <section className="py-14 md:py-20">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-5">
+            <Reveal onView index={0}>
               <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
                 {landing.steps.eyebrow}
               </p>
-              <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+              <h2 className="font-display mt-2 max-w-2xl text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
                 <RichLine>{landing.steps.title}</RichLine>
               </h2>
-              <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+              <RichText className="text-muted-foreground mt-3 max-w-2xl text-[0.95rem] leading-relaxed md:text-base">
                 {landing.steps.body}
               </RichText>
             </Reveal>
 
-            <ol className="mt-10 grid gap-5 md:grid-cols-3">
+            <ol className="mt-8 grid gap-4 sm:mt-10 sm:gap-5 md:grid-cols-3">
               {landing.stepCards.map((step, index) => {
                 const Icon = contentIcon(step.icon);
                 return (
-                  <Reveal key={step.id} index={index + 1} as="li">
+                  <Reveal onView key={step.id} index={index + 1} as="li">
                     <Card className="lift-3d h-full">
                       <CardContent className="p-5">
                         <div className="flex items-center justify-between">
@@ -476,27 +523,40 @@ export default async function LandingPage() {
 
       {/* Segurança -------------------------------------------------------------------- */}
       {landing.securityCards.length > 0 ? (
-        <section id="seguranca" className="bg-surface-sunken scroll-mt-20 py-20">
-          <div className="mx-auto w-full max-w-6xl px-5">
-            <Reveal index={0}>
+        <section
+          id="seguranca"
+          className="bg-surface-sunken scroll-mt-16 py-14 md:scroll-mt-20 md:py-20"
+        >
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-5">
+            <Reveal onView index={0}>
               <p className="text-accent-ink text-xs font-semibold uppercase tracking-wide">
                 {landing.security.eyebrow}
               </p>
-              <h2 className="font-display mt-2 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+              <h2 className="font-display mt-2 max-w-2xl text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
                 <RichLine>{landing.security.title}</RichLine>
               </h2>
-              <RichText className="text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed">
+              <RichText className="text-muted-foreground mt-3 max-w-2xl text-[0.95rem] leading-relaxed md:text-base">
                 {landing.security.body}
               </RichText>
             </Reveal>
 
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/*
+              Duas colunas já no celular.
+
+              Estes quatro cartões são os mais curtos da página — um ícone, um
+              título de duas palavras e duas linhas de texto. Em coluna única
+              eles ocupavam quatro telas para dizer o que cabe em uma, e a
+              seção de segurança é justamente a que a pessoa percorre buscando
+              **presença** de assunto (LGPD, auditoria, retenção), não leitura
+              contínua. Ler quatro selos lado a lado é o gesto certo.
+            */}
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-4 lg:grid-cols-4">
               {landing.securityCards.map((item, index) => {
                 const Icon = contentIcon(item.icon);
                 return (
-                  <Reveal key={item.id} index={index + 1}>
+                  <Reveal onView key={item.id} index={index + 1}>
                     <Card className="h-full">
-                      <CardContent className="p-5">
+                      <CardContent className="p-4 sm:p-5">
                         <Icon className="text-primary size-5" aria-hidden />
                         <h3 className="font-display mt-3 text-sm font-semibold">{item.title}</h3>
                         <RichText className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
@@ -513,15 +573,15 @@ export default async function LandingPage() {
       ) : null}
 
       {/* FAQ ------------------------------------------------------------------------- */}
-      <section className="py-20">
-        <div className="mx-auto w-full max-w-4xl px-5">
-          <Reveal index={0}>
-            <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+      <section className="py-14 md:py-20">
+        <div className="mx-auto w-full max-w-4xl px-4 sm:px-5">
+          <Reveal onView index={0}>
+            <h2 className="font-display text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
               {landing.faqTitle}
             </h2>
           </Reveal>
-          <Reveal index={1}>
-            <div className="mt-8">
+          <Reveal onView index={1}>
+            <div className="mt-6 md:mt-8">
               <Faq items={content.faq} />
             </div>
           </Reveal>
@@ -530,17 +590,17 @@ export default async function LandingPage() {
 
       {/* CTA final --------------------------------------------------------------------- */}
       <section className="bg-primary text-primary-foreground aurora">
-        <div className="mx-auto w-full max-w-4xl px-5 py-20 text-center">
+        <div className="mx-auto w-full max-w-4xl px-4 py-16 text-center sm:px-5 md:py-20">
           <CtaIcon className="text-accent mx-auto size-8" aria-hidden />
-          <h2 className="font-display mt-5 text-3xl font-semibold tracking-tight md:text-4xl">
+          <h2 className="font-display mt-5 text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
             <RichLine>{cta.title}</RichLine>
           </h2>
-          <RichText className="text-primary-foreground/75 mx-auto mt-4 max-w-2xl text-base leading-relaxed">
+          <RichText className="text-primary-foreground/75 mx-auto mt-4 max-w-2xl text-[0.95rem] leading-relaxed md:text-base">
             {cta.body}
           </RichText>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-7 flex flex-col items-stretch gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
             {cta.primary.label ? (
-              <Button asChild size="lg" variant="accent">
+              <Button asChild size="lg" variant="accent" className="w-full sm:w-auto">
                 <Link href={cta.primary.href}>
                   {cta.primary.label}
                   <ArrowRight />
@@ -552,7 +612,7 @@ export default async function LandingPage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent"
+                className="border-primary-foreground/25 text-primary-foreground hover:bg-primary-foreground/10 w-full bg-transparent sm:w-auto"
               >
                 <Link href={cta.secondary.href}>{cta.secondary.label}</Link>
               </Button>

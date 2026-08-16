@@ -33,10 +33,10 @@ export default async function ContaPage() {
   const quotes = await repositories.site.listQuotes(account.id);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-5 py-12">
+    <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-5 md:py-12">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
+          <h1 className="font-display text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl">
             Olá, {account.name.split(" ")[0]}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -132,7 +132,9 @@ export default async function ContaPage() {
         </Card>
       </div>
 
-      <h2 className="font-display mt-12 text-xl font-semibold tracking-tight">Meus pedidos de proposta</h2>
+      <h2 className="font-display mt-12 text-xl font-semibold tracking-tight">
+        Meus pedidos de proposta
+      </h2>
 
       {quotes.length === 0 ? (
         <Card className="mt-4">

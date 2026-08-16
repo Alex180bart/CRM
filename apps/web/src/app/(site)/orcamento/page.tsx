@@ -23,8 +23,8 @@ export default async function OrcamentoPage() {
   return (
     <>
       <section className="bg-primary text-primary-foreground aurora">
-        <div className="mx-auto w-full max-w-6xl px-5 py-14">
-          <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+        <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-5 md:py-14">
+          <h1 className="font-display text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">
             Solicitar proposta
           </h1>
           <p className="text-primary-foreground/75 mt-3 max-w-2xl text-base leading-relaxed">
@@ -35,7 +35,7 @@ export default async function OrcamentoPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-5 py-12">
+      <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-5 md:py-12">
         <QuoteForm
           account={
             account

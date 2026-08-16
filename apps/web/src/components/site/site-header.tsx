@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import * as React from "react";
 import type { HeaderContent } from "@elora/core";
 import { Button, cn } from "@elora/ui";
-import { Menu, X } from "lucide-react";
 
 import { LogoWordmark } from "@/components/shell/logo";
 
@@ -14,11 +12,22 @@ import { LogoWordmark } from "@/components/shell/logo";
  *
  * ## Por que é cliente
  *
- * Duas interações que não existem sem JavaScript: o menu de celular e a troca de
- * borda no scroll. Poderiam ser CSS puro — `:target` para o menu, `position:
- * sticky` com `scroll-timeline` para a borda —, mas `scroll-timeline` ainda não
- * está em todos os navegadores que este site precisa atender, e `:target` deixa
- * um `#menu` no histórico que o botão "voltar" do celular passa a consumir.
+ * Uma interação que não existe sem JavaScript: a troca de borda no scroll.
+ * Poderia ser CSS puro com `scroll-timeline`, mas ele ainda não está em todos os
+ * navegadores que este site precisa atender — e aqui, ao contrário do parallax
+ * do herói, a borda não é enfeite: é o que separa o cabeçalho do conteúdo claro
+ * quando os dois ficam da mesma cor.
+ *
+ * ## No celular ele tem duas coisas, e o resto desceu
+ *
+ * Marca à esquerda, ação primária à direita. O menu sanfonado saiu inteiro
+ * quando a navegação virou barra inferior (`mobile-tab-bar.tsx`): manter os dois
+ * significaria a mesma lista em dois lugares, com o de cima custando dois toques
+ * e ficando fora do alcance do polegar.
+ *
+ * A consequência de escopo vale registrar: com quatro alvos embaixo e o botão de
+ * ação aqui, um link do cabeçalho não cabe em lugar nenhum no celular — e é o
+ * rodapé que o segura. Por isso o rodapé não é opcional nesta página.
  *
  * ## A barra é opaca sempre; a borda só aparece depois do primeiro scroll
  *
@@ -58,8 +67,6 @@ export function SiteHeader({
   content: HeaderContent;
 }) {
   const [scrolled, setScrolled] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
-  const pathname = usePathname();
 
   React.useEffect(() => {
     function onScroll() {
@@ -70,12 +77,6 @@ export function SiteHeader({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Navegar fecha o menu. Sem isto, voltar para a home pelo menu deixaria o
-  // painel aberto sobre a página nova.
-  React.useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
   return (
     <header
       className={cn(
@@ -83,12 +84,18 @@ export function SiteHeader({
         scrolled ? "border-border" : "border-transparent",
       )}
     >
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-6 px-5">
+      {/*
+        A altura encolhe no celular — 3,5 rem contra 4. São 8 px que não parecem
+        nada numa tela de 1440 e valem meia linha de título numa de 844, onde a
+        primeira dobra é o único lugar que a maioria vê.
+      */}
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-6 px-4 lg:h-16 lg:px-5">
         <Link href="/" className="press shrink-0" aria-label="Elora — início">
-          <LogoWordmark height={26} />
+          <LogoWordmark height={24} className="lg:hidden" />
+          <LogoWordmark height={26} className="hidden lg:inline-flex" />
         </Link>
 
-        <nav className="hidden flex-1 items-center gap-1 md:flex">
+        <nav className="hidden flex-1 items-center gap-1 lg:flex">
           {content.links.map((link) => (
             <Link
               key={link.id}
@@ -100,7 +107,7 @@ export function SiteHeader({
           ))}
         </nav>
 
-        <div className="ml-auto hidden items-center gap-2 md:flex">
+        <div className="ml-auto hidden items-center gap-2 lg:flex">
           {accountName ? (
             <Button asChild variant="ghost" size="sm">
               <Link href="/conta">{accountName.split(" ")[0]}</Link>
@@ -115,42 +122,18 @@ export function SiteHeader({
           </Button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="border-input text-foreground ml-auto inline-flex size-9 items-center justify-center rounded-lg border md:hidden"
-          aria-expanded={open}
-          aria-label={open ? "Fechar menu" : "Abrir menu"}
-        >
-          {open ? <X className="size-4" /> : <Menu className="size-4" />}
-        </button>
+        {/*
+          O rótulo do botão vem do editor e pode ser longo — "Solicitar
+          orçamento" já tem 20 caracteres. `truncate` com largura máxima é o que
+          impede que um texto maior empurre a marca para fora da tela: o botão
+          encolhe, a marca fica.
+        */}
+        <Button asChild size="sm" className="ml-auto max-w-[55vw] lg:hidden">
+          <Link href={content.cta.href} className="truncate">
+            {content.cta.label}
+          </Link>
+        </Button>
       </div>
-
-      {open ? (
-        <div className="site-header border-border border-t px-5 py-4 md:hidden">
-          <nav className="grid gap-1">
-            {content.links.map((link) => (
-              <Link
-                key={link.id}
-                href={link.href}
-                className="hover:bg-muted rounded-lg px-3 py-2.5 text-sm font-medium"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="mt-3 grid gap-2">
-            <Button asChild variant="outline">
-              <Link href={accountName ? "/conta" : "/entrar"}>
-                {accountName ? content.accountLabel : content.signInLabel}
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href={content.cta.href}>{content.cta.label}</Link>
-            </Button>
-          </div>
-        </div>
-      ) : null}
     </header>
   );
 }

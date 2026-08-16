@@ -69,19 +69,33 @@ export function RevealScope({
  */
 export function Reveal({
   index = 0,
+  onView = false,
   as: Component = "div",
   className,
   children,
   ...props
 }: React.HTMLAttributes<HTMLElement> & {
   index?: number;
+  /**
+   * Amarra a entrada à **rolagem** em vez da montagem.
+   *
+   * Para o que nasce abaixo da dobra numa página longa. Sem isto, a seção sete
+   * termina de animar enquanto a pessoa ainda lê a primeira, e quem chega lá
+   * encontra tudo parado: o efeito roda, ninguém vê.
+   *
+   * É acréscimo puro. Onde o navegador não tem linha do tempo de rolagem, a
+   * classe extra não casa com regra nenhuma e o comportamento é o de sempre —
+   * animar na montagem. Nunca existe estado em que o conteúdo fique invisível
+   * esperando um gatilho.
+   */
+  onView?: boolean;
   as?: React.ElementType;
 }) {
   const settled = React.useContext(RevealSettled);
 
   return (
     <Component
-      className={cn(!settled && "reveal", className)}
+      className={cn(!settled && "reveal", !settled && onView && "reveal-on-view", className)}
       style={settled ? undefined : ({ "--reveal-index": index } as React.CSSProperties)}
       {...props}
     >
