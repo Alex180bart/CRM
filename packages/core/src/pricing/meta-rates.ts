@@ -111,6 +111,19 @@ export interface MetaRateTable {
   /** Data em que esta tabela passou a valer, ISO 8601 (só data). */
   effectiveFrom: string;
   /**
+   * Presente quando a tarifa **não** foi transcrita de um rate card publicado.
+   *
+   * Serve para a tela dizer que aquele número é derivado de anúncio, e não lido
+   * da fonte. Um valor provisório sem essa marca é indistinguível de um valor
+   * conferido — e é assim que uma estimativa vira preço praticado sem ninguém
+   * decidir.
+   */
+  provisional?: {
+    motivo: string;
+    /** Data em que a Meta publica o valor definitivo. */
+    confirmarAte: string;
+  };
+  /**
    * Data em que alguém abriu a página da Meta e conferiu.
    *
    * Separada de `effectiveFrom` porque respondem perguntas diferentes: a
@@ -321,4 +334,116 @@ export function ratesEffectiveAt(dateIso: string, country = "BR"): MetaRateTable
   );
 
   return match ?? CURRENT_META_RATES;
+}
+
+/* Mudanças anunciadas e ainda não vigentes ---------------------------------------- */
+
+/**
+ * Tabelas que a Meta já anunciou e que ainda não valem.
+ *
+ * ## Por que não entram em `META_RATE_TABLES`
+ *
+ * `CURRENT_META_RATES` é o primeiro item daquela lista, e `catalog.ts` lê dele o
+ * repasse de cada categoria na carga do módulo. Colocar uma tabela futura na
+ * posição zero passaria a cobrar **hoje** um preço que só vale em outubro — e o
+ * defeito não apareceria como erro: apareceria como fatura maior que a do
+ * concorrente, sem ninguém entender por quê. `ratesEffectiveAt` também depende
+ * daquela lista estar ordenada da mais recente para a mais antiga entre as que
+ * **já valem**.
+ *
+ * Então o que vem fica separado, e a promoção para a lista principal é um ato
+ * consciente: mover a entrada, apagar o `provisional` e conferir o número contra
+ * a página da Meta.
+ *
+ * ## Por que existe registro do que ainda não vale
+ *
+ * Porque o esquecimento aqui é caro e silencioso. A página publica "Serviço —
+ * não é cobrada"; em 1º de outubro de 2026 isso deixa de ser verdade, e sem
+ * registro nenhum ninguém descobre até um cliente conferir a fatura da Meta
+ * contra a nossa. `mudancasDeTarifa` transforma essa data num aviso na tela de
+ * quem cota.
+ */
+export const META_RATE_TABLES_ANUNCIADAS: MetaRateTable[] = [
+  {
+    country: "BR",
+    countryLabel: "Brasil",
+    currency: "BRL",
+    effectiveFrom: "2026-10-01",
+    checkedOn: "2026-08-16",
+    source:
+      "Anúncio oficial: mensagens de serviço passam a ser cobradas por mensagem e templates de utilidade perdem a gratuidade dentro da janela de 24 h. A Meta declara que a tarifa de serviço é a mesma de utilidade e autenticação, e publica os valores até 01/09/2026.",
+    sourceUrl:
+      "https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/non-template-messages",
+    provisional: {
+      motivo:
+        "A tarifa de serviço é derivada da declaração da Meta de que ela iguala utilidade e autenticação — não foi transcrita de rate card, porque o rate card com o valor ainda não existe.",
+      confirmarAte: "2026-09-01",
+    },
+    ratesMicros: {
+      marketing: 321_700,
+      utilidade: 35_000,
+      autenticacao: 35_000,
+      // Deixa de ser zero: é a mudança inteira desta vigência.
+      servico: 35_000,
+    },
+    volumeTiers: {
+      utilidade: [
+        { upTo: 250_000, rateMicros: 35_000, discountPct: 0 },
+        { upTo: 2_000_000, rateMicros: 33_300, discountPct: 5 },
+        { upTo: 17_000_000, rateMicros: 31_500, discountPct: 10 },
+        { upTo: 35_000_000, rateMicros: 29_800, discountPct: 15 },
+        { upTo: 70_000_000, rateMicros: 28_000, discountPct: 20 },
+        { upTo: null, rateMicros: 26_300, discountPct: 25 },
+      ],
+      autenticacao: [
+        { upTo: 500_000, rateMicros: 35_000, discountPct: 0 },
+        { upTo: 3_000_000, rateMicros: 33_300, discountPct: 5 },
+        { upTo: 5_250_000, rateMicros: 31_500, discountPct: 10 },
+        { upTo: 10_000_000, rateMicros: 29_800, discountPct: 15 },
+        { upTo: null, rateMicros: 28_000, discountPct: 20 },
+      ],
+    },
+  },
+];
+
+export type EstadoDaMudanca = "anunciada" | "atrasada";
+
+export interface MudancaDeTarifa {
+  tabela: MetaRateTable;
+  estado: EstadoDaMudanca;
+  /** Dias até a vigência; negativo quando a data já passou. */
+  dias: number;
+  message: string;
+}
+
+/**
+ * O que vem por aí, e o que já devia ter entrado.
+ *
+ * `anunciada` é informativo: existe mudança com data marcada, e quem cota hoje
+ * precisa saber para não prometer o preço de hoje para o mês que vem.
+ *
+ * `atrasada` é o estado que importa: a data chegou e a tabela continua fora da
+ * lista principal, o que significa que o produto está cobrando por uma tabela
+ * que a Meta já substituiu. Recebe o relógio por parâmetro, e não `Date.now()`,
+ * pela mesma razão de `rateStaleness`: o teste precisa poder viajar no tempo, e a
+ * função não pode divergir entre servidor e navegador.
+ */
+export function mudancasDeTarifa(nowIso: string, country = "BR"): MudancaDeTarifa[] {
+  const agora = new Date(nowIso).getTime();
+  const umDia = 86_400_000;
+
+  return META_RATE_TABLES_ANUNCIADAS.filter((tabela) => tabela.country === country).map(
+    (tabela) => {
+      const vigencia = new Date(`${tabela.effectiveFrom}T00:00:00-03:00`).getTime();
+      const dias = Math.ceil((vigencia - agora) / umDia);
+      const estado: EstadoDaMudanca = dias > 0 ? "anunciada" : "atrasada";
+
+      const message =
+        estado === "anunciada"
+          ? `Nova tabela da Meta em ${formatDate(tabela.effectiveFrom)} — ${dias} ${dias === 1 ? "dia" : "dias"}. Mensagem de serviço passa a ser cobrada.`
+          : `A tabela de ${formatDate(tabela.effectiveFrom)} já está vigente e ainda não foi promovida: o repasse cobrado está desatualizado.`;
+
+      return { tabela, estado, dias, message };
+    },
+  );
 }

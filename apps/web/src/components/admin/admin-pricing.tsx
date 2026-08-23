@@ -20,12 +20,13 @@ import {
   formatCurrencyCents,
   formatRateMicros,
   maxDiscountKeepingMargin,
+  mudancasDeTarifa,
   offsetIso,
   passthroughTaxDrag,
   rateStaleness,
 } from "@elora/core";
 import { Badge, Button, Callout, Eyebrow, Reveal, cn } from "@elora/ui";
-import { AlertTriangle, Info, ShieldAlert, TrendingUp } from "lucide-react";
+import { AlertTriangle, CalendarClock, Info, ShieldAlert, TrendingUp } from "lucide-react";
 
 /**
  * Precificação — a visão que **não** pode aparecer no site.
@@ -82,6 +83,15 @@ export function PricingTab() {
   const policy = MARGIN_BY_PLAN[planKey];
   const margin = quote.margin;
   const staleness = rateStaleness(CURRENT_META_RATES, offsetIso({}));
+  /**
+   * O que a Meta já anunciou e ainda não entrou na tabela.
+   *
+   * Usa o relógio **real**, não o ancorado de `offsetIso`: a âncora existe para
+   * os contadores da demonstração fazerem sentido em qualquer dia, e com ela a
+   * contagem até a nova vigência ficaria parada para sempre. Aqui a pergunta é
+   * sobre o calendário do mundo, como em `content-store`.
+   */
+  const mudancas = mudancasDeTarifa(new Date().toISOString());
 
   const fator = fatorRPct(payrollCents, rbt12Cents);
   const rate = effectiveRate(rbt12Cents, quote.taxRegime);
@@ -98,6 +108,29 @@ export function PricingTab() {
           back-end.
         </Callout>
       </Reveal>
+
+      {/*
+        O aviso fica **antes** do simulador, e não no rodapé.
+
+        Quem abre esta página está cotando: se a tarifa muda em poucas semanas,
+        essa é a informação que decide a validade da proposta que a pessoa vai
+        emitir nos próximos minutos. Embaixo do resultado, seria lida depois de a
+        proposta já estar pronta.
+      */}
+      {mudancas.map((mudanca) => (
+        <Reveal key={mudanca.tabela.effectiveFrom} index={1}>
+          <Callout
+            variant={mudanca.estado === "atrasada" ? "danger" : "warning"}
+            icon={<CalendarClock className="size-4" />}
+          >
+            <strong>{mudanca.message}</strong>
+            <p className="mt-1 text-xs leading-relaxed">
+              {mudanca.tabela.source}
+              {mudanca.tabela.provisional ? ` ${mudanca.tabela.provisional.motivo}` : null}
+            </p>
+          </Callout>
+        </Reveal>
+      ))}
 
       {/* --------------------------------------------------------- Simulação */}
       <Reveal index={1}>

@@ -5,6 +5,7 @@ import {
   PLANS,
   WHATSAPP_PRICES,
   formatCurrencyCents,
+  formatDateOnly,
   formatNumber,
   formatRateMicros,
 } from "@elora/core";
@@ -221,8 +222,22 @@ export default async function PrecosPage() {
                             ? "grátis"
                             : `${formatRateMicros(price.metaCostMicros)} / msg`}
                         </span>
+                        {/*
+                          A categoria gratuita declara **até quando**.
+
+                          Dizia "não é cobrada", e a Meta anunciou que passa a
+                          cobrar mensagem de serviço. Publicar gratuidade sem prazo
+                          às vésperas da mudança é a diferença entre o cliente
+                          saber que a fatura vai crescer e descobrir no mês
+                          seguinte. A data sai de `freeUntil`, derivada da tabela
+                          anunciada — não há data digitada nesta página.
+                        */}
                         <span className="text-muted-foreground block text-[10px] font-normal">
-                          {price.billableTemplate ? "repasse da Meta" : "não é cobrada"}
+                          {price.billableTemplate
+                            ? "repasse da Meta"
+                            : price.billableFrom
+                              ? `cobrada a partir de ${formatDateOnly(price.billableFrom)}`
+                              : "não é cobrada"}
                         </span>
                       </span>
                     </li>

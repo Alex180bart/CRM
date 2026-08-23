@@ -75,6 +75,23 @@ export function formatDateTime(iso: string): string {
   return dateTimeFormatter.format(new Date(iso));
 }
 
+/**
+ * Data pura (`YYYY-MM-DD`), formatada sem passar por fuso.
+ *
+ * `formatDate` recebe um instante e o converte para `America/Sao_Paulo` — o que
+ * está certo para carimbo de evento e **errado** para data de calendário. Uma
+ * string sem hora é interpretada como meia-noite UTC, que em Brasília é o dia
+ * anterior às 21 h: `formatDate("2026-10-01")` devolve `30/09/2026`.
+ *
+ * O erro é discreto e caro. Numa vigência de tabela de preço, ele antecipa a
+ * data em um dia — e ninguém confere um dia de diferença numa data plausível.
+ * Aqui não há relógio envolvido: a data é reordenada como texto, porque é texto
+ * que ela é.
+ */
+export function formatDateOnly(iso: string): string {
+  return iso.slice(0, 10).split("-").reverse().join("/");
+}
+
 export function formatDate(iso: string): string {
   return dateFormatter.format(new Date(iso));
 }

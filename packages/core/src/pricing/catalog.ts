@@ -81,7 +81,7 @@
 
 /* Edições ---------------------------------------------------------------------- */
 
-import { CURRENT_META_RATES } from "./meta-rates";
+import { CURRENT_META_RATES, META_RATE_TABLES_ANUNCIADAS } from "./meta-rates";
 
 export type PlanKey = "essencial" | "profissional" | "performance" | "corporativo";
 
@@ -381,6 +381,18 @@ export interface WhatsappPrice {
    */
   metaCostMicros: number;
   /**
+   * Data em que a Meta **passa a cobrar** a categoria, quando já anunciada.
+   *
+   * Existe porque a página dizia "não é cobrada" sobre mensagem de serviço, e a
+   * Meta anunciou que passa a cobrá-la. Uma promessa de gratuidade sem prazo,
+   * publicada às vésperas da mudança, é a diferença entre o cliente saber que a
+   * fatura vai crescer e descobrir sozinho no mês seguinte.
+   *
+   * Sai da lista de tabelas anunciadas, não de texto digitado: a data está num
+   * lugar só, e some da tela sozinha quando a mudança for promovida.
+   */
+  billableFrom?: string;
+  /**
    * `true` quando a nossa taxa de plataforma incide sobre esta categoria.
    *
    * Serviço fica de fora: é resposta dentro da janela de 24 h, já cobrada como
@@ -401,6 +413,18 @@ export interface WhatsappPrice {
  * O rótulo e a descrição continuam aqui porque são texto de produto, não dado
  * financeiro: mudam quando a explicação melhora, não quando a Meta reajusta.
  */
+/**
+ * Quando a mensagem de serviço passa a ser cobrada pela Meta.
+ *
+ * Derivada da primeira tabela anunciada em que o repasse de serviço deixa de ser
+ * zero. Só vale enquanto a categoria ainda é gratuita hoje: promovida a tabela,
+ * a condição abaixo para de encontrar sentido e a data desaparece da tela.
+ */
+const PRIMEIRA_COBRANCA_DE_SERVICO: string | undefined =
+  CURRENT_META_RATES.ratesMicros.servico === 0
+    ? META_RATE_TABLES_ANUNCIADAS.find((tabela) => tabela.ratesMicros.servico > 0)?.effectiveFrom
+    : undefined;
+
 export const WHATSAPP_PRICES: WhatsappPrice[] = [
   {
     category: "marketing",
@@ -426,9 +450,17 @@ export const WHATSAPP_PRICES: WhatsappPrice[] = [
   {
     category: "servico",
     label: "Serviço",
-    description: "Resposta dentro da janela de 24 h aberta pelo cliente. Gratuita.",
+    description: "Resposta dentro da janela de 24 h aberta pelo cliente.",
     metaCostMicros: CURRENT_META_RATES.ratesMicros.servico,
     billableTemplate: false,
+    /**
+     * Gratuita só até a data que a Meta já marcou.
+     *
+     * Fica `undefined` sozinho quando a tabela anunciada for promovida — nesse
+     * momento `metaCostMicros` deixa de ser zero e a categoria passa a exibir o
+     * repasse como as outras, sem ninguém editar este bloco.
+     */
+    billableFrom: PRIMEIRA_COBRANCA_DE_SERVICO,
   },
 ];
 

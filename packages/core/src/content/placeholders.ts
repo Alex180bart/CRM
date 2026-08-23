@@ -22,14 +22,11 @@
  */
 
 import { CURRENT_META_RATES } from "../pricing/meta-rates";
+import { formatDateOnly } from "../utils/datetime";
 import { MONTHLY_PREMIUM_PCT, PLANS, WHATSAPP_PRICE_BY_CATEGORY } from "../pricing/catalog";
 import { formatRateMicros } from "../utils/format";
 
 /** Data ISO (`2026-07-01`) no formato que o leitor brasileiro espera. */
-function brDate(iso: string): string {
-  return iso.split("-").reverse().join("/");
-}
-
 export interface ContentPlaceholder {
   key: string;
   /** O que o marcador significa, mostrado ao lado do campo no editor. */
@@ -67,8 +64,8 @@ export function contentPlaceholderValues(): Record<string, string> {
     precoUtilidade: formatRateMicros(WHATSAPP_PRICE_BY_CATEGORY.utilidade.metaCostMicros),
     precoAutenticacao: formatRateMicros(WHATSAPP_PRICE_BY_CATEGORY.autenticacao.metaCostMicros),
     premioMensal: `${MONTHLY_PREMIUM_PCT}%`,
-    vigencia: brDate(CURRENT_META_RATES.effectiveFrom),
-    conferencia: brDate(CURRENT_META_RATES.checkedOn),
+    vigencia: formatDateOnly(CURRENT_META_RATES.effectiveFrom),
+    conferencia: formatDateOnly(CURRENT_META_RATES.checkedOn),
     totalEdicoes: String(PLANS.length),
   };
 }

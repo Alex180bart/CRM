@@ -620,6 +620,41 @@ Dez consequências que valem enunciar:
    permitiria pedir proposta de R$ 1. Esse caminho deixou de existir junto com o cenário no
    formulário — hoje o pedido não carrega total nenhum, então não há total a forjar.
 
+## O que a Meta muda, e como o produto se prepara
+
+**Mudança anunciada vive em lista própria, não na tabela vigente.** `CURRENT_META_RATES` é o
+primeiro item de `META_RATE_TABLES`, e `catalog.ts` lê dele o repasse de cada categoria na carga do
+módulo — pôr uma vigência futura na posição zero passaria a cobrar hoje um preço de amanhã, e o
+sintoma não seria erro, seria fatura maior sem explicação. Daí `META_RATE_TABLES_ANUNCIADAS`, e a
+promoção para a lista principal como ato consciente: mover a entrada, apagar o `provisional`,
+conferir o número contra a página da Meta.
+
+**A data em vigor hoje: 1º de outubro de 2026.** A Meta passa a cobrar **mensagem de serviço** por
+mensagem, e templates de utilidade perdem a gratuidade dentro da janela de 24 h. A tarifa declarada
+é a mesma de utilidade e autenticação, e os valores exatos saem até 01/09/2026 — por isso a entrada
+anunciada é `provisional`: o número é **derivado do anúncio**, não transcrito de rate card. Sem essa
+marca, estimativa e valor conferido ficam indistinguíveis, que é como uma estimativa vira preço
+praticado sem ninguém decidir.
+
+**`mudancasDeTarifa` transforma a data num aviso, e usa o relógio real.** Antes da vigência avisa com
+os dias restantes; depois dela, acusa **atraso** — o produto cobrando por uma tabela que a Meta já
+substituiu. O `offsetIso` ancorado não serve aqui: a contagem ficaria parada para sempre, pela mesma
+razão que o carimbo de publicação do conteúdo usa `new Date()`.
+
+**A página declara a data, e ela sai do dado.** A linha de serviço dizia "não é cobrada"; hoje diz
+"cobrada a partir de 01/10/2026", com a data derivada de `billableFrom` — que some sozinho quando a
+tabela for promovida, porque a condição que o alimenta deixa de valer. Publicar gratuidade sem prazo
+às vésperas da mudança é a diferença entre o cliente saber que a fatura vai crescer e descobrir no
+mês seguinte.
+
+**Data de calendário não passa por `formatDate`.** Ela converte para `America/Sao_Paulo`, e sobre uma
+string sem hora devolve o **dia anterior** — `2026-10-01` sai como `30/09/2026`. Para vigência existe
+`formatDateOnly`, que reordena o texto. O erro é de um dia numa data plausível: ninguém confere.
+
+**A política de "AI Providers" da Meta não alcança a Elora.** Ela cobre provedor terceirizado de
+assistente de propósito geral oferecido dentro do WhatsApp, não empresa que usa IA para atender os
+próprios clientes por CRM ou BSP. Fica registrado porque a leitura contrária custaria uma linha de
+custo por mensagem que não existe.
 **O simulador é da área comercial, e o site publica a tabela sem a calculadora.** Ele já esteve na
 landing page e em `/precos`; hoje vive só na aba de `/admin`. A distinção que sustenta a decisão:
 saiu a **calculadora**, não a **informação** — franquia por edição, preço de excedente e o repasse
