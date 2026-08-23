@@ -550,7 +550,7 @@ segundo, base grande e adormecida. A Elora cobra os dois separados — assinatur
 consumo medido. A tabela inteira mora em `packages/core/src/pricing/catalog.ts` e **não há um único
 número em `calculator.ts`**: reajustar preço não deveria exigir ler lógica de cálculo.
 
-Oito consequências que valem enunciar:
+Dez consequências que valem enunciar:
 
 1. **Repasse de provedor viaja separado da margem.** A conversa de WhatsApp tem o custo da Meta
    (sem margem) e a taxa da plataforma. Somá-los produziria a linha que ninguém consegue auditar
@@ -580,7 +580,21 @@ Oito consequências que valem enunciar:
 5. **Colaborador ilimitado existe só na edição de cima.** "Ilimitado" numa edição barata é preço
    por assento escondido num número redondo, e quebra no dia em que o cliente cadastra a operação
    inteira.
-6. **O imposto sai da receita, e o Simples tributa faturamento.** `pricing/taxes.ts` modela os
+6. **O assento custa o mesmo em toda edição que o cobra, e a parcela fixa é que muda.** Subia por
+   edição (R$ 79, R$ 129, R$ 189) e produzia o efeito invertido: a pessoa a mais saía mais caro
+   justamente para quem já pagava mais. Ao uniformizar em R$ 79, a parcela fixa foi recomposta para
+   o mínimo de cada edição ficar **idêntico** — a página publica o total e o valor da pessoa
+   adicional, nunca a divisão entre os dois, e é isso que permitiu mexer sem mudar preço. O custo
+   está na escala e é conhecido: o assento deixou de subsidiar a franquia das edições grandes, e
+   quem cresce em time paga menos por pessoa do que pagaria antes. Quem cresce em volume paga no
+   consumo, que é onde a conta deve crescer.
+7. **A tabela publicada é verificada contra o custo de servir.** `pricing/margem-tabela.test.ts`
+   reprova o build se alguma edição de preço público custar mais do que cobra com a franquia cheia,
+   ficar no prejuízo depois do imposto ou não alcançar o piso da política no uso típico. Foi assim
+   que apareceu o furo do Corporativo — R$ 3.900 anunciados contra ~R$ 4.700 de custo estimado —,
+   que virou `priceOnRequest` e "sob medida" no cartão. O teste **não** cobra a margem alvo no uso
+   pleno: franquia é teto, não média, e exigir o alvo ali reprovaria uma tabela sadia.
+8. **O imposto sai da receita, e o Simples tributa faturamento.** `pricing/taxes.ts` modela os
    Anexos III e V com alíquota **efetiva** — `(RBT12 × nominal − dedução) / RBT12`, nunca a nominal,
    que superestima em vários pontos. O regime sai do **Fator R** (folha ÷ receita ≥ 28%), e a
    diferença na primeira faixa é de 6% para 15,5%: quase dez pontos de margem que somem sem nenhuma
@@ -591,7 +605,7 @@ Oito consequências que valem enunciar:
    Consequência que decide contrato: cada real de repasse da Meta que passa pela nossa nota paga
    imposto sem gerar margem **e** empurra a RBT12, elevando a alíquota de toda a receita —
    `passthroughTaxDrag` põe esse prejuízo em reais por ano, e acima de R$ 1.000 ele vira aviso.
-7. **A implantação tem porte, e o porte é linha.** `setup.ts` enquadra a empresa do cliente por
+9. **A implantação tem porte, e o porte é linha.** `setup.ts` enquadra a empresa do cliente por
    faturamento anual **e** por número de colaboradores, e vale o **maior** dos dois — multiplicar
    cobraria em dobro de quem é grande nas duas pontas, somar diluiria quem é grande em uma só. O
    acréscimo incide **só sobre a base** da edição: aplicá-lo ao total cobraria porte em cima de
@@ -599,7 +613,7 @@ Oito consequências que valem enunciar:
    próprias. `ResolvedSize.drivenBy` declara qual critério mandou, porque "média empresa pelo número
    de colaboradores" é frase que o cliente confere e "média empresa" sozinho é classificação que ele
    contesta.
-8. **O cálculo roda no navegador, e é a única cópia que existe.** O simulador precisa ser
+10. **O cálculo roda no navegador, e é a única cópia que existe.** O simulador precisa ser
    instantâneo — arrastar o volume vinte vezes procurando o ponto em que a edição vira é o gesto
    central da ferramenta. Antes havia um segundo cálculo, no servidor, refazendo a conta que o
    formulário de orçamento trazia em campos ocultos: aceitar o total enviado pelo navegador

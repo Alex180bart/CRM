@@ -118,7 +118,27 @@ export interface PlanDefinition {
   audience: string;
   /** Assinatura da plataforma, por mês, no compromisso anual. */
   platformFeeCents: number;
-  /** Preço por assento, por mês, no compromisso anual. Zero = ilimitado. */
+  /**
+   * Preço por assento, por mês, no compromisso anual. Zero = ilimitado.
+   *
+   * **É o mesmo valor em todas as edições que cobram por assento.** Antes
+   * subia por edição (R$ 79, R$ 129, R$ 189), e o efeito era o oposto do
+   * pretendido: a pessoa a mais custava mais caro justamente para quem já
+   * pagava mais, e a tabela ficava impossível de explicar numa frase.
+   *
+   * O que mudou junto foi a parcela fixa, para o preço mínimo de cada edição
+   * ficar **idêntico** ao anterior — a página publica o total e o valor da
+   * pessoa adicional, não a divisão entre os dois. Profissional: R$ 399 + 3 ×
+   * R$ 129 virou R$ 549 + 3 × R$ 79, e os dois dão R$ 786. Performance: R$ 899
+   * + 10 × R$ 189 virou R$ 1.999 + 10 × R$ 79, e os dois dão R$ 2.789.
+   *
+   * O custo desta escolha está na escala, e é conhecido: quem cresce em time
+   * passa a pagar menos por pessoa do que pagaria antes. Um Performance com 20
+   * assentos sai de R$ 4.679 para R$ 3.579. Continua saudável no assento
+   * marginal — R$ 79 sobre um custo estimado de R$ 19 por assento —, mas o
+   * assento deixou de subsidiar a franquia maior das edições grandes. Quem
+   * cresce em volume paga no consumo, que é onde a conta deve crescer.
+   */
   seatPriceCents: number;
   minSeats: number;
   /** Teto de assentos. `null` significa ilimitado. */
@@ -220,8 +240,8 @@ export const PLANS: PlanDefinition[] = [
     name: "Profissional",
     tagline: "Automação, campanhas e o agente de IA no ar",
     audience: "Operação que já tem fila, meta de SLA e campanha recorrente.",
-    platformFeeCents: 39_900,
-    seatPriceCents: 12_900,
+    platformFeeCents: 54_900,
+    seatPriceCents: 7_900,
     minSeats: 3,
     maxSeats: 50,
     includedContacts: 10_000,
@@ -255,8 +275,8 @@ export const PLANS: PlanDefinition[] = [
     name: "Performance",
     tagline: "Volume alto, vários times, governança de verdade",
     audience: "Operação com mais de um time, vários números e auditoria exigida.",
-    platformFeeCents: 89_900,
-    seatPriceCents: 18_900,
+    platformFeeCents: 199_900,
+    seatPriceCents: 7_900,
     minSeats: 10,
     maxSeats: 200,
     includedContacts: 30_000,
