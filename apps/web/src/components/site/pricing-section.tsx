@@ -246,22 +246,49 @@ export function PricingSection() {
                     clique no alternador faria os quatro preços piscarem até o
                     novo valor, e piscar é lido como recarregamento.
                   */}
-                  <p className="mt-4 flex items-baseline gap-1">
-                    <span className="text-muted-foreground text-xs">a partir de</span>
-                  </p>
-                  <p className="flex items-baseline gap-1">
-                    <RollingNumber
-                      value={startingPriceCents(plan.key, billing)}
-                      format={formatCurrencyCents}
-                      className="figure text-3xl font-semibold"
-                    />
-                    <span className="text-muted-foreground text-sm">/ mês</span>
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs leading-snug">
-                    {unlimitedSeats
-                      ? "Assinatura fechada, colaboradores ilimitados"
-                      : `${formatCurrencyCents(plan.platformFeeCents)} de assinatura + ${plan.minSeats} × ${formatCurrencyCents(plan.seatPriceCents)} por pessoa/mês`}
-                  </p>
+                  {/*
+                    Duas correções moram aqui, e as duas vinham desta seção.
+
+                    A primeira: a decomposição "R$ 149 de assinatura + 2 × R$ 79"
+                    saiu. A palavra assinatura nomeia a parcela fixa da edição num
+                    vocabulário interno, e a primeira reação de quem lê é perguntar
+                    o que é aquilo além do que já vai pagar — abrir a conta cobrava
+                    explicação em vez de dar confiança.
+
+                    A segunda: a edição sem preço público mostra "sob medida". O
+                    Corporativo anunciava um piso menor que o custo estimado de
+                    servir a franquia que ele promete.
+                  */}
+                  {plan.priceOnRequest ? (
+                    <>
+                      <p className="mt-4 flex items-baseline gap-1">
+                        <span className="text-muted-foreground text-xs">investimento</span>
+                      </p>
+                      <p className="flex items-baseline gap-1">
+                        <span className="font-display text-3xl font-semibold">sob medida</span>
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-xs leading-snug">
+                        Dimensionado por operação, com colaboradores ilimitados
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-4 flex items-baseline gap-1">
+                        <span className="text-muted-foreground text-xs">a partir de</span>
+                      </p>
+                      <p className="flex items-baseline gap-1">
+                        <RollingNumber
+                          value={startingPriceCents(plan.key, billing)}
+                          format={formatCurrencyCents}
+                          className="figure text-3xl font-semibold"
+                        />
+                        <span className="text-muted-foreground text-sm">/ mês</span>
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-xs leading-snug">
+                        {`Inclui ${plan.minSeats} ${plan.minSeats === 1 ? "pessoa" : "pessoas"}; cada pessoa a mais, ${formatCurrencyCents(plan.seatPriceCents)}/mês`}
+                      </p>
+                    </>
+                  )}
 
                   <ul className="border-border mt-4 space-y-2 border-t pt-4">
                     {[

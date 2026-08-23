@@ -63,14 +63,31 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
 
               <p className="text-muted-foreground mt-1 text-sm leading-snug">{plan.tagline}</p>
 
-              <p className="mt-4">
-                <span className="text-muted-foreground text-xs">a partir de</span>
-                <br />
-                <span className="figure text-3xl font-semibold">
-                  {formatCurrencyCents(startingPriceCents(plan.key))}
-                </span>
-                <span className="text-muted-foreground text-sm"> / mês</span>
-              </p>
+              {/*
+                A edição sem preço público mostra "sob medida", não um piso.
+
+                O Corporativo anunciava "a partir de R$ 3.900" — e o custo estimado
+                de servir a franquia que ele promete passa esse valor. Um piso que a
+                operação não honra é pior que nenhum piso: ele ancora a negociação
+                num número que dá prejuízo, e quem sobe dele parece estar cobrando
+                a mais.
+              */}
+              {plan.priceOnRequest ? (
+                <p className="mt-4">
+                  <span className="text-muted-foreground text-xs">investimento</span>
+                  <br />
+                  <span className="font-display text-3xl font-semibold">sob medida</span>
+                </p>
+              ) : (
+                <p className="mt-4">
+                  <span className="text-muted-foreground text-xs">a partir de</span>
+                  <br />
+                  <span className="figure text-3xl font-semibold">
+                    {formatCurrencyCents(startingPriceCents(plan.key))}
+                  </span>
+                  <span className="text-muted-foreground text-sm"> / mês</span>
+                </p>
+              )}
               {/*
                 A decomposição saiu, e a razão é o que ela provocava.
 
@@ -85,8 +102,8 @@ export function PlanCards({ compact = false }: { compact?: boolean }) {
                 pessoas estão inclusas nesse valor, e o que mais entra na fatura.
               */}
               <p className="text-muted-foreground mt-1 text-xs leading-snug">
-                {plan.seatPriceCents === 0
-                  ? "Colaboradores ilimitados"
+                {plan.priceOnRequest
+                  ? "Dimensionado por operação, com colaboradores ilimitados"
                   : `Inclui ${plan.minSeats} ${plan.minSeats === 1 ? "pessoa" : "pessoas"}; cada pessoa a mais, ${formatCurrencyCents(plan.seatPriceCents)}/mês`}
               </p>
               <p className="text-muted-foreground/80 mt-1 text-[11px] leading-snug">

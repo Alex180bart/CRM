@@ -123,6 +123,24 @@ export interface PlanDefinition {
   minSeats: number;
   /** Teto de assentos. `null` significa ilimitado. */
   maxSeats: number | null;
+  /**
+   * O preço desta edição não é publicado.
+   *
+   * Existe como campo, e não como dedução de `seatPriceCents === 0`, porque são
+   * duas afirmações diferentes sobre a edição — "os colaboradores são ilimitados"
+   * e "o valor sai da conversa" — e amarrá-las faria a próxima edição de assento
+   * ilimitado esconder o preço sem ninguém ter decidido isso.
+   *
+   * O motivo de o Corporativo entrar aqui está medido: com a franquia que ele
+   * promete, o custo estimado de servir (~R$ 4.700) passa o piso de R$ 3.900 que
+   * a página anunciava. Publicar um piso que a operação não honra amarra a
+   * negociação num número que dá prejuízo — e a edição já se descrevia como
+   * contrato sob medida.
+   *
+   * O simulador da área comercial continua calculando normalmente: lá o número
+   * é insumo de proposta, não promessa pública.
+   */
+  priceOnRequest?: boolean;
   includedContacts: number;
   /** Conversas tratadas por mês, incluídas na assinatura. */
   includedConversations: number;
@@ -269,6 +287,7 @@ export const PLANS: PlanDefinition[] = [
   },
   {
     key: "corporativo",
+    priceOnRequest: true,
     name: "Corporativo",
     tagline: "Colaboradores ilimitados e contrato sob medida",
     audience: "Operação grande, multiunidade, com exigência de segurança e SLA contratual.",
