@@ -24,3 +24,4 @@ export * from "./product-art";
 export * from "./product-search";
 export * from "./proposal-message";
 export * from "./markup";
+export * from "./rule-engine";
