@@ -620,6 +620,47 @@ Dez consequências que valem enunciar:
    permitiria pedir proposta de R$ 1. Esse caminho deixou de existir junto com o cenário no
    formulário — hoje o pedido não carrega total nenhum, então não há total a forjar.
 
+## A janela do WhatsApp é decisão de quem atende, não linha de fatura
+
+**`utils/whatsapp-janela.ts` responde duas perguntas antes do clique:** dá para responder sem
+template, e quanto a Meta cobra por isso. A segunda virou decisão de operação quando a cobrança
+passou a ser **por mensagem** — antes, o número de mensagens dentro de uma conversa não mudava a
+conta. Uma plataforma que só repassa a fatura entrega essa informação um mês depois, quando não dá
+mais para escolher.
+
+**São três janelas, e confundi-las custa dinheiro.** A de **atendimento** abre 24 h a cada mensagem
+do cliente e isenta resposta livre e template de utilidade. A **FEP** dura 72 h, nasce quando o
+cliente chegou por anúncio Click-to-WhatsApp ou botão da Página **e** a empresa respondeu dentro das
+primeiras 24 h, e isenta **tudo** — inclusive marketing, que custa nove vezes a utilidade. Fechada,
+só template, sempre cobrado. A FEP é conferida primeiro por ser mais permissiva: na ordem inversa,
+uma conversa de anúncio no segundo dia apareceria como fechada e o produto cobraria do cliente o que
+a Meta entrega de graça.
+
+**A FEP conta da primeira entrada, não da última.** Renovar a cada mensagem do cliente prometeria
+de graça o que a Meta cobra — e o erro só apareceria na fatura. Pelo mesmo motivo, saída anterior à
+primeira entrada não gera FEP: disparo de campanha não é resposta a nada, e contá-lo faria conversa
+fria parecer elegível.
+
+**A data do fim da gratuidade não está escrita no código.** Sai da primeira tabela de
+`META_RATE_TABLES_ANUNCIADAS` em que o repasse de serviço deixa de ser zero — a mesma fonte da
+página de preços. Há teste provando que a mesma resposta é grátis em 30/09 e cobrada em 01/10, sem
+ninguém editar nada: é o que garante que a estrutura de vigência não é só enfeite de documentação.
+
+**A janela é derivada das mensagens, não de `lastMessageAt`.** Aquele campo é a última mensagem de
+**qualquer** lado: usá-lo faria o atendente responder, o carimbo avançar, e a janela parecer aberta
+enquanto ele conversa sozinho. Quem abre a janela é mensagem de entrada. Quando o back-end entrar,
+vale materializar `lastInboundAt` para a lista não carregar mensagem — mas o cálculo continua sendo
+este, e a coluna passa a ser cache, não segunda verdade.
+
+**O selo do compositor diz o estado inteiro, não só o impedimento.** Antes ele só aparecia quando a
+janela fechava, e o caso mais comum ficava sem informação nenhuma — o atendente não sabia que estava
+respondendo de graça, nem que isso tem prazo. O relógio usado é o ancorado, como no resto do Inbox:
+com o real, servidor e navegador renderizariam tempos diferentes e a hidratação quebraria em toda
+conversa aberta.
+
+**A origem da conversa ainda não é guardada, e o padrão subestima o benefício.** No WhatsApp ela vem
+do campo `referral` do webhook, que identifica anúncio. Sem essa informação a conta é a da janela
+comum — prometer FEP que a Meta não deu seria pior que deixar de mostrar um desconto real.
 ## O que a Meta muda, e como o produto se prepara
 
 **Mudança anunciada vive em lista própria, não na tabela vigente.** `CURRENT_META_RATES` é o

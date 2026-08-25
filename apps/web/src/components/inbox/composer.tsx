@@ -13,7 +13,16 @@ import {
   type ReactNode,
 } from "react";
 import type { Attachment, CannedResponse, ChannelKind, AiToneAdjustment } from "@elora/core";
-import { AI_TONE_LABEL, formatBytes, minutesSince } from "@elora/core";
+import {
+  AI_TONE_LABEL,
+  custoDoEnvio,
+  estadoDaJanela,
+  formatBytes,
+  formatRateMicros,
+  offsetIso,
+  tempoRestanteLegivel,
+  type OrigemDaConversa,
+} from "@elora/core";
 import {
   Badge,
   Button,
@@ -31,22 +40,7 @@ import {
   Tooltip,
   cn,
 } from "@elora/ui";
-import {
-  AlertTriangle,
-  Check,
-  CornerUpLeft,
-  FileText,
-  Loader2,
-  Mic,
-  Paperclip,
-  Pencil,
-  Send,
-  Sparkles,
-  StickyNote,
-  Wand2,
-  X,
-  Zap,
-} from "lucide-react";
+import { AlertTriangle, Check, Clock, CornerUpLeft, FileText, Gift, Loader2, Mic, Paperclip, Pencil, Send, Sparkles, StickyNote, Wand2, X, Zap } from "lucide-react";
 
 import {
   MAX_ATTACHMENTS_PER_MESSAGE,
@@ -106,7 +100,6 @@ export interface ComposerHandle {
   focus: () => void;
 }
 
-const WHATSAPP_WINDOW_MINUTES = 24 * 60;
 const MAX_TEXTAREA_HEIGHT = 200;
 
 const TONES: AiToneAdjustment[] = [
@@ -135,6 +128,16 @@ export const Composer = forwardRef<
     channel: ChannelKind;
     cannedResponses: CannedResponse[];
     lastInboundAt?: string;
+    /**
+     * Primeira resposta da empresa e origem da conversa alimentam a janela de
+     * 72 h dos pontos de entrada gratuitos. Opcionais porque o modelo ainda não
+     * guarda a origem: no WhatsApp ela vem do campo `referral` do webhook, que
+     * identifica anúncio Click-to-WhatsApp. Sem elas, a conta é a da janela
+     * comum — subestimar o benefício é melhor que prometer gratuidade que a
+     * Meta não deu.
+     */
+    primeiraRespostaAt?: string;
+    origemDaConversa?: OrigemDaConversa;
     disabled?: boolean;
     disabledReason?: string;
     quote?: ComposerQuote;
@@ -157,6 +160,8 @@ export const Composer = forwardRef<
     channel,
     cannedResponses,
     lastInboundAt,
+    primeiraRespostaAt,
+    origemDaConversa,
     disabled,
     disabledReason,
     quote,
@@ -189,14 +194,42 @@ export const Composer = forwardRef<
   const dragDepth = useRef(0);
 
   /**
-   * Fora da janela de 24 horas, o WhatsApp só aceita template aprovado
-   * (seção 11 do plano). A interface precisa deixar isso explícito antes do
-   * envio, e não depois da falha do provedor.
+   * A janela do WhatsApp decide duas coisas: se dá para responder sem template e
+   * quanto a Meta cobra por isso.
+   *
+   * A versão anterior respondia só a primeira, com uma conta de 24 horas escrita
+   * aqui dentro. Desde que a Meta passou a cobrar **por mensagem**, a segunda
+   * pergunta virou decisão de quem atende — e ela precisa da resposta antes do
+   * clique, não na fatura do mês seguinte. Ver `utils/whatsapp-janela.ts`.
+   *
+   * O relógio é o ancorado (`offsetIso`), como todo o resto do Inbox: com o real, o
+   * servidor renderizaria um tempo restante e o navegador outro, e a hidratação
+   * quebraria em toda conversa aberta.
    */
-  const outsideWindow = useMemo(() => {
-    if (channel !== "whatsapp" || !lastInboundAt) return false;
-    return minutesSince(lastInboundAt) > WHATSAPP_WINDOW_MINUTES;
-  }, [channel, lastInboundAt]);
+  const janela = useMemo(
+    () =>
+      estadoDaJanela({
+        ultimaMensagemDoClienteAt: lastInboundAt,
+        origem: origemDaConversa ?? "cliente",
+        primeiraRespostaDaEmpresaAt: primeiraRespostaAt,
+        nowIso: offsetIso({}),
+      }),
+    [lastInboundAt, origemDaConversa, primeiraRespostaAt],
+  );
+
+  /**
+   * Só o WhatsApp tem janela e tarifa. Webchat, e-mail e Instagram não cobram
+   * por mensagem, e mostrar "grátis" neles sugeriria que em algum momento
+   * custariam.
+   */
+  const janelaVale = channel === "whatsapp" && Boolean(lastInboundAt);
+
+  const custoDaResposta = useMemo(
+    () => (janelaVale ? custoDoEnvio({ janela, categoria: "servico", nowIso: offsetIso({}) }) : undefined),
+    [janela, janelaVale],
+  );
+
+  const outsideWindow = janelaVale && janela.tipo === "fechada";
 
   const requiresTemplate = mode === "resposta" && outsideWindow;
   const validDrafts = drafts.filter((draft) => !draft.error);
@@ -551,11 +584,35 @@ export const Composer = forwardRef<
           activeClass="bg-warning-soft text-warning-foreground"
         />
 
-        {requiresTemplate ? (
-          <Badge variant="warning" className="ml-auto">
-            <AlertTriangle aria-hidden />
-            Fora da janela de 24 h — exige template
-          </Badge>
+        {/*
+          O selo diz o estado da janela **e** o custo, não só o impedimento.
+
+          Antes ele só aparecia quando a janela fechava, o que deixava o caso mais
+          comum sem informação nenhuma: dentro da janela, o atendente não sabia
+          que estava respondendo de graça — nem que isso tem prazo. Com a cobrança
+          por mensagem, essa é a informação que muda a decisão de quem escreve.
+        */}
+        {janelaVale && mode === "resposta" ? (
+          janela.tipo === "fep" ? (
+            <Badge variant="success" className="ml-auto">
+              <Gift aria-hidden />
+              Janela de anúncio · {tempoRestanteLegivel(janela.minutosRestantes)} · tudo grátis
+            </Badge>
+          ) : janela.tipo === "atendimento" ? (
+            <Badge variant={custoDaResposta?.cobrado ? "info" : "success"} className="ml-auto">
+              <Clock aria-hidden />
+              Janela aberta · {tempoRestanteLegivel(janela.minutosRestantes)} ·{" "}
+              {custoDaResposta?.cobrado
+                ? `${formatRateMicros(custoDaResposta.custoMicros)} por mensagem`
+                : "resposta grátis"}
+            </Badge>
+          ) : (
+            <Badge variant="warning" className="ml-auto">
+              <AlertTriangle aria-hidden />
+              Fora da janela — exige template
+              {custoDaResposta ? ` · ${formatRateMicros(custoDaResposta.custoMicros)}` : null}
+            </Badge>
+          )
         ) : null}
       </div>
 

@@ -25,3 +25,4 @@ export * from "./product-search";
 export * from "./proposal-message";
 export * from "./markup";
 export * from "./rule-engine";
+export * from "./whatsapp-janela";
